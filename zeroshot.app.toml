@@ -1,0 +1,10 @@
+allowed_roots = ["/Users/khkim/dev"]
+default_approval = "never"
+default_sandbox = "workspace-write"
+max_iters = 30
+stall_limit = 2
+plan_reasoning = "high"
+exec_reasoning = "medium"
+validate_reasoning = "medium"
+closeout_reasoning = "medium"
+

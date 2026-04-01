@@ -1,0 +1,26 @@
+@import "tailwindcss";
+
+:root {
+  --background: oklch(0.97 0.01 95);
+  --foreground: oklch(0.24 0.02 255);
+  --card: oklch(1 0 0);
+  --card-foreground: var(--foreground);
+  --primary: oklch(0.49 0.12 226);
+  --primary-foreground: oklch(0.98 0 0);
+  --muted: oklch(0.94 0.01 95);
+  --muted-foreground: oklch(0.48 0.02 255);
+  --border: oklch(0.88 0.01 90);
+}
+
+body {
+  background:
+    radial-gradient(circle at top left, rgba(30, 64, 175, 0.08), transparent 28%),
+    linear-gradient(135deg, rgba(245, 158, 11, 0.06), transparent 45%),
+    var(--background);
+  color: var(--foreground);
+  min-height: 100vh;
+}
+
+#root {
+  min-height: 100vh;
+}

@@ -22,9 +22,9 @@ CLOSEOUT_REASONING ?= medium
 build:
 	@echo "[make] build 타깃을 시작합니다."
 	@echo "[make] PRODUCT.md를 기준으로 새 run을 생성합니다."
-	@MODE=build bash scripts/build.sh
+	@bun run --cwd cli src/index.ts build --project-root $(CURDIR)
 
 update:
 	@echo "[make] update 타깃을 시작합니다."
 	@echo "[make] PRODUCT.md + UPDATE.md + 이전 run을 비교하여 새 update run을 생성합니다."
-	@MODE=update bash scripts/build.sh
+	@bun run --cwd cli src/index.ts update --project-root $(CURDIR)

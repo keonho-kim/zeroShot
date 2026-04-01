@@ -18,28 +18,30 @@ set -Eeuo pipefail
 # -----------------------------------------------------------------------------
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-export ROOT
+TOOL_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+ROOT="${PROJECT_ROOT:-${ROOT:-$TOOL_ROOT}}"
+export ROOT TOOL_ROOT
 
 cd "$ROOT"
 
 echo "[build] 프로젝트 루트로 이동했습니다: $ROOT"
+echo "[build] 도구 루트: $TOOL_ROOT"
 echo "[build] 공통 라이브러리와 phase 스크립트를 로드합니다."
 
-source "$ROOT/scripts/lib/10_env.sh"
-source "$ROOT/scripts/lib/20_run_state.sh"
-source "$ROOT/scripts/lib/30_schema.sh"
-source "$ROOT/scripts/lib/40_json.sh"
-source "$ROOT/scripts/lib/50_contract.sh"
-source "$ROOT/scripts/lib/60_codex.sh"
+source "$TOOL_ROOT/scripts/lib/10_env.sh"
+source "$TOOL_ROOT/scripts/lib/20_run_state.sh"
+source "$TOOL_ROOT/scripts/lib/30_schema.sh"
+source "$TOOL_ROOT/scripts/lib/40_json.sh"
+source "$TOOL_ROOT/scripts/lib/50_contract.sh"
+source "$TOOL_ROOT/scripts/lib/60_codex.sh"
 
-source "$ROOT/scripts/phases/00_prepare.sh"
-source "$ROOT/scripts/phases/10_requirements_normalize.sh"
-source "$ROOT/scripts/phases/20_replan.sh"
-source "$ROOT/scripts/phases/30_iter_once.sh"
-source "$ROOT/scripts/phases/40_validate.sh"
-source "$ROOT/scripts/phases/50_sync_product.sh"
-source "$ROOT/scripts/phases/90_closeout.sh"
+source "$TOOL_ROOT/scripts/phases/00_prepare.sh"
+source "$TOOL_ROOT/scripts/phases/10_requirements_normalize.sh"
+source "$TOOL_ROOT/scripts/phases/20_replan.sh"
+source "$TOOL_ROOT/scripts/phases/30_iter_once.sh"
+source "$TOOL_ROOT/scripts/phases/40_validate.sh"
+source "$TOOL_ROOT/scripts/phases/50_sync_product.sh"
+source "$TOOL_ROOT/scripts/phases/90_closeout.sh"
 
 main() {
   echo "[build] 전체 파이프라인을 시작합니다."

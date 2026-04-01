@@ -1,0 +1,6 @@
+node_modules
+backend/dist
+cli/dist
+frontend/dist
+*.log
+.git

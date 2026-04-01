@@ -13,5 +13,5 @@ json_get() {
   local key="$2"
 
   log "[json] JSON 값을 추출합니다. file=$file key=$key"
-  uv run python "$ROOT/scripts/python/get_json.py" "$file" "$key"
+  python3 "${TOOL_ROOT:-$ROOT}/scripts/python/get_json.py" "$file" "$key"
 }

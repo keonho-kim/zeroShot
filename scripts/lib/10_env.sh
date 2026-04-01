@@ -80,7 +80,7 @@ ensure_env_and_tools() {
   mkdir -p "$WORK_ROOT"
 
   require_cmd codex
-  require_cmd uv
+  require_cmd python3
 
   if [[ ! -f "$PRODUCT_FILE" ]]; then
     log "[env] PRODUCT.md를 찾지 못했습니다: $PRODUCT_FILE"
