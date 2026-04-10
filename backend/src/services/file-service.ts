@@ -1,6 +1,6 @@
-import { stat } from "node:fs/promises";
-import { join } from "node:path";
-import { ensureFileContent, listDirectoryEntries, readUtf8, resolveUserFilePath } from "../core/path-guards.js";
+import { mkdir, rename, rm, stat, writeFile } from "node:fs/promises";
+import { dirname, join } from "node:path";
+import { ensureFileContent, listDirectoryEntries, readUtf8, resolveExistingPath, resolveUserFilePath } from "../core/path-guards.js";
 import type { FileReadResult } from "../types.js";
 
 export async function readProjectFile(projectRoot: string, relativePath = ""): Promise<FileReadResult> {
@@ -29,4 +29,57 @@ export async function saveProjectFile(projectRoot: string, relativePath: string,
 
 export async function writeProductOrUpdate(projectRoot: string, filename: "PRODUCT.md" | "UPDATE.md", content: string): Promise<void> {
   await ensureFileContent(join(projectRoot, filename), content);
+}
+
+function assertValidEntryName(name: string): string {
+  const trimmed = name.trim();
+  if (!trimmed || trimmed === "." || trimmed === ".." || /[\\/]/.test(trimmed)) {
+    throw Object.assign(new Error("Invalid name"), { statusCode: 400 });
+  }
+
+  return trimmed;
+}
+
+async function ensureTargetMissing(targetPath: string): Promise<void> {
+  try {
+    await stat(targetPath);
+    const error = new Error("Entry already exists") as NodeJS.ErrnoException & { statusCode?: number };
+    error.code = "EEXIST";
+    throw error;
+  } catch (error) {
+    const err = error as NodeJS.ErrnoException;
+    if (err.code === "ENOENT") {
+      return;
+    }
+    throw error;
+  }
+}
+
+export async function createDirectory(parentPath: string, name: string): Promise<string> {
+  const validName = assertValidEntryName(name);
+
+  const targetPath = join(parentPath, validName);
+  await mkdir(targetPath);
+  return resolveExistingPath(targetPath);
+}
+
+export async function createFile(parentPath: string, name: string): Promise<string> {
+  const validName = assertValidEntryName(name);
+  const targetPath = join(parentPath, validName);
+  await ensureTargetMissing(targetPath);
+  await writeFile(targetPath, "", { encoding: "utf8", flag: "wx" });
+  return resolveExistingPath(targetPath);
+}
+
+export async function renameEntry(targetPath: string, name: string): Promise<string> {
+  const validName = assertValidEntryName(name);
+  const nextPath = join(dirname(targetPath), validName);
+  await ensureTargetMissing(nextPath);
+  await rename(targetPath, nextPath);
+  return resolveExistingPath(nextPath);
+}
+
+export async function deleteEntry(targetPath: string): Promise<void> {
+  const stats = await stat(targetPath);
+  await rm(targetPath, { recursive: stats.isDirectory(), force: false });
 }

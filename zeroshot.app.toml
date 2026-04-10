@@ -1,4 +1,5 @@
-allowed_roots = ["/Users/khkim/dev"]
+bootstrap_roots = [ "/Users/khkim/dev/test/zeroShot/workspace" ]
+allowed_roots = [ "/Users/khkim/dev/test/zeroShot/workspace/sample" ]
 default_approval = "never"
 default_sandbox = "workspace-write"
 max_iters = 30
@@ -7,4 +8,3 @@ plan_reasoning = "high"
 exec_reasoning = "medium"
 validate_reasoning = "medium"
 closeout_reasoning = "medium"
-

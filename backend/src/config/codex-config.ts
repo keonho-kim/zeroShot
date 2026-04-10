@@ -1,7 +1,7 @@
 import { parse, stringify } from "@iarna/toml";
 import { homedir } from "node:os";
 import { join } from "node:path";
-import { readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import type { CodexSettings } from "../types.js";
 
 export function getCodexConfigPath(): string {
@@ -13,8 +13,13 @@ function asRecord(value: unknown): Record<string, unknown> {
 }
 
 export async function loadCodexSettings(): Promise<{ settings: CodexSettings; raw: Record<string, unknown> }> {
-  const rawText = await readFile(getCodexConfigPath(), "utf8");
-  const raw = parse(rawText) as Record<string, unknown>;
+  const rawText = await readFile(getCodexConfigPath(), "utf8").catch((error: NodeJS.ErrnoException) => {
+    if (error.code === "ENOENT") {
+      return "";
+    }
+    throw error;
+  });
+  const raw = rawText ? (parse(rawText) as Record<string, unknown>) : {};
   const providersRecord = asRecord(raw.model_providers);
   const profilesRecord = asRecord(raw.profiles);
 
@@ -88,5 +93,6 @@ export async function saveCodexSettings(next: CodexSettings): Promise<void> {
     raw.sandbox_mode = next.defaults.sandboxMode;
   }
 
+  await mkdir(join(homedir(), ".codex"), { recursive: true });
   await writeFile(getCodexConfigPath(), stringify(raw as never), "utf8");
 }

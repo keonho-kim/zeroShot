@@ -43,7 +43,9 @@ export function LogViewer({ job }: Props) {
         <p className="text-sm font-semibold">실행 로그</p>
         <p className="text-xs text-[var(--muted-foreground)]">Build / Update 작업의 stdout, stderr, phase 이벤트가 실시간 표시됩니다.</p>
       </div>
-      <pre className="max-h-[420px] overflow-auto rounded-xl bg-slate-950 p-4 text-xs text-slate-50">{rendered || "아직 로그가 없습니다."}</pre>
+      <pre className="max-h-[420px] overflow-auto rounded-xl border border-[var(--border)] bg-[var(--code-bg)] p-4 text-xs text-[var(--code-fg)] shadow-[inset_0_1px_0_rgb(255_255_255_/_0.03)]">
+        {rendered || "아직 로그가 없습니다."}
+      </pre>
     </Card>
   );
 }

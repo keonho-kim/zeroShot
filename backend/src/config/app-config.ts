@@ -1,9 +1,11 @@
 import { parse, stringify } from "@iarna/toml";
 import { readFile, writeFile } from "node:fs/promises";
+import { expandHomePath } from "../core/path-input.js";
 import { getAppConfigPath } from "../core/workspace.js";
 import type { AppConfig } from "../types.js";
 
 const defaultConfig: AppConfig = {
+  bootstrapRoots: ["/project"],
   allowedRoots: [],
   defaults: {
     approval: "never",
@@ -17,6 +19,30 @@ const defaultConfig: AppConfig = {
   }
 };
 
+function normalizeRoots(value: unknown, fallback: string[]): string[] {
+  const roots = Array.isArray(value)
+    ? value.filter((entry): entry is string => typeof entry === "string" && entry.trim().length > 0)
+    : fallback;
+
+  return Array.from(new Set(roots.map(expandHomePath)));
+}
+
+function getBootstrapRootsOverride(): string[] | null {
+  const raw = process.env.ZEROSHOT_BOOTSTRAP_ROOTS;
+  if (!raw?.trim()) {
+    return null;
+  }
+
+  return Array.from(
+    new Set(
+      raw
+        .split(",")
+        .map(expandHomePath)
+        .filter(Boolean)
+    )
+  );
+}
+
 function toString(value: unknown, fallback: string): string {
   return typeof value === "string" && value.trim() ? value : fallback;
 }
@@ -29,11 +55,11 @@ export async function loadAppConfig(): Promise<AppConfig> {
   const filePath = getAppConfigPath();
   const raw = await readFile(filePath, "utf8");
   const parsed = parse(raw) as Record<string, unknown>;
+  const bootstrapOverride = getBootstrapRootsOverride();
 
   return {
-    allowedRoots: Array.isArray(parsed.allowed_roots)
-      ? parsed.allowed_roots.filter((entry): entry is string => typeof entry === "string")
-      : defaultConfig.allowedRoots,
+    bootstrapRoots: bootstrapOverride ?? normalizeRoots(parsed.bootstrap_roots, defaultConfig.bootstrapRoots),
+    allowedRoots: normalizeRoots(parsed.allowed_roots, defaultConfig.allowedRoots),
     defaults: {
       approval: toString(parsed.default_approval, defaultConfig.defaults.approval),
       sandbox: toString(parsed.default_sandbox, defaultConfig.defaults.sandbox),
@@ -49,7 +75,8 @@ export async function loadAppConfig(): Promise<AppConfig> {
 
 export async function saveAppConfig(config: AppConfig): Promise<void> {
   const payload = {
-    allowed_roots: config.allowedRoots,
+    bootstrap_roots: normalizeRoots(config.bootstrapRoots, defaultConfig.bootstrapRoots),
+    allowed_roots: normalizeRoots(config.allowedRoots, defaultConfig.allowedRoots),
     default_approval: config.defaults.approval,
     default_sandbox: config.defaults.sandbox,
     max_iters: config.defaults.maxIters,

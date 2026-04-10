@@ -8,7 +8,7 @@
 ZeroShot은 기존 Bash 기반 Codex 파이프라인을 유지하면서, 그 위에 다음 두 가지 제품 표면을 추가한 모노레포입니다.
 
 - CLI: `zeroshot build`, `zeroshot update`
-- Web Console: Login / Build / Update / History / Editor / Settings
+- Web Console: Login / Home / Build / Update / Logs / Editor / Settings
 
 v1의 핵심 원칙은 다음과 같습니다.
 
@@ -62,6 +62,7 @@ v1의 핵심 원칙은 다음과 같습니다.
 
 - `~/.codex/auth.json` 존재 여부와 JSON 파싱 가능 여부만 확인
 - auth가 유효하지 않으면 Build/Update 차단
+- 필요 시 Login 페이지에서 `auth.json` 업로드 또는 붙여넣기로 컨테이너 내부 `~/.codex/auth.json` 생성
 
 ### Build
 
@@ -76,9 +77,9 @@ v1의 핵심 원칙은 다음과 같습니다.
 - `PRODUCT.md`, `UPDATE.md` 업로드 또는 직접 작성
 - 실행 시 `zeroshot update --project-root <path>` 호출
 
-### History
+### Logs
 
-- `.work.history`의 run 목록, manifest, 문서 출력 조회
+- 선택된 프로젝트 내부 `.work.history`의 run 목록, manifest, 문서 출력 조회
 
 ### Editor
 
@@ -93,6 +94,7 @@ v1의 핵심 원칙은 다음과 같습니다.
   - profiles
   - 주요 기본 실행 옵션
 - `zeroshot.app.toml`
+  - bootstrap roots
   - allowed roots
   - 기본 approval/sandbox
   - iteration / reasoning 기본값
@@ -124,7 +126,7 @@ v1의 핵심 원칙은 다음과 같습니다.
 - Bun 1.3+
 - `codex`
 - `python3`
-- 호스트의 `~/.codex/auth.json`
+- Login 페이지를 통해 저장할 `auth.json` 또는 이미 준비된 `~/.codex/auth.json`
 
 ### 설치
 
@@ -146,6 +148,20 @@ bun run build
 
 ### 개발 서버
 
+한 번에 실행:
+
+```bash
+bun run dev
+```
+
+bootstrap root 지정:
+
+```bash
+bun run dev --root=/absolute/bootstrap/root
+```
+
+개별 실행:
+
 터미널 1:
 
 ```bash
@@ -156,6 +172,12 @@ bun run dev:server
 
 ```bash
 bun run dev:web
+```
+
+프로덕션 서버:
+
+```bash
+bun run serve --root=/absolute/bootstrap/root
 ```
 
 ### CLI
@@ -181,7 +203,8 @@ make update
 앱 전용 설정 파일입니다.
 
 ```toml
-allowed_roots = ["/Users/khkim/dev"]
+bootstrap_roots = ["/project"]
+allowed_roots = []
 default_approval = "never"
 default_sandbox = "workspace-write"
 max_iters = 30
@@ -215,20 +238,98 @@ model = "gpt-oss:20b"
 실행 시 다음 mount를 권장합니다.
 
 - 호스트 프로젝트 루트들
-- 호스트의 `~/.codex`
+- 선택 사항: `/root/.codex`용 named volume 또는 host mount
 
 예시 개념:
 
 ```bash
-docker build -f docker/Dockerfile -t zeroshot .
+docker build --no-cache -f docker/Dockerfile -t zeroshot .
 docker run \
   -p 3000:3000 \
-  -v $HOME/.codex:/root/.codex \
-  -v /your/projects:/workspace/projects \
+  -v ~/dev/test/zeroShot/workspace:/project \
   zeroshot
 ```
 
-그 후 `zeroshot.app.toml`의 `allowed_roots`를 컨테이너 내부 경로 기준으로 맞춰야 합니다.
+기본 설정은 `/project`를 bootstrap root로 사용합니다.
+
+`auth.json`을 컨테이너 재시작 후에도 유지하려면:
+
+```bash
+docker run \
+  -p 3000:3000 \
+  -v ~/dev/test/zeroShot/root:/root \
+  -v ~/dev/test/zeroShot/workspace:/project \
+  zeroshot
+```
+
+그 다음 Login 페이지에서 `auth.json`을 업로드하면 됩니다.
+
+## 커스텀 가이드
+
+아래 예시는 당신이 사용하는 로컬 디렉터리 레이아웃을 그대로 반영합니다.
+
+```text
+~/dev/test/zeroShot/
+|-- root
+`-- workspace
+```
+
+### 역할
+
+- `~/dev/test/zeroShot/root`
+  - 컨테이너의 `/root`로 마운트
+  - Login 페이지에서 업로드한 `auth.json`은 최종적으로 `~/dev/test/zeroShot/root/.codex/auth.json`에 저장됨
+  - Settings 페이지에서 수정한 `config.toml`도 `~/dev/test/zeroShot/root/.codex/config.toml`에 반영됨
+- `~/dev/test/zeroShot/workspace`
+  - 컨테이너의 `/project`로 마운트
+  - UI에서 탐색을 시작하는 bootstrap root의 실제 호스트 위치
+  - `PRODUCT.md`, `UPDATE.md`, `.work.history`가 이 경로 아래 프로젝트들에 생성됨
+
+### 권장 준비
+
+```bash
+mkdir -p ~/dev/test/zeroShot/root/.codex
+mkdir -p ~/dev/test/zeroShot/workspace
+```
+
+### 권장 실행
+
+```bash
+docker build --no-cache -f docker/Dockerfile -t zeroshot .
+docker run --rm \
+  -p 3000:3000 \
+  -v ~/dev/test/zeroShot/root:/root \
+  -v ~/dev/test/zeroShot/workspace:/project \
+  zeroshot
+```
+
+### 실행 후 흐름
+
+1. 브라우저에서 `http://localhost:3000` 접속
+2. `Login` 페이지에서 `auth.json` 업로드
+3. 업로드된 파일은 호스트의 `~/dev/test/zeroShot/root/.codex/auth.json`에 저장
+4. `Home`에서 프로젝트 선택 모달을 열고 `~/dev/test/zeroShot/workspace` 아래 프로젝트를 선택
+5. 실행 결과는 해당 프로젝트 내부 `.work.history`에 기록
+
+### 예시 프로젝트 경로
+
+예를 들어 호스트에 아래 디렉터리가 있으면:
+
+```text
+~/dev/test/zeroShot/workspace/my-app
+```
+
+컨테이너/UI 기준으로는 다음 경로로 보입니다.
+
+```text
+/project/my-app
+```
+
+이 프로젝트에서 Build를 실행하면 결과는 호스트 기준으로 여기에 쌓입니다.
+
+```text
+~/dev/test/zeroShot/workspace/my-app/.work.history
+```
 
 ## 참고
 

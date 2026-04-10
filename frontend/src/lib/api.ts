@@ -12,6 +12,9 @@ export interface DirectoryEntry {
   path: string;
   relativePath: string;
   isDirectory: boolean;
+  isAllowedRoot?: boolean;
+  hasWorkHistory?: boolean;
+  runsCount?: number;
 }
 
 export interface ProjectState {
@@ -39,6 +42,7 @@ export interface RunDetail {
 }
 
 export interface AppConfig {
+  bootstrapRoots: string[];
   allowedRoots: string[];
   defaults: {
     approval: string;
@@ -82,6 +86,12 @@ export interface FileReadResult {
   entries?: DirectoryEntry[];
 }
 
+export interface FileChangeEvent {
+  action: "created" | "deleted" | "changed";
+  path: string;
+  parentPath: string;
+}
+
 const client = axios.create({
   baseURL: "/api"
 });
@@ -90,8 +100,24 @@ export async function fetchAuthStatus() {
   return (await client.get<AuthStatus>("/auth/status")).data;
 }
 
+export async function saveAuthStatus(content: string) {
+  return (await client.put<AuthStatus>("/auth", { content })).data;
+}
+
 export async function fetchProjectTree(path?: string) {
   return (await client.get<{ path: string; entries: DirectoryEntry[] }>("/projects/tree", { params: { path } })).data;
+}
+
+export async function allowProjectRoot(path: string) {
+  return (await client.post<AppConfig>("/projects/allow", { path })).data;
+}
+
+export async function createProjectDirectory(parentPath: string, name: string) {
+  return (await client.post<DirectoryEntry>("/projects/directory", { parentPath, name })).data;
+}
+
+export async function deleteProjectDirectory(path: string) {
+  await client.delete("/projects/directory", { data: { path } });
 }
 
 export async function fetchProjectState(projectRoot: string) {
@@ -122,8 +148,25 @@ export async function fetchFile(projectRoot: string, path = "") {
   return (await client.get<FileReadResult>("/files", { params: { projectRoot, path } })).data;
 }
 
+export async function createFileSystemEntry(payload: {
+  projectRoot: string;
+  parentPath?: string;
+  name: string;
+  kind: "file" | "directory";
+}) {
+  return (await client.post<DirectoryEntry>("/files", payload)).data;
+}
+
+export async function renameFileSystemEntry(projectRoot: string, path: string, name: string) {
+  return (await client.patch<DirectoryEntry>("/files", { projectRoot, path, name })).data;
+}
+
 export async function saveFile(projectRoot: string, path: string, content: string) {
   await client.put("/files", { projectRoot, path, content });
+}
+
+export async function deleteFileSystemEntry(projectRoot: string, path: string) {
+  await client.delete("/files", { data: { projectRoot, path } });
 }
 
 export async function fetchAppSettings() {

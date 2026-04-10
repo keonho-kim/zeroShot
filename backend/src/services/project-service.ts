@@ -27,3 +27,20 @@ export async function readProjectState(projectRoot: string): Promise<ProjectStat
     updateEnabled: hasHistory && runs.length > 0
   };
 }
+
+export async function readProjectHistoryMeta(projectRoot: string): Promise<{ hasWorkHistory: boolean; runsCount: number }> {
+  const historyRoot = join(projectRoot, ".work.history");
+  const hasHistory = await exists(historyRoot);
+  if (!hasHistory) {
+    return { hasWorkHistory: false, runsCount: 0 };
+  }
+
+  const runs = (await readdir(historyRoot, { withFileTypes: true }))
+    .filter((entry) => entry.isDirectory() && /^\d{6}-\d{3}$/.test(entry.name))
+    .map((entry) => entry.name);
+
+  return {
+    hasWorkHistory: true,
+    runsCount: runs.length
+  };
+}

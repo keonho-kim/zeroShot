@@ -1,6 +1,6 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
-import { readFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import type { AuthStatus } from "../types.js";
 
 export function getAuthPath(): string {
@@ -25,7 +25,7 @@ export async function readAuthStatus(): Promise<AuthStatus> {
         exists: false,
         valid: false,
         path,
-        message: "auth.json is missing. Upload or create it outside the app before continuing."
+        message: "auth.json is missing. Upload it in the Login page before continuing."
       };
     }
 
@@ -36,4 +36,14 @@ export async function readAuthStatus(): Promise<AuthStatus> {
       message: "auth.json exists but could not be parsed as JSON."
     };
   }
+}
+
+export async function saveAuthFile(raw: string): Promise<AuthStatus> {
+  JSON.parse(raw);
+
+  const path = getAuthPath();
+  await mkdir(join(homedir(), ".codex"), { recursive: true });
+  await writeFile(path, raw, "utf8");
+
+  return readAuthStatus();
 }

@@ -1,13 +1,29 @@
 import { realpath, readdir, readFile, stat, writeFile, mkdir, lstat } from "node:fs/promises";
 import { dirname, join, relative, resolve } from "node:path";
+import { expandHomePath } from "./path-input.js";
 import type { DirectoryEntry } from "../types.js";
+import { readProjectHistoryMeta } from "../services/project-service.js";
 
 function normalize(path: string): string {
   return path.replace(/\\/g, "/");
 }
 
 export async function resolveExistingPath(targetPath: string): Promise<string> {
-  return realpath(targetPath);
+  return realpath(expandHomePath(targetPath));
+}
+
+async function resolveRoots(roots: string[]): Promise<string[]> {
+  const resolved = await Promise.all(
+    roots.map(async (entry) => {
+      try {
+        return await resolveExistingPath(entry);
+      } catch {
+        return null;
+      }
+    })
+  );
+
+  return resolved.filter((entry): entry is string => entry !== null);
 }
 
 export function isWithin(parent: string, child: string): boolean {
@@ -17,10 +33,21 @@ export function isWithin(parent: string, child: string): boolean {
 
 export async function assertAllowedProjectRoot(targetPath: string, allowedRoots: string[]): Promise<string> {
   const resolvedTarget = await resolveExistingPath(targetPath);
-  const resolvedRoots = await Promise.all(allowedRoots.map((entry) => resolveExistingPath(entry)));
+  const resolvedRoots = await resolveRoots(allowedRoots);
 
   if (!resolvedRoots.some((root) => isWithin(root, resolvedTarget))) {
     throw Object.assign(new Error("Path is outside allowed roots"), { statusCode: 403 });
+  }
+
+  return resolvedTarget;
+}
+
+export async function assertPathWithinRoots(targetPath: string, roots: string[], label: string): Promise<string> {
+  const resolvedTarget = await resolveExistingPath(targetPath);
+  const resolvedRoots = await resolveRoots(roots);
+
+  if (!resolvedRoots.some((root) => isWithin(root, resolvedTarget))) {
+    throw Object.assign(new Error(`Path is outside ${label}`), { statusCode: 403 });
   }
 
   return resolvedTarget;
@@ -46,10 +73,11 @@ export async function resolveUserFilePath(projectRoot: string, userRelativePath 
 export async function listDirectoryEntries(
   rootPath: string,
   currentPath: string,
-  options?: { directoriesOnly?: boolean; includeFiles?: boolean; hideWorkHistory?: boolean }
+  options?: { directoriesOnly?: boolean; includeFiles?: boolean; hideWorkHistory?: boolean; allowedRoots?: string[] }
 ): Promise<DirectoryEntry[]> {
   const entries = await readdir(currentPath, { withFileTypes: true });
   const rootReal = await resolveExistingPath(rootPath);
+  const allowedRoots = options?.allowedRoots ? await resolveRoots(options.allowedRoots) : [];
 
   const mapped = await Promise.all(
     entries.map(async (entry) => {
@@ -71,18 +99,22 @@ export async function listDirectoryEntries(
         return null;
       }
 
+      const historyMeta = isDirectory ? await readProjectHistoryMeta(absolute) : { hasWorkHistory: false, runsCount: 0 };
+
       return {
         name: entry.name,
         path: absolute,
         relativePath: normalize(relative(rootReal, absolute)),
-        isDirectory
+        isDirectory,
+        isAllowedRoot: isDirectory ? allowedRoots.includes(await resolveExistingPath(absolute).catch(() => absolute)) : false,
+        hasWorkHistory: historyMeta.hasWorkHistory,
+        runsCount: historyMeta.runsCount
       } satisfies DirectoryEntry;
     })
   );
 
-  return mapped
-    .filter((entry): entry is DirectoryEntry => entry !== null)
-    .sort((a, b) => Number(b.isDirectory) - Number(a.isDirectory) || a.name.localeCompare(b.name));
+  const filtered = mapped.filter((entry) => entry !== null);
+  return filtered.sort((a, b) => Number(b.isDirectory) - Number(a.isDirectory) || a.name.localeCompare(b.name));
 }
 
 export async function ensureFileContent(targetPath: string, content: string): Promise<void> {

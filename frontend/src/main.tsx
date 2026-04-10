@@ -5,9 +5,10 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { setupMonaco } from "./lib/monaco";
 import { AppLayout } from "./app/layout";
+import { HomePage } from "./features/HomePage";
 import { LoginPage } from "./features/LoginPage";
 import { PipelinePage } from "./features/PipelinePage";
-import { HistoryPage } from "./features/HistoryPage";
+import { LogsPage } from "./features/LogsPage";
 import { EditorPage } from "./features/EditorPage";
 import { SettingsPage } from "./features/SettingsPage";
 import "./styles/globals.css";
@@ -22,11 +23,13 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
       <BrowserRouter>
         <Routes>
           <Route element={<AppLayout />}>
-            <Route index element={<Navigate to="/build" replace />} />
+            <Route index element={<Navigate to="/" replace />} />
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/home" element={<HomePage />} />
             <Route path="/build" element={<PipelinePage mode="build" />} />
             <Route path="/update" element={<PipelinePage mode="update" />} />
-            <Route path="/history" element={<HistoryPage />} />
+            <Route path="/logs" element={<LogsPage />} />
+            <Route path="/history" element={<Navigate to="/logs" replace />} />
             <Route path="/editor" element={<EditorPage />} />
             <Route path="/settings" element={<SettingsPage />} />
           </Route>

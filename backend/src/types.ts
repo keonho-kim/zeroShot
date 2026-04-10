@@ -12,6 +12,7 @@ export interface AppDefaults {
 }
 
 export interface AppConfig {
+  bootstrapRoots: string[];
   allowedRoots: string[];
   defaults: AppDefaults;
 }
@@ -53,6 +54,9 @@ export interface DirectoryEntry {
   path: string;
   relativePath: string;
   isDirectory: boolean;
+  isAllowedRoot?: boolean;
+  hasWorkHistory?: boolean;
+  runsCount?: number;
 }
 
 export interface ProjectState {

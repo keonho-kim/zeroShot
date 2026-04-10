@@ -1,12 +1,15 @@
 import express, { type NextFunction, type Request, type RequestHandler, type Response, type Router } from "express";
+import { watch } from "node:fs";
+import { stat } from "node:fs/promises";
+import { basename, dirname, join, relative } from "node:path";
 import { loadAppConfig, saveAppConfig } from "../config/app-config.js";
 import { loadCodexSettings, saveCodexSettings } from "../config/codex-config.js";
-import { assertAllowedProjectRoot, listDirectoryEntries } from "../core/path-guards.js";
-import { readAuthStatus } from "../services/auth-service.js";
-import { readProjectFile, saveProjectFile, writeProductOrUpdate } from "../services/file-service.js";
+import { assertPathWithinRoots, isWithin, listDirectoryEntries, resolveUserFilePath } from "../core/path-guards.js";
+import { readAuthStatus, saveAuthFile } from "../services/auth-service.js";
+import { createDirectory, createFile, deleteEntry, readProjectFile, renameEntry, saveProjectFile, writeProductOrUpdate } from "../services/file-service.js";
 import { readRunDetail, listRuns } from "../services/history-service.js";
 import { jobManager } from "../services/job-manager.js";
-import { readProjectState } from "../services/project-service.js";
+import { readProjectHistoryMeta, readProjectState } from "../services/project-service.js";
 import type { PipelineOptions, RunMode } from "../types.js";
 
 const router: Router = express.Router();
@@ -17,33 +20,156 @@ function asyncHandler(handler: RequestHandler): RequestHandler {
 
 async function getValidatedProjectRoot(projectRoot: string): Promise<string> {
   const config = await loadAppConfig();
-  return assertAllowedProjectRoot(projectRoot, config.allowedRoots);
+  return assertPathWithinRoots(projectRoot, getBrowsableRoots(config), "browsable roots");
+}
+
+function getBrowsableRoots(config: Awaited<ReturnType<typeof loadAppConfig>>): string[] {
+  return Array.from(new Set([...config.bootstrapRoots, ...config.allowedRoots]));
+}
+
+function normalizeRelativePath(path: string): string {
+  return path.replace(/\\/g, "/").replace(/^\.\//, "").replace(/^\.$/, "");
+}
+
+async function buildDirectoryEntry(projectRoot: string, absolutePath: string, allowedRoots: string[]) {
+  const entryStats = await stat(absolutePath);
+  const historyMeta = entryStats.isDirectory()
+    ? await readProjectHistoryMeta(absolutePath)
+    : { hasWorkHistory: false, runsCount: 0 };
+
+  return {
+    name: basename(absolutePath),
+    path: absolutePath,
+    relativePath: normalizeRelativePath(relative(projectRoot, absolutePath)),
+    isDirectory: entryStats.isDirectory(),
+    isAllowedRoot: entryStats.isDirectory() ? allowedRoots.includes(absolutePath) : false,
+    hasWorkHistory: historyMeta.hasWorkHistory,
+    runsCount: historyMeta.runsCount
+  };
 }
 
 router.get("/auth/status", asyncHandler(async (_req: Request, res: Response) => {
   res.json(await readAuthStatus());
 }));
 
+router.put("/auth", asyncHandler(async (req: Request, res: Response) => {
+  const body = req.body as { content?: string };
+  if (typeof body.content !== "string" || !body.content.trim()) {
+    res.status(400).json({ message: "auth.json content is required" });
+    return;
+  }
+
+  try {
+    const status = await saveAuthFile(body.content);
+    res.json(status);
+  } catch {
+    res.status(400).json({ message: "auth.json must be valid JSON" });
+  }
+}));
+
 router.get("/projects/tree", asyncHandler(async (req: Request, res: Response) => {
   const config = await loadAppConfig();
   const targetPath = typeof req.query.path === "string" ? req.query.path : "";
+  const browsableRoots = getBrowsableRoots(config);
 
   if (!targetPath) {
     const roots = await Promise.all(
-      config.allowedRoots.map(async (root) => ({
+      browsableRoots.map(async (root) => ({
         name: root,
         path: root,
         relativePath: "",
-        isDirectory: true
+        isDirectory: true,
+        isAllowedRoot: config.allowedRoots.includes(root),
+        hasWorkHistory: false,
+        runsCount: 0
       }))
     );
     res.json({ path: "", entries: roots });
     return;
   }
 
-  const validated = await assertAllowedProjectRoot(targetPath, config.allowedRoots);
-  const entries = await listDirectoryEntries(validated, validated, { directoriesOnly: true });
+  const validated = await assertPathWithinRoots(targetPath, browsableRoots, "browsable roots");
+  const entries = await listDirectoryEntries(validated, validated, {
+    directoriesOnly: true,
+    allowedRoots: config.allowedRoots
+  });
   res.json({ path: validated, entries });
+}));
+
+router.post("/projects/allow", asyncHandler(async (req: Request, res: Response) => {
+  const body = req.body as { path?: string };
+  if (typeof body.path !== "string" || !body.path.trim()) {
+    res.status(400).json({ message: "path is required" });
+    return;
+  }
+
+  const config = await loadAppConfig();
+  const validated = await assertPathWithinRoots(body.path, config.bootstrapRoots, "bootstrap roots");
+  const nextAllowedRoots = Array.from(new Set([...config.allowedRoots, validated]));
+
+  const nextConfig = {
+    ...config,
+    allowedRoots: nextAllowedRoots
+  };
+
+  await saveAppConfig(nextConfig);
+  res.json(nextConfig);
+}));
+
+router.post("/projects/directory", asyncHandler(async (req: Request, res: Response) => {
+  const body = req.body as { parentPath?: string; name?: string };
+  if (typeof body.parentPath !== "string" || !body.parentPath.trim()) {
+    res.status(400).json({ message: "parentPath is required" });
+    return;
+  }
+  if (typeof body.name !== "string" || !body.name.trim()) {
+    res.status(400).json({ message: "name is required" });
+    return;
+  }
+
+  const config = await loadAppConfig();
+  const validatedParent = await assertPathWithinRoots(body.parentPath, getBrowsableRoots(config), "browsable roots");
+
+  try {
+    const createdPath = await createDirectory(validatedParent, body.name.trim());
+    res.status(201).json(await buildDirectoryEntry(validatedParent, createdPath, config.allowedRoots));
+  } catch (error) {
+    const err = error as NodeJS.ErrnoException & { statusCode?: number };
+    if (err.code === "EEXIST") {
+      res.status(409).json({ message: "Directory already exists" });
+      return;
+    }
+    res.status(err.statusCode ?? 500).json({ message: err.message });
+  }
+}));
+
+router.delete("/projects/directory", asyncHandler(async (req: Request, res: Response) => {
+  const body = req.body as { path?: string };
+  if (typeof body.path !== "string" || !body.path.trim()) {
+    res.status(400).json({ message: "path is required" });
+    return;
+  }
+
+  const config = await loadAppConfig();
+  const browsableRoots = getBrowsableRoots(config);
+  const validated = await assertPathWithinRoots(body.path, browsableRoots, "browsable roots");
+
+  if (config.bootstrapRoots.includes(validated)) {
+    res.status(400).json({ message: "Cannot delete a bootstrap root directory" });
+    return;
+  }
+
+  await deleteEntry(validated);
+
+  const nextAllowedRoots = config.allowedRoots.filter((root) => !isWithin(validated, root));
+  if (nextAllowedRoots.length !== config.allowedRoots.length) {
+    await saveAppConfig({
+      ...config,
+      allowedRoots: nextAllowedRoots
+    });
+  }
+
+  res.status(204).end();
 }));
 
 router.get("/projects/state", asyncHandler(async (req: Request, res: Response) => {
@@ -131,11 +257,139 @@ router.get("/files", asyncHandler(async (req: Request, res: Response) => {
   res.json(await readProjectFile(projectRoot, filePath));
 }));
 
+router.post("/files", asyncHandler(async (req: Request, res: Response) => {
+  const body = req.body as {
+    projectRoot: string;
+    parentPath?: string;
+    name?: string;
+    kind?: "file" | "directory";
+  };
+  const projectRoot = await getValidatedProjectRoot(body.projectRoot);
+  if (typeof body.name !== "string" || !body.name.trim()) {
+    res.status(400).json({ message: "name is required" });
+    return;
+  }
+  if (body.kind !== "file" && body.kind !== "directory") {
+    res.status(400).json({ message: "kind must be file or directory" });
+    return;
+  }
+
+  const parentAbsolute = await resolveUserFilePath(projectRoot, body.parentPath ?? "");
+
+  try {
+    const createdPath = body.kind === "directory"
+      ? await createDirectory(parentAbsolute, body.name)
+      : await createFile(parentAbsolute, body.name);
+    const config = await loadAppConfig();
+    res.status(201).json(await buildDirectoryEntry(projectRoot, createdPath, config.allowedRoots));
+  } catch (error) {
+    const err = error as NodeJS.ErrnoException & { statusCode?: number };
+    if (err.code === "EEXIST") {
+      res.status(409).json({ message: "Entry already exists" });
+      return;
+    }
+    res.status(err.statusCode ?? 500).json({ message: err.message });
+  }
+}));
+
+router.patch("/files", asyncHandler(async (req: Request, res: Response) => {
+  const body = req.body as { projectRoot: string; path?: string; name?: string };
+  const projectRoot = await getValidatedProjectRoot(body.projectRoot);
+  if (typeof body.path !== "string" || !body.path.trim()) {
+    res.status(400).json({ message: "path is required" });
+    return;
+  }
+  if (typeof body.name !== "string" || !body.name.trim()) {
+    res.status(400).json({ message: "name is required" });
+    return;
+  }
+
+  if (!body.path.trim()) {
+    res.status(400).json({ message: "Cannot rename project root" });
+    return;
+  }
+
+  try {
+    const currentPath = await resolveUserFilePath(projectRoot, body.path);
+    const renamedPath = await renameEntry(currentPath, body.name);
+    const config = await loadAppConfig();
+    res.json(await buildDirectoryEntry(projectRoot, renamedPath, config.allowedRoots));
+  } catch (error) {
+    const err = error as NodeJS.ErrnoException & { statusCode?: number };
+    if (err.code === "EEXIST") {
+      res.status(409).json({ message: "Entry already exists" });
+      return;
+    }
+    res.status(err.statusCode ?? 500).json({ message: err.message });
+  }
+}));
+
 router.put("/files", asyncHandler(async (req: Request, res: Response) => {
   const body = req.body as { projectRoot: string; path: string; content: string };
   const projectRoot = await getValidatedProjectRoot(body.projectRoot);
   await saveProjectFile(projectRoot, body.path, body.content);
   res.status(204).end();
+}));
+
+router.delete("/files", asyncHandler(async (req: Request, res: Response) => {
+  const body = req.body as { projectRoot: string; path?: string };
+  const projectRoot = await getValidatedProjectRoot(body.projectRoot);
+  if (typeof body.path !== "string" || !body.path.trim()) {
+    res.status(400).json({ message: "path is required" });
+    return;
+  }
+
+  const absolutePath = await resolveUserFilePath(projectRoot, body.path);
+  await deleteEntry(absolutePath);
+  res.status(204).end();
+}));
+
+router.get("/files/stream", asyncHandler(async (req: Request, res: Response) => {
+  const projectRoot = await getValidatedProjectRoot(String(req.query.projectRoot ?? ""));
+
+  res.writeHead(200, {
+    "Content-Type": "text/event-stream",
+    "Cache-Control": "no-cache",
+    Connection: "keep-alive"
+  });
+
+  const send = (payload: Record<string, unknown>) => {
+    res.write("event: change\n");
+    res.write(`data: ${JSON.stringify(payload)}\n\n`);
+  };
+
+  const watcher = watch(projectRoot, { recursive: true }, async (eventType, filename) => {
+    const rawFilename = String(filename ?? "");
+    const absolutePath = join(projectRoot, rawFilename);
+    if (!isWithin(projectRoot, absolutePath)) {
+      return;
+    }
+
+    const relativePath = normalizeRelativePath(relative(projectRoot, absolutePath));
+    const parentPath = relativePath ? normalizeRelativePath(dirname(relativePath)) : "";
+
+    if (eventType === "change") {
+      send({ action: "changed", path: relativePath, parentPath: parentPath === "." ? "" : parentPath });
+      return;
+    }
+
+    try {
+      await stat(absolutePath);
+      send({ action: "created", path: relativePath, parentPath: parentPath === "." ? "" : parentPath });
+    } catch {
+      send({ action: "deleted", path: relativePath, parentPath: parentPath === "." ? "" : parentPath });
+    }
+  });
+
+  const keepAlive = setInterval(() => {
+    res.write(": keepalive\n\n");
+  }, 15000);
+
+  req.on("close", () => {
+    clearInterval(keepAlive);
+    watcher.close();
+    res.end();
+  });
 }));
 
 router.get("/settings/codex", asyncHandler(async (_req: Request, res: Response) => {
