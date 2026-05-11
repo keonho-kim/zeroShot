@@ -134,8 +134,11 @@ bun install
 GitHub release가 생성된 뒤에는 다음 명령으로 CLI를 설치할 수 있습니다.
 
 ```bash
-curl -sSfL https://github.com/keonho-kim/zeroShot/releases/download/v0.1.0/install.sh | sh
+curl -fsSL https://github.com/keonho-kim/zeroShot/releases/download/v0.1.0/install.sh | sh
 ```
+
+installer는 Termux, Linux, WSL, proot, macOS에서 arm64와 x64를 확인합니다.
+Termux에서는 Bun이 미리 설치되어 있어야 하며, 다른 환경에서는 Bun이 없으면 공식 Bun installer를 실행합니다.
 
 또는 release tarball을 Bun으로 직접 전역 설치할 수 있습니다.
 

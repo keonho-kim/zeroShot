@@ -49,20 +49,13 @@ jobs:
           cd ..
           mv "release/zeroshot-cli-${VERSION}.tgz" "release/zeroShot-${VERSION}.tgz"
 
-      - name: Generate installer
+      - name: Copy installer
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
-          cat > release/install.sh <<EOF
-          #!/usr/bin/env sh
-          set -eu
-
-          if ! command -v bun >/dev/null 2>&1; then
-            echo "Bun is required to install ZeroShot. Install Bun first: https://bun.sh" >&2
-            exit 1
-          fi
-
-          bun install -g "https://github.com/${GITHUB_REPOSITORY}/releases/download/v${VERSION}/zeroShot-${VERSION}.tgz"
-          EOF
+          sed \
+            -e "s|^REPOSITORY=.*|REPOSITORY=\"${GITHUB_REPOSITORY}\"|" \
+            -e "s|^VERSION=.*|VERSION=\"${VERSION}\"|" \
+            install.sh > release/install.sh
           chmod +x release/install.sh
 
       - name: Publish GitHub release
@@ -71,7 +64,7 @@ jobs:
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
           TITLE="ZeroShot ${GITHUB_REF_NAME}"
-          NOTES="Install with: curl -sSfL https://github.com/${GITHUB_REPOSITORY}/releases/download/${GITHUB_REF_NAME}/install.sh | sh"
+          NOTES="Install with: curl -fsSL https://github.com/${GITHUB_REPOSITORY}/releases/download/${GITHUB_REF_NAME}/install.sh | sh"
 
           if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
             gh release upload "$GITHUB_REF_NAME" \
