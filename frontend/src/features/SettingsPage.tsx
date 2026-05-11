@@ -40,10 +40,10 @@ export function SettingsPage() {
   });
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6">
       <PageHeader title="SETTING" />
       <div className="grid gap-6 xl:grid-cols-2">
-        <Card className="space-y-4">
+        <Card className="flex flex-col gap-4 bg-[var(--panel)]">
           <h2 className="text-xl font-bold">App Settings</h2>
           {appSettings ? (
             <>
@@ -68,17 +68,17 @@ export function SettingsPage() {
                   <option value="danger-full-access">danger-full-access</option>
                 </Select>
               </div>
-              <Button onClick={() => saveAppMutation.mutate()}>앱 설정 저장</Button>
+              <Button className="self-start" onClick={() => saveAppMutation.mutate()}>앱 설정 저장</Button>
             </>
           ) : null}
         </Card>
-        <Card className="space-y-4">
+        <Card className="flex flex-col gap-4 bg-[var(--panel)]">
           <h2 className="text-xl font-bold">Codex Settings</h2>
           {codexSettings ? (
             <>
               <div className="grid gap-4">
                 {codexSettings.modelProviders.map((provider, index) => (
-                  <div key={provider.id} className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4">
+                  <div key={provider.id} className="rounded-md bg-[var(--surface)] p-4">
                     <Input value={provider.id} onChange={(event) => {
                       const next = structuredClone(codexSettings);
                       next.modelProviders[index].id = event.target.value;
@@ -94,7 +94,7 @@ export function SettingsPage() {
               </div>
               <div className="grid gap-4">
                 {codexSettings.profiles.map((profile, index) => (
-                  <div key={profile.id} className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4">
+                  <div key={profile.id} className="rounded-md bg-[var(--surface)] p-4">
                     <Input value={profile.id} onChange={(event) => {
                       const next = structuredClone(codexSettings);
                       next.profiles[index].id = event.target.value;
@@ -113,7 +113,7 @@ export function SettingsPage() {
                   </div>
                 ))}
               </div>
-              <Button onClick={() => saveCodexMutation.mutate()}>Codex 설정 저장</Button>
+              <Button className="self-start" onClick={() => saveCodexMutation.mutate()}>Codex 설정 저장</Button>
             </>
           ) : null}
         </Card>

@@ -5,15 +5,15 @@
 
 ## 개요
 
-ZeroShot은 기존 Bash 기반 Codex 파이프라인을 유지하면서, 그 위에 다음 두 가지 제품 표면을 추가한 모노레포입니다.
+ZeroShot은 TypeScript 기반 Codex 파이프라인 runner 위에 다음 두 가지 제품 표면을 제공하는 모노레포입니다.
 
 - CLI: `zeroshot build`, `zeroshot update`
 - Web Console: Login / Home / Build / Update / Logs / Editor / Settings
 
 v1의 핵심 원칙은 다음과 같습니다.
 
-- 실제 build/update 실행 엔진은 기존 `scripts/` shell pipeline 유지
-- 새 인터페이스는 `Bun + TypeScript`로 제공
+- 실제 build/update 실행 엔진은 `cli/src/pipeline`의 TypeScript runner
+- CLI와 Web Console은 `Bun + TypeScript`로 제공
 - `.work.history` 구조, run naming, manifest, prompt/문서 출력 계약은 기존과 호환 유지
 - Codex 인증/설정은 호스트의 `~/.codex`를 직접 사용
 
@@ -27,10 +27,6 @@ v1의 핵심 원칙은 다음과 같습니다.
 |   `-- src
 |-- frontend
 |   `-- src
-|-- scripts
-|   |-- build.sh
-|   |-- lib
-|   `-- phases
 |-- zeroshot.app.toml
 `-- Makefile
 ```
@@ -39,7 +35,7 @@ v1의 핵심 원칙은 다음과 같습니다.
 
 - `zeroshot build --project-root <abs-path>`
 - `zeroshot update --project-root <abs-path>`
-- 선택한 프로젝트 루트에 대해 기존 shell pipeline을 실행하는 래퍼
+- 선택한 프로젝트 루트에 대해 TypeScript pipeline runner를 실행
 
 ### `backend`
 
@@ -125,7 +121,6 @@ v1의 핵심 원칙은 다음과 같습니다.
 
 - Bun 1.3+
 - `codex`
-- `python3`
 - Login 페이지를 통해 저장할 `auth.json` 또는 이미 준비된 `~/.codex/auth.json`
 
 ### 설치
@@ -335,4 +330,4 @@ docker run --rm \
 
 - Monaco는 CDN 없이 로컬 worker 번들로 동작합니다.
 - 프런트 번들 크기는 Monaco worker 때문에 큽니다.
-- v1은 shell pipeline 유지가 우선이며, 추후 TypeScript core로 단계적 이관이 가능합니다.
+- build/update 오케스트레이션은 TypeScript runner가 담당하며, `.work.history` 출력 계약은 유지합니다.

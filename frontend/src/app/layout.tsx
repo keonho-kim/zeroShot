@@ -30,7 +30,7 @@ export function AppLayout() {
   if (authQuery.isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] px-6 py-4 text-sm shadow-[var(--shadow-card)]">
+        <div className="rounded-md bg-[var(--surface)] px-6 py-4 text-sm text-[var(--muted-foreground)]">
           auth 상태 확인 중...
         </div>
       </div>
@@ -54,7 +54,7 @@ export function AppLayout() {
   }
 
   return (
-    <main className="min-h-screen p-6 md:p-8">
+    <main className="min-h-screen px-5 py-6 md:px-8 md:py-8">
       <Outlet />
     </main>
   );

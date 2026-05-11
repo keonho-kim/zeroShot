@@ -1,40 +1,52 @@
 import { join } from "node:path";
 import { getWorkspaceRoot } from "./workspace.js";
-import type { AppDefaults, PipelineOptions, RunMode, ShellCommandSpec } from "../types.js";
+import type { AppDefaults, PipelineCommandSpec, PipelineOptions, RunMode } from "../types.js";
 
-export function buildShellCommandSpec(
+export function buildPipelineCommandSpec(
   mode: RunMode,
   projectRoot: string,
   defaults: AppDefaults,
   options: PipelineOptions = {}
-): ShellCommandSpec {
+): PipelineCommandSpec {
   const workspaceRoot = getWorkspaceRoot();
-  const env: NodeJS.ProcessEnv = {
-    ...process.env,
-    MODE: mode,
-    PROJECT_ROOT: projectRoot,
-    PRODUCT_FILE: join(projectRoot, "PRODUCT.md"),
-    UPDATE_FILE: join(projectRoot, "UPDATE.md"),
-    WORK_ROOT: join(projectRoot, ".work.history"),
-    ACTIVE_RUN_FILE: join(projectRoot, ".work.history", ".active_run"),
-    APPROVAL: options.approval ?? defaults.approval,
-    SANDBOX: options.sandbox ?? defaults.sandbox,
-    MAX_ITERS: String(options.maxIters ?? defaults.maxIters),
-    STALL_LIMIT: String(options.stallLimit ?? defaults.stallLimit),
-    PLAN_REASONING: options.planReasoning ?? defaults.planReasoning,
-    EXEC_REASONING: options.execReasoning ?? defaults.execReasoning,
-    VALIDATE_REASONING: options.validateReasoning ?? defaults.validateReasoning,
-    CLOSEOUT_REASONING: options.closeoutReasoning ?? defaults.closeoutReasoning
-  };
+  const args = [
+    "run",
+    "--cwd",
+    join(workspaceRoot, "cli"),
+    "src/index.ts",
+    mode,
+    "--project-root",
+    projectRoot,
+    "--approval",
+    options.approval ?? defaults.approval,
+    "--sandbox",
+    options.sandbox ?? defaults.sandbox,
+    "--max-iters",
+    String(options.maxIters ?? defaults.maxIters),
+    "--stall-limit",
+    String(options.stallLimit ?? defaults.stallLimit),
+    "--plan-reasoning",
+    options.planReasoning ?? defaults.planReasoning,
+    "--exec-reasoning",
+    options.execReasoning ?? defaults.execReasoning,
+    "--validate-reasoning",
+    options.validateReasoning ?? defaults.validateReasoning,
+    "--closeout-reasoning",
+    options.closeoutReasoning ?? defaults.closeoutReasoning
+  ];
+
+  if (options.responseLanguage) {
+    args.push("--response-language", options.responseLanguage);
+  }
 
   if (options.model) {
-    env.MODEL = options.model;
+    args.push("--model", options.model);
   }
 
   return {
-    command: "bash",
-    args: [join(workspaceRoot, "scripts", "build.sh")],
+    command: "bun",
+    args,
     cwd: workspaceRoot,
-    env
+    env: process.env
   };
 }

@@ -79,10 +79,10 @@ function PathBadge({ active, children }: { active?: boolean; children: React.Rea
   return (
     <span
       className={cn(
-        "rounded-full border px-2 py-1 text-[11px] font-medium",
+        "rounded-full px-2 py-1 text-[11px] font-medium",
         active
-          ? "border-[var(--success-border)] bg-[var(--success-surface)] text-[var(--success-foreground)]"
-          : "border-[var(--border)] bg-[var(--surface)] text-[var(--muted-foreground)]"
+          ? "bg-[var(--success-surface)] text-[var(--success-foreground)]"
+          : "bg-[var(--surface)] text-[var(--muted-foreground)]"
       )}
     >
       {children}
@@ -122,7 +122,7 @@ function TreeRow({
       role="button"
       tabIndex={0}
       className={cn(
-        "group grid w-full grid-cols-[32px_40px_minmax(0,1fr)_auto] items-center gap-3 px-3 py-2 text-left transition hover:bg-[var(--surface)]",
+        "group grid w-full grid-cols-[32px_40px_minmax(0,1fr)_auto] items-center gap-3 rounded-md px-3 py-2 text-left transition hover:bg-[var(--surface)]",
         selected && "bg-[var(--surface-active)]"
       )}
       style={{ paddingLeft: `${depth * 18 + 12}px` }}
@@ -147,7 +147,7 @@ function TreeRow({
           {expanded ? <ChevronDown className="size-4" /> : <ChevronRight className="size-4" />}
         </button>
       </div>
-      <div className="flex size-10 items-center justify-center rounded-xl bg-[var(--muted)] text-[var(--primary)]">
+      <div className="flex size-10 items-center justify-center rounded-md bg-[var(--muted)] text-[var(--primary)]">
         {selected || expanded ? <FolderOpen className="size-5" /> : <Folder className="size-5" />}
       </div>
       <div className="min-w-0">
@@ -165,7 +165,7 @@ function TreeRow({
           </Button>
           <Button
             variant="outline"
-            className="h-8 border-[var(--danger-border)] px-3 py-1 text-xs text-[var(--danger-foreground)] hover:border-[var(--danger)] hover:bg-[var(--danger-surface)]"
+            className="h-8 px-3 py-1 text-xs text-[var(--danger-foreground)] hover:bg-[var(--danger-surface)]"
             disabled={deletePending}
             onClick={(event) => {
               event.stopPropagation();
@@ -412,10 +412,10 @@ export function ProjectPickerModal({ open, onClose }: Props) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--overlay)] p-6">
-      <Card className="max-h-[88vh] w-full max-w-7xl overflow-hidden p-0">
-        <div className="flex items-center justify-between border-b border-[var(--border)] px-6 py-4">
+      <Card className="max-h-[88vh] w-full max-w-7xl overflow-hidden bg-[var(--panel)] p-0 shadow-[var(--shadow-popover)]">
+        <div className="flex items-center justify-between px-6 py-4">
           <div>
-            <p className="text-2xl font-black tracking-tight">프로젝트 선택</p>
+            <p className="text-2xl font-semibold tracking-[-0.02em]">프로젝트 선택</p>
             <p className="text-sm text-[var(--muted-foreground)]">single click은 선택, double click은 폴더 진입입니다.</p>
           </div>
           <Button variant="ghost" onClick={onClose}>
@@ -424,7 +424,7 @@ export function ProjectPickerModal({ open, onClose }: Props) {
           </Button>
         </div>
 
-        <div className="border-b border-[var(--border)] px-6 py-4">
+        <div className="px-6 py-4">
           <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
             <div className="flex flex-wrap items-center gap-2">
               <Button variant="outline" disabled={!canGoBack} onClick={goBack}>
@@ -436,7 +436,7 @@ export function ProjectPickerModal({ open, onClose }: Props) {
                 상위 폴더
               </Button>
             </div>
-            <div className="flex min-w-0 flex-1 items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm">
+            <div className="flex min-w-0 flex-1 items-center gap-2 rounded-md bg-[var(--surface)] px-3 py-2 text-sm">
               <span className="shrink-0 font-medium">현재 경로</span>
               <span className="min-w-0 truncate text-[var(--muted-foreground)]" title={currentPath || "Bootstrap roots"}>
                 {currentPath || "Bootstrap roots"}
@@ -464,17 +464,17 @@ export function ProjectPickerModal({ open, onClose }: Props) {
         </div>
 
         <div className="flex min-h-[560px] min-w-0 flex-col">
-          <div className="border-b border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-sm text-[var(--muted-foreground)]">
+          <div className="bg-[var(--surface)] px-4 py-3 text-sm text-[var(--muted-foreground)]">
             <span className="block truncate" title={currentPath ? `${currentPath} 탐색 중` : "탐색 시작점을 선택하세요"}>
               {currentPath ? `${currentPath} 탐색 중` : "탐색 시작점을 선택하세요"}
             </span>
           </div>
           <div className="min-h-0 flex-1 overflow-auto">
-            <div className="divide-y divide-[var(--border)]">
+            <div className="flex flex-col gap-1 p-2">
               {pendingCreateDirParentPath === currentPath ? (
                 <div className="grid grid-cols-[32px_40px_minmax(0,1fr)] gap-3 px-3 py-2 md:grid-cols-[32px_40px_minmax(0,1fr)_auto] md:items-center">
                   <div />
-                  <div className="flex size-10 items-center justify-center rounded-xl bg-[var(--muted)] text-[var(--primary)]">
+                  <div className="flex size-10 items-center justify-center rounded-md bg-[var(--muted)] text-[var(--primary)]">
                     <FolderPlus className="size-5" />
                   </div>
                   <Input
@@ -516,17 +516,17 @@ export function ProjectPickerModal({ open, onClose }: Props) {
                 <div className="px-4 py-10 text-center text-sm text-[var(--muted-foreground)]">표시할 디렉터리가 없습니다.</div>
               ) : null}
               {createDirectoryMutation.isError ? (
-                <div className="mx-3 my-3 rounded-xl border border-[var(--danger-border)] bg-[var(--danger-surface)] px-4 py-3 text-sm text-[var(--danger-foreground)]">
+                <div className="mx-3 my-3 rounded-md bg-[var(--danger-surface)] px-4 py-3 text-sm text-[var(--danger-foreground)]">
                   {getErrorMessage(createDirectoryMutation.error, "새 폴더를 만들지 못했습니다. 이름 충돌 또는 잘못된 이름인지 확인하세요.")}
                 </div>
               ) : null}
               {selectProjectMutation.isError ? (
-                <div className="mx-3 my-3 rounded-xl border border-[var(--danger-border)] bg-[var(--danger-surface)] px-4 py-3 text-sm text-[var(--danger-foreground)]">
+                <div className="mx-3 my-3 rounded-md bg-[var(--danger-surface)] px-4 py-3 text-sm text-[var(--danger-foreground)]">
                   {getErrorMessage(selectProjectMutation.error, "프로젝트를 선택하지 못했습니다. 경로 권한을 확인하세요.")}
                 </div>
               ) : null}
               {deleteDirectoryMutation.isError ? (
-                <div className="mx-3 my-3 rounded-xl border border-[var(--danger-border)] bg-[var(--danger-surface)] px-4 py-3 text-sm text-[var(--danger-foreground)]">
+                <div className="mx-3 my-3 rounded-md bg-[var(--danger-surface)] px-4 py-3 text-sm text-[var(--danger-foreground)]">
                   {getErrorMessage(deleteDirectoryMutation.error, "폴더를 삭제하지 못했습니다. 경로와 권한을 확인하세요.")}
                 </div>
               ) : null}
@@ -536,17 +536,17 @@ export function ProjectPickerModal({ open, onClose }: Props) {
       </Card>
       {pendingDeleteEntry ? (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-[var(--overlay-soft)] p-6">
-          <Card className="w-full max-w-xl space-y-4">
+          <Card className="flex w-full max-w-xl flex-col gap-4 bg-[var(--panel)] shadow-[var(--shadow-popover)]">
             <div>
-              <p className="text-xl font-black tracking-tight">정말 삭제하시겠습니까?</p>
+              <p className="text-xl font-semibold tracking-[-0.02em]">정말 삭제하시겠습니까?</p>
               <p className="mt-2 text-sm text-[var(--muted-foreground)]">
                 아래 폴더와 그 안의 모든 내용이 삭제됩니다.
               </p>
             </div>
-            <div className="rounded-xl border border-[var(--danger-border)] bg-[var(--danger-surface)] px-4 py-3 text-sm text-[var(--danger-foreground)]">
+            <div className="rounded-md bg-[var(--danger-surface)] px-4 py-3 text-sm text-[var(--danger-foreground)]">
               {pendingDeleteEntry.path}
             </div>
-            <div className="space-y-2">
+            <div className="flex flex-col gap-2">
               <p className="text-sm text-[var(--muted-foreground)]">삭제하려면 폴더 이름을 다시 입력하세요.</p>
               <Input
                 autoFocus

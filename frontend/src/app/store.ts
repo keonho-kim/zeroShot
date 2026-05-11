@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import type { AuthStatus, DirectoryEntry, JobSnapshot, ProjectState } from "../lib/api";
 
-interface LogLine {
+export interface LogLine {
   type: "stdout" | "stderr" | "phase" | "job_started" | "job_finished" | "job_failed";
   text: string;
 }
@@ -11,6 +11,7 @@ interface AppState {
   bootstrapRoots: string[];
   projectRoot: string;
   projectState: ProjectState | null;
+  architectProductContent: string;
   currentJob: JobSnapshot | null;
   logs: LogLine[];
   isProjectPickerOpen: boolean;
@@ -28,6 +29,7 @@ interface AppState {
   setBootstrapRoots: (value: string[]) => void;
   setProjectRoot: (value: string) => void;
   setProjectState: (value: ProjectState | null) => void;
+  setArchitectProductContent: (value: string) => void;
   setProjectPickerOpen: (value: boolean) => void;
   setProjectBrowserPath: (value: string) => void;
   setCandidateProjectPath: (value: string) => void;
@@ -49,6 +51,7 @@ export const useAppStore = create<AppState>((set) => ({
   bootstrapRoots: [],
   projectRoot: "",
   projectState: null,
+  architectProductContent: "",
   currentJob: null,
   logs: [],
   isProjectPickerOpen: false,
@@ -66,6 +69,7 @@ export const useAppStore = create<AppState>((set) => ({
   setBootstrapRoots: (value) => set({ bootstrapRoots: value }),
   setProjectRoot: (value) => set({ projectRoot: value, candidateProjectPath: value }),
   setProjectState: (value) => set({ projectState: value }),
+  setArchitectProductContent: (value) => set({ architectProductContent: value }),
   setProjectPickerOpen: (value) => set({ isProjectPickerOpen: value }),
   setProjectBrowserPath: (value) => set({ projectBrowserPath: value }),
   setCandidateProjectPath: (value) => set({ candidateProjectPath: value }),

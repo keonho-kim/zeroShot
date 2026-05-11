@@ -1,7 +1,8 @@
-import { useEffect, useMemo } from "react";
+import { useEffect } from "react";
 import type { JobSnapshot } from "../lib/api";
 import { useAppStore } from "../app/store";
 import { Card } from "./ui/card";
+import { BuildFlashcards } from "./BuildFlashcards";
 
 interface Props {
   job: JobSnapshot | null;
@@ -35,17 +36,13 @@ export function LogViewer({ job }: Props) {
     return () => stream.close();
   }, [appendLog, job]);
 
-  const rendered = useMemo(() => logs.map((line, index) => `${index + 1}. [${line.type}] ${line.text}`).join("\n"), [logs]);
-
   return (
-    <Card className="space-y-3">
+    <Card className="flex flex-col gap-4 bg-[var(--panel)]">
       <div>
-        <p className="text-sm font-semibold">실행 로그</p>
-        <p className="text-xs text-[var(--muted-foreground)]">Build / Update 작업의 stdout, stderr, phase 이벤트가 실시간 표시됩니다.</p>
+        <p className="text-sm font-semibold">Work cards</p>
+        <p className="text-xs text-[var(--muted-foreground)]">작업 단위로 로그를 넘겨보며 진행 상황을 확인합니다.</p>
       </div>
-      <pre className="max-h-[420px] overflow-auto rounded-xl border border-[var(--border)] bg-[var(--code-bg)] p-4 text-xs text-[var(--code-fg)] shadow-[inset_0_1px_0_rgb(255_255_255_/_0.03)]">
-        {rendered || "아직 로그가 없습니다."}
-      </pre>
+      <BuildFlashcards job={job} logs={logs} />
     </Card>
   );
 }

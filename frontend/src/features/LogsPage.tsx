@@ -28,10 +28,10 @@ export function LogsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6">
       <PageHeader title="LOGS" projectRoot={projectRoot} />
       <div className="grid gap-6 xl:grid-cols-[320px_1fr]">
-        <Card className="space-y-3">
+        <Card className="flex flex-col gap-3 bg-[var(--panel)]">
           <p className="text-lg font-semibold">Run List</p>
           <div className="grid gap-2">
             {runsQuery.data?.map((run) => (
@@ -42,7 +42,7 @@ export function LogsPage() {
             {!runsQuery.data?.length ? <p className="text-sm text-[var(--muted-foreground)]">표시할 run이 없습니다.</p> : null}
           </div>
         </Card>
-        <Card className="space-y-4">
+        <Card className="flex flex-col gap-4 bg-[var(--panel)]">
           <div className="flex flex-wrap gap-2">
             {Object.keys(detailQuery.data?.documents ?? {}).map((doc) => (
               <Button key={doc} variant={selectedDoc === doc ? "default" : "outline"} onClick={() => setSelectedDoc(doc)}>
@@ -50,7 +50,7 @@ export function LogsPage() {
               </Button>
             ))}
           </div>
-          <pre className="max-h-[620px] overflow-auto rounded-xl border border-[var(--border)] bg-[var(--code-bg)] p-4 text-xs text-[var(--code-fg)] shadow-[inset_0_1px_0_rgb(255_255_255_/_0.03)]">
+          <pre className="max-h-[620px] overflow-auto rounded-md bg-[var(--code-bg)] p-4 text-xs leading-5 text-[var(--code-fg)]">
             {detailQuery.data?.documents[selectedDoc] || detailQuery.data?.manifest || "run을 선택하세요."}
           </pre>
         </Card>

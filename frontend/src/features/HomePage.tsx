@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { FilePenLine, Logs, Wrench, Hammer } from "lucide-react";
+import { DraftingCompass, Hammer } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { ProjectPickerModal } from "../components/ProjectPickerModal";
@@ -8,6 +8,7 @@ import { Button } from "../components/ui/button";
 import { Card } from "../components/ui/card";
 import { fetchProjectState } from "../lib/api";
 import { useAppStore } from "../app/store";
+import { buildDisabledReason, canStartBuild } from "../entities/project/project-core";
 
 function ActionCard({
   title,
@@ -27,12 +28,12 @@ function ActionCard({
       type="button"
       disabled={disabled}
       onClick={onClick}
-      className="min-h-[240px] rounded-[2rem] border border-[var(--border)] bg-[var(--card)] p-9 text-left shadow-[var(--shadow-card)] transition hover:-translate-y-0.5 hover:border-[var(--surface-active)] hover:bg-[var(--surface-hover)] md:p-10 disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:translate-y-0 disabled:hover:border-[var(--border)] disabled:hover:bg-[var(--card)]"
+      className="min-h-[220px] rounded-lg bg-[var(--panel)] p-8 text-left transition hover:bg-[var(--surface)] md:p-9 disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:bg-[var(--panel)]"
     >
-      <div className="mb-6 flex size-14 items-center justify-center rounded-2xl border border-[var(--border)] bg-[var(--surface)] text-[var(--primary)]">
+      <div className="mb-6 flex size-12 items-center justify-center rounded-md bg-[var(--surface)] text-[var(--primary)]">
         {icon}
       </div>
-      <p className="text-2xl font-black tracking-tight">{title}</p>
+      <p className="text-2xl font-semibold tracking-[-0.02em]">{title}</p>
       <p className="mt-3 max-w-[28ch] text-sm leading-6 text-[var(--muted-foreground)]">{description}</p>
     </button>
   );
@@ -59,11 +60,14 @@ export function HomePage() {
 
   useEffect(() => {
     document.body.classList.add("home-page");
+    if (!projectRoot) {
+      setProjectPickerOpen(true);
+    }
 
     return () => {
       document.body.classList.remove("home-page");
     };
-  }, []);
+  }, [projectRoot, setProjectPickerOpen]);
 
   useEffect(() => {
     if (!projectRoot) {
@@ -73,8 +77,10 @@ export function HomePage() {
     setProjectState(projectStateQuery.data ?? null);
   }, [projectRoot, projectStateQuery.data, setProjectState]);
 
-  const nextPipelineMode = projectState?.updateEnabled ? "update" : "build";
-  const disabled = !projectRoot;
+  const buildEnabled = Boolean(projectRoot && projectState && canStartBuild(projectState));
+  const architectDisabled = !projectRoot;
+  const buildDisabled = !buildEnabled;
+  const buildReason = projectState ? buildDisabledReason(projectState) : "프로젝트를 먼저 선택하세요.";
   const openProjectPicker = () => {
     setProjectBrowserPath("");
     setCandidateProjectPath(projectRoot || candidateProjectPath);
@@ -82,9 +88,9 @@ export function HomePage() {
   };
 
   return (
-    <div className="mx-auto max-w-[1320px] space-y-8 md:space-y-10">
+    <div className="mx-auto flex max-w-[1320px] flex-col gap-8 md:gap-10">
       <PageHeader title="PHASE HOME" rightAction="settings" />
-      <Card className="space-y-5 p-6 md:p-7">
+      <Card className="flex flex-col gap-5 bg-transparent p-0">
         <div className="flex flex-col items-start justify-between gap-5 md:flex-row md:items-start">
           <div>
             <p className="text-lg font-semibold">Selected Project</p>
@@ -100,43 +106,36 @@ export function HomePage() {
           </div>
         </div>
         {projectState ? (
-          <div className="grid gap-3 rounded-2xl border border-[var(--border)] bg-[var(--muted)]/60 p-5 text-sm text-[var(--muted-foreground)] md:grid-cols-2 xl:grid-cols-4">
-            <p>PRODUCT.md: {projectState.hasProduct ? "존재" : "없음"}</p>
+          <div className="grid gap-2 rounded-md bg-[var(--surface)] p-4 text-sm text-[var(--muted-foreground)] md:grid-cols-2 xl:grid-cols-4">
+            <p>PRODUCT.html: {projectState.hasProductHtml ? "존재" : "없음"}</p>
+            <p>Workspace: {projectState.isDirectoryEmpty ? "비어 있음" : "파일 있음"}</p>
             <p>UPDATE.md: {projectState.hasUpdate ? "존재" : "없음"}</p>
             <p>.work.history runs: {projectState.runsCount}</p>
-            <p>다음 파이프라인: {nextPipelineMode.toUpperCase()}</p>
           </div>
         ) : !projectRoot ? (
           <button
             type="button"
             onClick={openProjectPicker}
-            className="w-full rounded-2xl border border-dashed border-[var(--border)] bg-[var(--surface)] p-7 text-left text-sm text-[var(--muted-foreground)] transition hover:border-[var(--primary)] hover:bg-[var(--surface-hover)]"
+            className="w-full rounded-lg bg-[var(--surface)] p-7 text-left text-sm text-[var(--muted-foreground)] transition hover:bg-[var(--surface-hover)]"
           >
-            프로젝트를 먼저 선택해야 BUILD/UPDATE, EDITOR, LOGS를 사용할 수 있습니다.
+            먼저 워크스페이스를 선택한 다음 ARCHITECT 또는 BUILD를 진행합니다.
           </button>
         ) : null}
       </Card>
-      <div className="grid gap-5 xl:grid-cols-3 xl:gap-6">
+      <div className="grid gap-5 md:grid-cols-2 xl:gap-6">
         <ActionCard
-          title={nextPipelineMode.toUpperCase()}
-          description={disabled ? "프로젝트를 먼저 선택하세요." : nextPipelineMode === "build" ? "새 프로젝트 실행을 시작합니다." : "기존 로그가 있는 프로젝트를 업데이트합니다."}
-          icon={nextPipelineMode === "build" ? <Hammer className="size-6" /> : <Wrench className="size-6" />}
-          disabled={disabled}
-          onClick={() => navigate(`/${nextPipelineMode}`)}
+          title="ARCHITECT"
+          description={architectDisabled ? "프로젝트를 먼저 선택하세요." : "대화를 통해 PRODUCT.html blueprint를 만듭니다."}
+          icon={<DraftingCompass className="size-6" />}
+          disabled={architectDisabled}
+          onClick={() => navigate("/architect")}
         />
         <ActionCard
-          title="EDITOR"
-          description={disabled ? "프로젝트를 먼저 선택하세요." : "선택된 프로젝트 루트 내부 파일을 편집합니다."}
-          icon={<FilePenLine className="size-6" />}
-          disabled={disabled}
-          onClick={() => navigate("/editor")}
-        />
-        <ActionCard
-          title="LOGS"
-          description={disabled ? "프로젝트를 먼저 선택하세요." : ".work.history 기반 실행 기록과 문서를 확인합니다."}
-          icon={<Logs className="size-6" />}
-          disabled={disabled}
-          onClick={() => navigate("/logs")}
+          title="BUILD"
+          description={buildDisabled ? buildReason : "PRODUCT.html 또는 기존 프로젝트 파일을 바탕으로 빌드를 시작합니다."}
+          icon={<Hammer className="size-6" />}
+          disabled={buildDisabled}
+          onClick={() => navigate("/build")}
         />
       </div>
       <ProjectPickerModal

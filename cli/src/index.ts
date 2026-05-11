@@ -1,43 +1,18 @@
 #!/usr/bin/env bun
 import { parse } from "@iarna/toml";
 import { Command } from "commander";
-import { spawn } from "node:child_process";
 import { readFile, stat } from "node:fs/promises";
-import { dirname, join, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
-
-type RunMode = "build" | "update";
-
-interface PipelineOptions {
-  model?: string;
-  approval?: string;
-  sandbox?: string;
-  maxIters?: number;
-  stallLimit?: number;
-  planReasoning?: string;
-  execReasoning?: string;
-  validateReasoning?: string;
-  closeoutReasoning?: string;
-}
+import { join } from "node:path";
+import { findWorkspaceRoot } from "./pipeline/utils.js";
+import { runPipeline } from "./pipeline/runner.js";
+import type { AppDefaults, PipelineOptions, RunMode } from "./pipeline/types.js";
 
 interface CliOptions extends PipelineOptions {
   projectRoot: string;
 }
 
-interface AppDefaults {
-  approval: string;
-  sandbox: string;
-  maxIters: number;
-  stallLimit: number;
-  planReasoning: string;
-  execReasoning: string;
-  validateReasoning: string;
-  closeoutReasoning: string;
-}
-
 function getWorkspaceRoot(): string {
-  const current = dirname(fileURLToPath(import.meta.url));
-  return resolve(current, "../../..");
+  return findWorkspaceRoot();
 }
 
 async function loadDefaults(): Promise<AppDefaults> {
@@ -66,39 +41,7 @@ async function assertDirectory(path: string): Promise<void> {
 async function runCommand(mode: RunMode, options: CliOptions): Promise<number> {
   await assertDirectory(options.projectRoot);
   const defaults = await loadDefaults();
-  const workspaceRoot = getWorkspaceRoot();
-  const env: NodeJS.ProcessEnv = {
-    ...process.env,
-    MODE: mode,
-    PROJECT_ROOT: options.projectRoot,
-    PRODUCT_FILE: join(options.projectRoot, "PRODUCT.md"),
-    UPDATE_FILE: join(options.projectRoot, "UPDATE.md"),
-    WORK_ROOT: join(options.projectRoot, ".work.history"),
-    ACTIVE_RUN_FILE: join(options.projectRoot, ".work.history", ".active_run"),
-    APPROVAL: options.approval ?? defaults.approval,
-    SANDBOX: options.sandbox ?? defaults.sandbox,
-    MAX_ITERS: String(options.maxIters ?? defaults.maxIters),
-    STALL_LIMIT: String(options.stallLimit ?? defaults.stallLimit),
-    PLAN_REASONING: options.planReasoning ?? defaults.planReasoning,
-    EXEC_REASONING: options.execReasoning ?? defaults.execReasoning,
-    VALIDATE_REASONING: options.validateReasoning ?? defaults.validateReasoning,
-    CLOSEOUT_REASONING: options.closeoutReasoning ?? defaults.closeoutReasoning
-  };
-
-  if (options.model) {
-    env.MODEL = options.model;
-  }
-
-  return await new Promise<number>((resolvePromise, reject) => {
-    const child = spawn("bash", [join(workspaceRoot, "scripts", "build.sh")], {
-      cwd: workspaceRoot,
-      env,
-      stdio: "inherit"
-    });
-
-    child.on("close", (code) => resolvePromise(code ?? 1));
-    child.on("error", reject);
-  });
+  return runPipeline(mode, options.projectRoot, defaults, options);
 }
 
 function bindSharedOptions(command: Command): Command {
@@ -112,7 +55,8 @@ function bindSharedOptions(command: Command): Command {
     .option("--plan-reasoning <level>", "Reasoning effort for planning phases")
     .option("--exec-reasoning <level>", "Reasoning effort for implementation phases")
     .option("--validate-reasoning <level>", "Reasoning effort for validation")
-    .option("--closeout-reasoning <level>", "Reasoning effort for closeout");
+    .option("--closeout-reasoning <level>", "Reasoning effort for closeout")
+    .option("--response-language <language>", "Language Codex should use for user-facing run documents and final answers");
 }
 
 const program = new Command();

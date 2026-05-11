@@ -1,9 +1,19 @@
 import { fileURLToPath } from "node:url";
-import { dirname, resolve } from "node:path";
+import { existsSync } from "node:fs";
+import { dirname, join, resolve } from "node:path";
 
 export function getWorkspaceRoot(): string {
-  const current = dirname(fileURLToPath(import.meta.url));
-  return resolve(current, "../../..");
+  let current = dirname(fileURLToPath(import.meta.url));
+  while (true) {
+    if (existsSync(join(current, "zeroshot.app.toml")) && existsSync(join(current, "package.json"))) {
+      return current;
+    }
+    const parent = dirname(current);
+    if (parent === current) {
+      return resolve(dirname(fileURLToPath(import.meta.url)), "../..");
+    }
+    current = parent;
+  }
 }
 
 export function getAppConfigPath(): string {

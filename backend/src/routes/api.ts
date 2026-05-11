@@ -1,12 +1,12 @@
 import express, { type NextFunction, type Request, type RequestHandler, type Response, type Router } from "express";
-import { watch } from "node:fs";
 import { stat } from "node:fs/promises";
-import { basename, dirname, join, relative } from "node:path";
+import { basename, relative } from "node:path";
 import { loadAppConfig, saveAppConfig } from "../config/app-config.js";
 import { loadCodexSettings, saveCodexSettings } from "../config/codex-config.js";
-import { assertPathWithinRoots, isWithin, listDirectoryEntries, resolveUserFilePath } from "../core/path-guards.js";
+import { assertPathWithinRoots, isWithin, listDirectoryEntries } from "../core/path-guards.js";
 import { readAuthStatus, saveAuthFile } from "../services/auth-service.js";
-import { createDirectory, createFile, deleteEntry, readProjectFile, renameEntry, saveProjectFile, writeProductOrUpdate } from "../services/file-service.js";
+import { buildArchitectDecisions } from "../services/architect-service.js";
+import { createDirectory, deleteEntry, readProductHtml, writeProductHtml, writeProductOrUpdate } from "../services/file-service.js";
 import { readRunDetail, listRuns } from "../services/history-service.js";
 import { jobManager } from "../services/job-manager.js";
 import { readProjectHistoryMeta, readProjectState } from "../services/project-service.js";
@@ -177,6 +177,55 @@ router.get("/projects/state", asyncHandler(async (req: Request, res: Response) =
   res.json(await readProjectState(projectRoot));
 }));
 
+router.get("/projects/product-html", asyncHandler(async (req: Request, res: Response) => {
+  const projectRoot = await getValidatedProjectRoot(String(req.query.projectRoot ?? ""));
+  res.type("html").send(await readProductHtml(projectRoot));
+}));
+
+router.post("/architect/decisions", asyncHandler(async (req: Request, res: Response) => {
+  const auth = await readAuthStatus();
+  if (!auth.valid) {
+    res.status(412).json(auth);
+    return;
+  }
+
+  const body = req.body as { projectRoot?: string; goal?: string; locale?: string; model?: string };
+  const projectRoot = await getValidatedProjectRoot(String(body.projectRoot ?? ""));
+  if (typeof body.goal !== "string" || !body.goal.trim()) {
+    res.status(400).json({ message: "Architect goal is required" });
+    return;
+  }
+
+  try {
+    const decisions = await buildArchitectDecisions({
+      projectRoot,
+      goal: body.goal.trim(),
+      locale: body.locale === "ko" ? "ko" : "en",
+      reasoning: (await loadAppConfig()).defaults.planReasoning,
+      model: typeof body.model === "string" && body.model.trim() ? body.model.trim() : undefined
+    });
+    res.json(decisions);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    res.status(502).json({ message: `Codex could not produce architect decisions: ${message}` });
+  }
+}));
+
+router.put("/projects/product-html", asyncHandler(async (req: Request, res: Response) => {
+  const body = req.body as { projectRoot: string; content?: string; markdownMirror?: string };
+  const projectRoot = await getValidatedProjectRoot(body.projectRoot);
+  if (typeof body.content !== "string" || !body.content.trim()) {
+    res.status(400).json({ message: "PRODUCT.html content is required" });
+    return;
+  }
+
+  await writeProductHtml(projectRoot, body.content);
+  if (typeof body.markdownMirror === "string" && body.markdownMirror.trim()) {
+    await writeProductOrUpdate(projectRoot, "PRODUCT.md", body.markdownMirror);
+  }
+  res.status(204).end();
+}));
+
 async function startPipeline(mode: RunMode, req: Request, res: Response) {
   const auth = await readAuthStatus();
   if (!auth.valid) {
@@ -191,9 +240,33 @@ async function startPipeline(mode: RunMode, req: Request, res: Response) {
     options?: PipelineOptions;
   };
   const projectRoot = await getValidatedProjectRoot(body.projectRoot);
+  const projectState = await readProjectState(projectRoot);
+
+  if (mode === "build" && !projectState.buildEnabled) {
+    res.status(409).json({ message: "BUILD needs a non-empty workspace or PRODUCT.html." });
+    return;
+  }
 
   if (typeof body.productContent === "string") {
     await writeProductOrUpdate(projectRoot, "PRODUCT.md", body.productContent);
+  } else if (mode === "build" && projectState.hasProductHtml && !projectState.hasProduct) {
+    const productHtml = await readProductHtml(projectRoot);
+    await writeProductOrUpdate(
+      projectRoot,
+      "PRODUCT.md",
+      [
+        "# PRODUCT",
+        "",
+        "This PRODUCT.md was generated from PRODUCT.html.",
+        "Use PRODUCT.html as the canonical interactive blueprint and this markdown file as the Codex pipeline input.",
+        "",
+        "## Blueprint HTML",
+        "```html",
+        productHtml,
+        "```",
+        ""
+      ].join("\n")
+    );
   }
   if (mode === "update" && typeof body.updateContent === "string") {
     await writeProductOrUpdate(projectRoot, "UPDATE.md", body.updateContent);
@@ -249,147 +322,6 @@ router.get("/history", asyncHandler(async (req: Request, res: Response) => {
 router.get("/history/:runName", asyncHandler(async (req: Request, res: Response) => {
   const projectRoot = await getValidatedProjectRoot(String(req.query.projectRoot ?? ""));
   res.json(await readRunDetail(projectRoot, String(req.params.runName)));
-}));
-
-router.get("/files", asyncHandler(async (req: Request, res: Response) => {
-  const projectRoot = await getValidatedProjectRoot(String(req.query.projectRoot ?? ""));
-  const filePath = typeof req.query.path === "string" ? req.query.path : "";
-  res.json(await readProjectFile(projectRoot, filePath));
-}));
-
-router.post("/files", asyncHandler(async (req: Request, res: Response) => {
-  const body = req.body as {
-    projectRoot: string;
-    parentPath?: string;
-    name?: string;
-    kind?: "file" | "directory";
-  };
-  const projectRoot = await getValidatedProjectRoot(body.projectRoot);
-  if (typeof body.name !== "string" || !body.name.trim()) {
-    res.status(400).json({ message: "name is required" });
-    return;
-  }
-  if (body.kind !== "file" && body.kind !== "directory") {
-    res.status(400).json({ message: "kind must be file or directory" });
-    return;
-  }
-
-  const parentAbsolute = await resolveUserFilePath(projectRoot, body.parentPath ?? "");
-
-  try {
-    const createdPath = body.kind === "directory"
-      ? await createDirectory(parentAbsolute, body.name)
-      : await createFile(parentAbsolute, body.name);
-    const config = await loadAppConfig();
-    res.status(201).json(await buildDirectoryEntry(projectRoot, createdPath, config.allowedRoots));
-  } catch (error) {
-    const err = error as NodeJS.ErrnoException & { statusCode?: number };
-    if (err.code === "EEXIST") {
-      res.status(409).json({ message: "Entry already exists" });
-      return;
-    }
-    res.status(err.statusCode ?? 500).json({ message: err.message });
-  }
-}));
-
-router.patch("/files", asyncHandler(async (req: Request, res: Response) => {
-  const body = req.body as { projectRoot: string; path?: string; name?: string };
-  const projectRoot = await getValidatedProjectRoot(body.projectRoot);
-  if (typeof body.path !== "string" || !body.path.trim()) {
-    res.status(400).json({ message: "path is required" });
-    return;
-  }
-  if (typeof body.name !== "string" || !body.name.trim()) {
-    res.status(400).json({ message: "name is required" });
-    return;
-  }
-
-  if (!body.path.trim()) {
-    res.status(400).json({ message: "Cannot rename project root" });
-    return;
-  }
-
-  try {
-    const currentPath = await resolveUserFilePath(projectRoot, body.path);
-    const renamedPath = await renameEntry(currentPath, body.name);
-    const config = await loadAppConfig();
-    res.json(await buildDirectoryEntry(projectRoot, renamedPath, config.allowedRoots));
-  } catch (error) {
-    const err = error as NodeJS.ErrnoException & { statusCode?: number };
-    if (err.code === "EEXIST") {
-      res.status(409).json({ message: "Entry already exists" });
-      return;
-    }
-    res.status(err.statusCode ?? 500).json({ message: err.message });
-  }
-}));
-
-router.put("/files", asyncHandler(async (req: Request, res: Response) => {
-  const body = req.body as { projectRoot: string; path: string; content: string };
-  const projectRoot = await getValidatedProjectRoot(body.projectRoot);
-  await saveProjectFile(projectRoot, body.path, body.content);
-  res.status(204).end();
-}));
-
-router.delete("/files", asyncHandler(async (req: Request, res: Response) => {
-  const body = req.body as { projectRoot: string; path?: string };
-  const projectRoot = await getValidatedProjectRoot(body.projectRoot);
-  if (typeof body.path !== "string" || !body.path.trim()) {
-    res.status(400).json({ message: "path is required" });
-    return;
-  }
-
-  const absolutePath = await resolveUserFilePath(projectRoot, body.path);
-  await deleteEntry(absolutePath);
-  res.status(204).end();
-}));
-
-router.get("/files/stream", asyncHandler(async (req: Request, res: Response) => {
-  const projectRoot = await getValidatedProjectRoot(String(req.query.projectRoot ?? ""));
-
-  res.writeHead(200, {
-    "Content-Type": "text/event-stream",
-    "Cache-Control": "no-cache",
-    Connection: "keep-alive"
-  });
-
-  const send = (payload: Record<string, unknown>) => {
-    res.write("event: change\n");
-    res.write(`data: ${JSON.stringify(payload)}\n\n`);
-  };
-
-  const watcher = watch(projectRoot, { recursive: true }, async (eventType, filename) => {
-    const rawFilename = String(filename ?? "");
-    const absolutePath = join(projectRoot, rawFilename);
-    if (!isWithin(projectRoot, absolutePath)) {
-      return;
-    }
-
-    const relativePath = normalizeRelativePath(relative(projectRoot, absolutePath));
-    const parentPath = relativePath ? normalizeRelativePath(dirname(relativePath)) : "";
-
-    if (eventType === "change") {
-      send({ action: "changed", path: relativePath, parentPath: parentPath === "." ? "" : parentPath });
-      return;
-    }
-
-    try {
-      await stat(absolutePath);
-      send({ action: "created", path: relativePath, parentPath: parentPath === "." ? "" : parentPath });
-    } catch {
-      send({ action: "deleted", path: relativePath, parentPath: parentPath === "." ? "" : parentPath });
-    }
-  });
-
-  const keepAlive = setInterval(() => {
-    res.write(": keepalive\n\n");
-  }, 15000);
-
-  req.on("close", () => {
-    clearInterval(keepAlive);
-    watcher.close();
-    res.end();
-  });
 }));
 
 router.get("/settings/codex", asyncHandler(async (_req: Request, res: Response) => {

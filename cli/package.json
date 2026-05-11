@@ -13,6 +13,8 @@
   },
   "dependencies": {
     "@iarna/toml": "^2.2.5",
-    "commander": "^14.0.1"
+    "@openai/codex-sdk": "^0.129.0",
+    "commander": "^14.0.1",
+    "zod": "^3.25.76"
   }
 }

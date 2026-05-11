@@ -1,0 +1,15 @@
+import { runCodexPhase } from "../../executor.js";
+import type { PhaseResult, PipelineContext } from "../../types.js";
+import { createPrompt } from "./prompt.js";
+
+export async function requirementsNormalizePhase(ctx: PipelineContext): Promise<PhaseResult> {
+  console.log("[normalize] requirements-normalize phase를 시작합니다.");
+  console.log("[normalize] 목표: PRODUCT.md를 제품화 가능한 REQUIREMENTS/PLAN/SPEC/TEST_PLAN으로 정규화합니다.");
+  console.log(`[normalize] RUN_MODE=${ctx.mode}`);
+  const prompt = createPrompt(ctx);
+  const result = await runCodexPhase(ctx, "requirements-normalize", ctx.options.planReasoning, prompt.goal, prompt.extra);
+  console.log("[normalize] requirements-normalize phase가 끝났습니다.");
+  console.log(`[normalize] gate    : ${result.gate}`);
+  console.log(`[normalize] summary : ${result.summary}`);
+  return result;
+}

@@ -20,7 +20,10 @@ export interface DirectoryEntry {
 export interface ProjectState {
   projectRoot: string;
   hasProduct: boolean;
+  hasProductHtml: boolean;
   hasUpdate: boolean;
+  isDirectoryEmpty: boolean;
+  buildEnabled: boolean;
   workHistoryExists: boolean;
   runsCount: number;
   latestRunName?: string;
@@ -79,17 +82,29 @@ export interface JobSnapshot {
   exitCode?: number;
 }
 
-export interface FileReadResult {
-  kind: "file" | "directory";
-  path: string;
-  content?: string;
-  entries?: DirectoryEntry[];
+export interface PipelineOptions {
+  responseLanguage?: string;
 }
 
-export interface FileChangeEvent {
-  action: "created" | "deleted" | "changed";
-  path: string;
-  parentPath: string;
+export interface ArchitectDecisionOption {
+  id: string;
+  label: string;
+  detail: string;
+  productRequirement: string;
+}
+
+export interface ArchitectDecision {
+  id: string;
+  title: string;
+  prompt: string;
+  section: string;
+  options: ArchitectDecisionOption[];
+}
+
+export interface ArchitectDecisionResponse {
+  title: string;
+  summary: string;
+  decisions: ArchitectDecision[];
 }
 
 const client = axios.create({
@@ -124,7 +139,19 @@ export async function fetchProjectState(projectRoot: string) {
   return (await client.get<ProjectState>("/projects/state", { params: { projectRoot } })).data;
 }
 
-export async function startBuild(payload: { projectRoot: string; productContent: string }) {
+export async function fetchProductHtml(projectRoot: string) {
+  return (await client.get<string>("/projects/product-html", { params: { projectRoot }, responseType: "text" })).data;
+}
+
+export async function saveProductHtml(payload: { projectRoot: string; content: string; markdownMirror: string }) {
+  await client.put("/projects/product-html", payload);
+}
+
+export async function requestArchitectDecisions(payload: { projectRoot: string; goal: string; locale: string }) {
+  return (await client.post<ArchitectDecisionResponse>("/architect/decisions", payload)).data;
+}
+
+export async function startBuild(payload: { projectRoot: string; productContent?: string; options?: PipelineOptions }) {
   return (await client.post<JobSnapshot>("/build", payload)).data;
 }
 
@@ -142,31 +169,6 @@ export async function fetchRuns(projectRoot: string) {
 
 export async function fetchRunDetail(projectRoot: string, runName: string) {
   return (await client.get<RunDetail>(`/history/${runName}`, { params: { projectRoot } })).data;
-}
-
-export async function fetchFile(projectRoot: string, path = "") {
-  return (await client.get<FileReadResult>("/files", { params: { projectRoot, path } })).data;
-}
-
-export async function createFileSystemEntry(payload: {
-  projectRoot: string;
-  parentPath?: string;
-  name: string;
-  kind: "file" | "directory";
-}) {
-  return (await client.post<DirectoryEntry>("/files", payload)).data;
-}
-
-export async function renameFileSystemEntry(projectRoot: string, path: string, name: string) {
-  return (await client.patch<DirectoryEntry>("/files", { projectRoot, path, name })).data;
-}
-
-export async function saveFile(projectRoot: string, path: string, content: string) {
-  await client.put("/files", { projectRoot, path, content });
-}
-
-export async function deleteFileSystemEntry(projectRoot: string, path: string) {
-  await client.delete("/files", { data: { projectRoot, path } });
 }
 
 export async function fetchAppSettings() {

@@ -62,7 +62,10 @@ export interface DirectoryEntry {
 export interface ProjectState {
   projectRoot: string;
   hasProduct: boolean;
+  hasProductHtml: boolean;
   hasUpdate: boolean;
+  isDirectoryEmpty: boolean;
+  buildEnabled: boolean;
   workHistoryExists: boolean;
   runsCount: number;
   latestRunName?: string;
@@ -93,9 +96,10 @@ export interface PipelineOptions {
   execReasoning?: string;
   validateReasoning?: string;
   closeoutReasoning?: string;
+  responseLanguage?: string;
 }
 
-export interface ShellCommandSpec {
+export interface PipelineCommandSpec {
   command: string;
   args: string[];
   cwd: string;
@@ -117,11 +121,4 @@ export interface JobEvent {
   seq: number;
   type: "job_started" | "stdout" | "stderr" | "phase" | "job_finished" | "job_failed";
   data: Record<string, unknown>;
-}
-
-export interface FileReadResult {
-  kind: "file" | "directory";
-  path: string;
-  content?: string;
-  entries?: DirectoryEntry[];
 }

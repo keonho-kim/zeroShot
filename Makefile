@@ -1,7 +1,7 @@
 # Makefile
 #
 # 사용자는 make build 또는 make update만 실행하면 됩니다.
-# 실제 전체 오케스트레이션은 scripts/build.sh가 담당합니다.
+# 실제 전체 오케스트레이션은 cli/src/pipeline의 TypeScript runner가 담당합니다.
 
 SHELL := /usr/bin/env bash
 .DEFAULT_GOAL := build

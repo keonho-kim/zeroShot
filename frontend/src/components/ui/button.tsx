@@ -4,14 +4,14 @@ import * as React from "react";
 import { cn } from "../../lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 rounded-xl border border-transparent px-4 py-2 text-sm font-medium outline-none transition duration-150 focus-visible:border-[var(--ring)] focus-visible:shadow-[var(--shadow-focus)] disabled:cursor-not-allowed disabled:opacity-50",
+  "inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium outline-none transition duration-150 active:scale-[0.98] focus-visible:shadow-[var(--shadow-focus)] disabled:cursor-not-allowed disabled:opacity-50",
   {
     variants: {
       variant: {
-        default: "bg-[var(--primary)] text-[var(--primary-foreground)] shadow-[var(--shadow-card)] hover:-translate-y-px hover:brightness-105 active:translate-y-0",
-        outline: "border-[var(--border)] bg-[var(--panel)] text-[var(--foreground)] shadow-[var(--shadow-card)] hover:border-[var(--surface-active)] hover:bg-[var(--surface-hover)]",
+        default: "bg-[var(--primary)] text-[var(--primary-foreground)] hover:bg-[#005bab]",
+        outline: "bg-[var(--surface)] text-[var(--foreground)] hover:bg-[var(--surface-hover)]",
         ghost: "text-[var(--muted-foreground)] hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)]",
-        destructive: "border-[var(--danger-border)] bg-[var(--danger-surface)] text-[var(--danger-foreground)] hover:border-[var(--danger)] hover:bg-[var(--danger-surface-strong)]"
+        destructive: "bg-[var(--danger-surface)] text-[var(--danger-foreground)] hover:bg-[var(--danger-surface-strong)]"
       }
     },
     defaultVariants: {

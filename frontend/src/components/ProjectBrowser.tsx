@@ -19,7 +19,7 @@ export function ProjectBrowser({ value, onChange, className }: Props) {
   });
 
   return (
-    <Card className={cn("space-y-4", className)}>
+    <Card className={cn("flex flex-col gap-4 bg-[var(--panel)]", className)}>
       <div className="flex items-center justify-between">
         <div>
           <p className="text-lg font-semibold">Project Cards</p>
@@ -32,7 +32,7 @@ export function ProjectBrowser({ value, onChange, className }: Props) {
       </div>
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
         {query.data?.entries.map((entry) => (
-          <div key={entry.path} className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-[var(--shadow-card)]">
+          <div key={entry.path} className="rounded-md bg-[var(--surface)] p-4">
             <button className="w-full text-left" onClick={() => setPath(entry.path)}>
               <p className="text-sm font-semibold">{entry.name}</p>
               <p className="mt-1 text-xs text-[var(--muted-foreground)]">{entry.path}</p>

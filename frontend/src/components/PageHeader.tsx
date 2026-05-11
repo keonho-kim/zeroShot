@@ -12,15 +12,15 @@ export function PageHeader({ title, projectRoot, rightAction }: Props) {
   const navigate = useNavigate();
 
   return (
-    <div className="mb-6 flex items-start justify-between gap-4">
-      <div className="space-y-2">
-        <Button variant="ghost" onClick={() => navigate("/home")} className="-ml-3">
+    <div className="mb-8 flex items-start justify-between gap-4">
+      <div className="flex flex-col gap-2">
+        <Button variant="ghost" onClick={() => navigate("/home")} className="-ml-3 text-xs tracking-[0.08em]">
           <House className="size-4" />
           HOME
         </Button>
         <div>
-          <h1 className="text-3xl font-black tracking-tight">{title}</h1>
-          {projectRoot ? <p className="text-sm text-[var(--muted-foreground)]">{projectRoot}</p> : null}
+          <h1 className="text-2xl font-semibold tracking-[-0.02em] text-[var(--foreground)] md:text-3xl">{title}</h1>
+          {projectRoot ? <p className="mt-1 break-all text-sm text-[var(--muted-foreground)]">{projectRoot}</p> : null}
         </div>
       </div>
       {rightAction === "settings" ? (
