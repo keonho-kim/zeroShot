@@ -129,6 +129,27 @@ v1의 핵심 원칙은 다음과 같습니다.
 bun install
 ```
 
+### 릴리스 설치
+
+GitHub release가 생성된 뒤에는 다음 명령으로 CLI를 설치할 수 있습니다.
+
+```bash
+curl -sSfL https://github.com/keonho-kim/zeroShot/releases/download/v0.1.0/install.sh | sh
+```
+
+또는 release tarball을 Bun으로 직접 전역 설치할 수 있습니다.
+
+```bash
+bun install -g https://github.com/keonho-kim/zeroShot/releases/download/v0.1.0/zeroShot-0.1.0.tgz
+```
+
+설치 후에는 `zeroshot` 명령을 사용합니다.
+
+```bash
+zeroshot build --project-root /absolute/project/path
+zeroshot update --project-root /absolute/project/path
+```
+
 ### 타입체크
 
 ```bash
@@ -140,6 +161,21 @@ bun run check
 ```bash
 bun run build
 ```
+
+### 릴리스 생성
+
+`v*.*.*` 태그를 푸시하면 GitHub Actions가 CLI를 빌드하고 release asset을 생성합니다.
+같은 태그의 release가 이미 있으면 asset과 release notes를 갱신합니다.
+
+```bash
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+릴리스 워크플로는 다음 asset을 업로드합니다.
+
+- `zeroShot-0.1.0.tgz`
+- `install.sh`
 
 ### 개발 서버
 

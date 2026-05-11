@@ -1,0 +1,88 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.11
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Typecheck
+        run: bun run check
+
+      - name: Check package version
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          PACKAGE_VERSION="$(bun --print 'require("./cli/package.json").version')"
+
+          if [ "$VERSION" != "$PACKAGE_VERSION" ]; then
+            echo "Tag version v$VERSION does not match cli/package.json version $PACKAGE_VERSION." >&2
+            exit 1
+          fi
+
+      - name: Build CLI
+        run: bun run --cwd cli build
+
+      - name: Pack release artifact
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          mkdir -p release
+          cd cli
+          bun pm pack --destination ../release
+          cd ..
+          mv "release/zeroshot-cli-${VERSION}.tgz" "release/zeroShot-${VERSION}.tgz"
+
+      - name: Generate installer
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          cat > release/install.sh <<EOF
+          #!/usr/bin/env sh
+          set -eu
+
+          if ! command -v bun >/dev/null 2>&1; then
+            echo "Bun is required to install ZeroShot. Install Bun first: https://bun.sh" >&2
+            exit 1
+          fi
+
+          bun install -g "https://github.com/${GITHUB_REPOSITORY}/releases/download/v${VERSION}/zeroShot-${VERSION}.tgz"
+          EOF
+          chmod +x release/install.sh
+
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          TITLE="ZeroShot ${GITHUB_REF_NAME}"
+          NOTES="Install with: curl -sSfL https://github.com/${GITHUB_REPOSITORY}/releases/download/${GITHUB_REF_NAME}/install.sh | sh"
+
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" \
+              "release/zeroShot-${VERSION}.tgz" \
+              "release/install.sh" \
+              --clobber
+            gh release edit "$GITHUB_REF_NAME" --title "$TITLE" --notes "$NOTES"
+          else
+            gh release create "$GITHUB_REF_NAME" \
+              "release/zeroShot-${VERSION}.tgz" \
+              "release/install.sh" \
+              --title "$TITLE" \
+              --notes "$NOTES"
+          fi

@@ -11,23 +11,45 @@ interface CliOptions extends PipelineOptions {
   projectRoot: string;
 }
 
+const defaultAppOptions: AppDefaults = {
+  approval: "never",
+  sandbox: "workspace-write",
+  maxIters: 30,
+  stallLimit: 2,
+  planReasoning: "high",
+  execReasoning: "medium",
+  validateReasoning: "medium",
+  closeoutReasoning: "medium"
+};
+
 function getWorkspaceRoot(): string {
   return findWorkspaceRoot();
 }
 
 async function loadDefaults(): Promise<AppDefaults> {
   const configPath = process.env.ZEROSHOT_APP_CONFIG ?? join(getWorkspaceRoot(), "zeroshot.app.toml");
-  const raw = parse(await readFile(configPath, "utf8")) as Record<string, unknown>;
+  const config = await readFile(configPath, "utf8").catch((error: NodeJS.ErrnoException) => {
+    if (!process.env.ZEROSHOT_APP_CONFIG && error.code === "ENOENT") {
+      return "";
+    }
+    throw error;
+  });
+
+  if (!config) {
+    return defaultAppOptions;
+  }
+
+  const raw = parse(config) as Record<string, unknown>;
 
   return {
-    approval: typeof raw.default_approval === "string" ? raw.default_approval : "never",
-    sandbox: typeof raw.default_sandbox === "string" ? raw.default_sandbox : "workspace-write",
-    maxIters: typeof raw.max_iters === "number" ? raw.max_iters : 30,
-    stallLimit: typeof raw.stall_limit === "number" ? raw.stall_limit : 2,
-    planReasoning: typeof raw.plan_reasoning === "string" ? raw.plan_reasoning : "high",
-    execReasoning: typeof raw.exec_reasoning === "string" ? raw.exec_reasoning : "medium",
-    validateReasoning: typeof raw.validate_reasoning === "string" ? raw.validate_reasoning : "medium",
-    closeoutReasoning: typeof raw.closeout_reasoning === "string" ? raw.closeout_reasoning : "medium"
+    approval: typeof raw.default_approval === "string" ? raw.default_approval : defaultAppOptions.approval,
+    sandbox: typeof raw.default_sandbox === "string" ? raw.default_sandbox : defaultAppOptions.sandbox,
+    maxIters: typeof raw.max_iters === "number" ? raw.max_iters : defaultAppOptions.maxIters,
+    stallLimit: typeof raw.stall_limit === "number" ? raw.stall_limit : defaultAppOptions.stallLimit,
+    planReasoning: typeof raw.plan_reasoning === "string" ? raw.plan_reasoning : defaultAppOptions.planReasoning,
+    execReasoning: typeof raw.exec_reasoning === "string" ? raw.exec_reasoning : defaultAppOptions.execReasoning,
+    validateReasoning: typeof raw.validate_reasoning === "string" ? raw.validate_reasoning : defaultAppOptions.validateReasoning,
+    closeoutReasoning: typeof raw.closeout_reasoning === "string" ? raw.closeout_reasoning : defaultAppOptions.closeoutReasoning
   };
 }
 
