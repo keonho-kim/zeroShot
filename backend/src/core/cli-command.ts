@@ -9,11 +9,9 @@ export function buildPipelineCommandSpec(
   options: PipelineOptions = {}
 ): PipelineCommandSpec {
   const workspaceRoot = getWorkspaceRoot();
+  const cliEntry = process.env.ZEROSHOT_CLI_ENTRY;
   const args = [
-    "run",
-    "--cwd",
-    join(workspaceRoot, "cli"),
-    "src/index.ts",
+    ...(cliEntry ? [cliEntry] : ["run", "--cwd", join(workspaceRoot, "cli"), "src/index.ts"]),
     mode,
     "--project-root",
     projectRoot,
@@ -46,7 +44,7 @@ export function buildPipelineCommandSpec(
   return {
     command: "bun",
     args,
-    cwd: workspaceRoot,
+    cwd: cliEntry ? projectRoot : workspaceRoot,
     env: process.env
   };
 }

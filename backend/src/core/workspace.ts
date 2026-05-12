@@ -1,5 +1,6 @@
 import { fileURLToPath } from "node:url";
 import { existsSync } from "node:fs";
+import { homedir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 
 export function getWorkspaceRoot(): string {
@@ -17,7 +18,7 @@ export function getWorkspaceRoot(): string {
 }
 
 export function getAppConfigPath(): string {
-  return process.env.ZEROSHOT_APP_CONFIG ?? resolve(getWorkspaceRoot(), "zeroshot.app.toml");
+  return process.env.ZEROSHOT_APP_CONFIG ?? join(homedir(), ".zeroshot", "config.toml");
 }
 
 export function getScriptsRoot(): string {

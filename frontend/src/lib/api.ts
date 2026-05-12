@@ -47,6 +47,10 @@ export interface RunDetail {
 export interface AppConfig {
   bootstrapRoots: string[];
   allowedRoots: string[];
+  server: {
+    host: string;
+    port: number;
+  };
   defaults: {
     approval: string;
     sandbox: string;
@@ -107,6 +111,13 @@ export interface ArchitectDecisionResponse {
   decisions: ArchitectDecision[];
 }
 
+export interface ArchitectProgressEvent {
+  id: string;
+  title: string;
+  detail: string;
+  status: "running" | "completed" | "failed";
+}
+
 const client = axios.create({
   baseURL: "/api"
 });
@@ -149,6 +160,73 @@ export async function saveProductHtml(payload: { projectRoot: string; content: s
 
 export async function requestArchitectDecisions(payload: { projectRoot: string; goal: string; locale: string }) {
   return (await client.post<ArchitectDecisionResponse>("/architect/decisions", payload)).data;
+}
+
+function parseStreamEvent(raw: string): { event: string; data: unknown } | null {
+  const event = raw.split("\n").find((line) => line.startsWith("event: "))?.slice(7).trim();
+  const data = raw
+    .split("\n")
+    .filter((line) => line.startsWith("data: "))
+    .map((line) => line.slice(6))
+    .join("\n");
+
+  if (!event || !data) {
+    return null;
+  }
+
+  return { event, data: JSON.parse(data) as unknown };
+}
+
+export async function requestArchitectDecisionsStream(
+  payload: { projectRoot: string; goal: string; locale: string },
+  onProgress: (event: ArchitectProgressEvent) => void
+) {
+  const response = await fetch("/api/architect/decisions/stream", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || "Architect request failed.");
+  }
+  if (!response.body) {
+    throw new Error("Architect stream is unavailable.");
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  while (true) {
+    const { done, value } = await reader.read();
+    buffer += decoder.decode(value, { stream: !done });
+    const parts = buffer.split("\n\n");
+    buffer = parts.pop() ?? "";
+
+    for (const part of parts) {
+      const parsed = parseStreamEvent(part);
+      if (!parsed) {
+        continue;
+      }
+      if (parsed.event === "progress") {
+        onProgress(parsed.data as ArchitectProgressEvent);
+      }
+      if (parsed.event === "complete") {
+        return (parsed.data as { decisions: ArchitectDecisionResponse }).decisions;
+      }
+      if (parsed.event === "error") {
+        throw new Error((parsed.data as { message: string }).message);
+      }
+    }
+
+    if (done) {
+      break;
+    }
+  }
+
+  throw new Error("Architect stream ended before decisions were returned.");
 }
 
 export async function startBuild(payload: { projectRoot: string; productContent?: string; options?: PipelineOptions }) {

@@ -1,4 +1,3 @@
-bootstrap_roots = [ "/Users/khkim/dev/test/zeroShot/workspace" ]
 allowed_roots = [ "/Users/khkim/dev/test/zeroShot/workspace/sample" ]
 default_approval = "never"
 default_sandbox = "workspace-write"

@@ -1,6 +1,5 @@
 #!/usr/bin/env bun
 import { spawn, type ChildProcess } from "node:child_process";
-import { homedir } from "node:os";
 
 type ProcSpec = {
   name: string;
@@ -11,31 +10,6 @@ type ProcSpec = {
 
 const processes: ChildProcess[] = [];
 let shuttingDown = false;
-
-function expandHomePath(input: string): string {
-  const trimmed = input.trim();
-  if (trimmed === "~") {
-    return homedir();
-  }
-  if (trimmed.startsWith("~/") || trimmed.startsWith("~\\")) {
-    return `${homedir()}${trimmed.slice(1)}`;
-  }
-  return trimmed;
-}
-
-function readRootArg(): string | null {
-  const args = process.argv.slice(2);
-  for (let index = 0; index < args.length; index += 1) {
-    const current = args[index];
-    if (current.startsWith("--root=")) {
-      return current.slice("--root=".length);
-    }
-    if (current === "--root") {
-      return args[index + 1] ?? null;
-    }
-  }
-  return null;
-}
 
 function prefixAndPipe(stream: NodeJS.ReadableStream | null, name: string, color: string) {
   if (!stream) {
@@ -102,11 +76,6 @@ process.on("SIGINT", () => {
 process.on("SIGTERM", () => {
   stopAll("SIGTERM");
 });
-
-const root = readRootArg();
-if (root) {
-  process.env.ZEROSHOT_BOOTSTRAP_ROOTS = expandHomePath(root);
-}
 
 start({
   name: "backend",

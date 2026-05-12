@@ -1,12 +1,18 @@
 import { parse, stringify } from "@iarna/toml";
-import { readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { homedir } from "node:os";
+import { dirname } from "node:path";
 import { expandHomePath } from "../core/path-input.js";
 import { getAppConfigPath } from "../core/workspace.js";
 import type { AppConfig } from "../types.js";
 
 const defaultConfig: AppConfig = {
-  bootstrapRoots: ["/project"],
+  bootstrapRoots: [homedir()],
   allowedRoots: [],
+  server: {
+    host: "127.0.0.1",
+    port: 3000
+  },
   defaults: {
     approval: "never",
     sandbox: "workspace-write",
@@ -27,22 +33,6 @@ function normalizeRoots(value: unknown, fallback: string[]): string[] {
   return Array.from(new Set(roots.map(expandHomePath)));
 }
 
-function getBootstrapRootsOverride(): string[] | null {
-  const raw = process.env.ZEROSHOT_BOOTSTRAP_ROOTS;
-  if (!raw?.trim()) {
-    return null;
-  }
-
-  return Array.from(
-    new Set(
-      raw
-        .split(",")
-        .map(expandHomePath)
-        .filter(Boolean)
-    )
-  );
-}
-
 function toString(value: unknown, fallback: string): string {
   return typeof value === "string" && value.trim() ? value : fallback;
 }
@@ -51,15 +41,49 @@ function toNumber(value: unknown, fallback: number): number {
   return typeof value === "number" && Number.isFinite(value) ? value : fallback;
 }
 
-export async function loadAppConfig(): Promise<AppConfig> {
+async function ensureConfigFile(): Promise<string> {
   const filePath = getAppConfigPath();
-  const raw = await readFile(filePath, "utf8");
+  await mkdir(dirname(filePath), { recursive: true });
+
+  const existing = await readFile(filePath, "utf8").catch((error: NodeJS.ErrnoException) => {
+    if (error.code === "ENOENT") {
+      return "";
+    }
+    throw error;
+  });
+
+  if (existing) {
+    return existing;
+  }
+
+  const payload = stringify({
+    host: defaultConfig.server.host,
+    port: defaultConfig.server.port,
+    allowed_roots: defaultConfig.allowedRoots,
+    default_approval: defaultConfig.defaults.approval,
+    default_sandbox: defaultConfig.defaults.sandbox,
+    max_iters: defaultConfig.defaults.maxIters,
+    stall_limit: defaultConfig.defaults.stallLimit,
+    plan_reasoning: defaultConfig.defaults.planReasoning,
+    exec_reasoning: defaultConfig.defaults.execReasoning,
+    validate_reasoning: defaultConfig.defaults.validateReasoning,
+    closeout_reasoning: defaultConfig.defaults.closeoutReasoning
+  });
+  await writeFile(filePath, payload, "utf8");
+  return payload;
+}
+
+export async function loadAppConfig(): Promise<AppConfig> {
+  const raw = await ensureConfigFile();
   const parsed = parse(raw) as Record<string, unknown>;
-  const bootstrapOverride = getBootstrapRootsOverride();
 
   return {
-    bootstrapRoots: bootstrapOverride ?? normalizeRoots(parsed.bootstrap_roots, defaultConfig.bootstrapRoots),
+    bootstrapRoots: defaultConfig.bootstrapRoots,
     allowedRoots: normalizeRoots(parsed.allowed_roots, defaultConfig.allowedRoots),
+    server: {
+      host: toString(parsed.host, defaultConfig.server.host),
+      port: toNumber(parsed.port, defaultConfig.server.port)
+    },
     defaults: {
       approval: toString(parsed.default_approval, defaultConfig.defaults.approval),
       sandbox: toString(parsed.default_sandbox, defaultConfig.defaults.sandbox),
@@ -75,7 +99,8 @@ export async function loadAppConfig(): Promise<AppConfig> {
 
 export async function saveAppConfig(config: AppConfig): Promise<void> {
   const payload = {
-    bootstrap_roots: normalizeRoots(config.bootstrapRoots, defaultConfig.bootstrapRoots),
+    host: toString(config.server?.host, defaultConfig.server.host),
+    port: toNumber(config.server?.port, defaultConfig.server.port),
     allowed_roots: normalizeRoots(config.allowedRoots, defaultConfig.allowedRoots),
     default_approval: config.defaults.approval,
     default_sandbox: config.defaults.sandbox,
@@ -87,5 +112,7 @@ export async function saveAppConfig(config: AppConfig): Promise<void> {
     closeout_reasoning: config.defaults.closeoutReasoning
   };
 
-  await writeFile(getAppConfigPath(), stringify(payload), "utf8");
+  const filePath = getAppConfigPath();
+  await mkdir(dirname(filePath), { recursive: true });
+  await writeFile(filePath, stringify(payload), "utf8");
 }

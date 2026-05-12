@@ -90,7 +90,7 @@ v1의 핵심 원칙은 다음과 같습니다.
   - profiles
   - 주요 기본 실행 옵션
 - `zeroshot.app.toml`
-  - bootstrap roots
+  - bootstrap root는 시스템 홈 디렉터리로 고정
   - allowed roots
   - 기본 approval/sandbox
   - iteration / reasoning 기본값
@@ -134,7 +134,7 @@ bun install
 GitHub release가 생성된 뒤에는 다음 명령으로 CLI를 설치할 수 있습니다.
 
 ```bash
-curl -fsSL https://github.com/keonho-kim/zeroShot/releases/download/v0.1.0/install.sh | sh
+curl -fsSL https://github.com/keonho-kim/zeroShot/releases/download/v.dev.1/install.sh | sh
 ```
 
 installer는 Termux, Linux, WSL, proot, macOS에서 arm64와 x64를 확인합니다.
@@ -143,14 +143,38 @@ Termux에서는 Bun이 미리 설치되어 있어야 하며, 다른 환경에서
 또는 release tarball을 Bun으로 직접 전역 설치할 수 있습니다.
 
 ```bash
-bun install -g https://github.com/keonho-kim/zeroShot/releases/download/v0.1.0/zeroShot-0.1.0.tgz
+bun install -g https://github.com/keonho-kim/zeroShot/releases/download/v.dev.1/zeroShot-dev.1.tgz
 ```
 
 설치 후에는 `zeroshot` 명령을 사용합니다.
 
 ```bash
+zeroshot start
 zeroshot build --project-root /absolute/project/path
 zeroshot update --project-root /absolute/project/path
+```
+
+`zeroshot start`는 설치된 tarball 안의 빌드 산출물만 실행합니다. 설치 후 추가 `bun run build`는 필요하지 않습니다.
+처음 실행하면 `~/.zeroshot/config.toml`이 생성되고, CLI는 접속 가능한 주소와 포트를 출력합니다.
+
+기본값은 로컬 전용입니다.
+
+```toml
+host = "127.0.0.1"
+port = 3000
+```
+
+홈서버, 서비스 서버, Tailscale 같은 사설망에서 접속하려면 다음처럼 바인딩 주소를 열 수 있습니다.
+
+```toml
+host = "0.0.0.0"
+port = 3000
+```
+
+또는 일회성으로 실행할 수 있습니다.
+
+```bash
+zeroshot start --host 0.0.0.0 --port 3000
 ```
 
 ### 타입체크
@@ -167,17 +191,17 @@ bun run build
 
 ### 릴리스 생성
 
-`v*.*.*` 태그를 푸시하면 GitHub Actions가 CLI를 빌드하고 release asset을 생성합니다.
+`v.dev.<number>` 또는 `v*.*.*` 태그를 푸시하면 GitHub Actions가 CLI, backend, frontend를 빌드하고 release asset을 생성합니다.
 같은 태그의 release가 이미 있으면 asset과 release notes를 갱신합니다.
 
 ```bash
-git tag v0.1.0
-git push origin v0.1.0
+git tag v.dev.1
+git push origin v.dev.1
 ```
 
 릴리스 워크플로는 다음 asset을 업로드합니다.
 
-- `zeroShot-0.1.0.tgz`
+- `zeroShot-dev.1.tgz`
 - `install.sh`
 
 ### 개발 서버
@@ -188,11 +212,7 @@ git push origin v0.1.0
 bun run dev
 ```
 
-bootstrap root 지정:
-
-```bash
-bun run dev --root=/absolute/bootstrap/root
-```
+bootstrap root는 시스템 홈 디렉터리로 고정됩니다.
 
 개별 실행:
 
@@ -211,7 +231,7 @@ bun run dev:web
 프로덕션 서버:
 
 ```bash
-bun run serve --root=/absolute/bootstrap/root
+bun run serve
 ```
 
 ### CLI
@@ -232,12 +252,13 @@ make update
 
 ## 설정 파일
 
-### `zeroshot.app.toml`
+### `~/.zeroshot/config.toml`
 
 앱 전용 설정 파일입니다.
 
 ```toml
-bootstrap_roots = ["/project"]
+host = "127.0.0.1"
+port = 3000
 allowed_roots = []
 default_approval = "never"
 default_sandbox = "workspace-write"
@@ -280,11 +301,11 @@ model = "gpt-oss:20b"
 docker build --no-cache -f docker/Dockerfile -t zeroshot .
 docker run \
   -p 3000:3000 \
-  -v ~/dev/test/zeroShot/workspace:/project \
+  -v ~/dev/test/zeroShot/root:/root \
   zeroshot
 ```
 
-기본 설정은 `/project`를 bootstrap root로 사용합니다.
+기본 설정은 시스템 홈 디렉터리를 bootstrap root로 사용합니다.
 
 `auth.json`을 컨테이너 재시작 후에도 유지하려면:
 
@@ -292,7 +313,6 @@ docker run \
 docker run \
   -p 3000:3000 \
   -v ~/dev/test/zeroShot/root:/root \
-  -v ~/dev/test/zeroShot/workspace:/project \
   zeroshot
 ```
 
@@ -304,8 +324,9 @@ docker run \
 
 ```text
 ~/dev/test/zeroShot/
-|-- root
-`-- workspace
+`-- root
+    |-- .codex
+    `-- workspace
 ```
 
 ### 역할
@@ -314,16 +335,16 @@ docker run \
   - 컨테이너의 `/root`로 마운트
   - Login 페이지에서 업로드한 `auth.json`은 최종적으로 `~/dev/test/zeroShot/root/.codex/auth.json`에 저장됨
   - Settings 페이지에서 수정한 `config.toml`도 `~/dev/test/zeroShot/root/.codex/config.toml`에 반영됨
-- `~/dev/test/zeroShot/workspace`
-  - 컨테이너의 `/project`로 마운트
-  - UI에서 탐색을 시작하는 bootstrap root의 실제 호스트 위치
+- `~/dev/test/zeroShot/root/workspace`
+  - 컨테이너의 `/root/workspace`로 보이는 작업 디렉터리 예시
+  - UI에서 프로젝트로 허용할 수 있는 작업 디렉터리 예시
   - `PRODUCT.md`, `UPDATE.md`, `.work.history`가 이 경로 아래 프로젝트들에 생성됨
 
 ### 권장 준비
 
 ```bash
 mkdir -p ~/dev/test/zeroShot/root/.codex
-mkdir -p ~/dev/test/zeroShot/workspace
+mkdir -p ~/dev/test/zeroShot/root/workspace
 ```
 
 ### 권장 실행
@@ -333,7 +354,6 @@ docker build --no-cache -f docker/Dockerfile -t zeroshot .
 docker run --rm \
   -p 3000:3000 \
   -v ~/dev/test/zeroShot/root:/root \
-  -v ~/dev/test/zeroShot/workspace:/project \
   zeroshot
 ```
 
@@ -342,7 +362,7 @@ docker run --rm \
 1. 브라우저에서 `http://localhost:3000` 접속
 2. `Login` 페이지에서 `auth.json` 업로드
 3. 업로드된 파일은 호스트의 `~/dev/test/zeroShot/root/.codex/auth.json`에 저장
-4. `Home`에서 프로젝트 선택 모달을 열고 `~/dev/test/zeroShot/workspace` 아래 프로젝트를 선택
+4. `Home`에서 프로젝트 선택 모달을 열고 `/root/workspace` 아래 프로젝트를 선택
 5. 실행 결과는 해당 프로젝트 내부 `.work.history`에 기록
 
 ### 예시 프로젝트 경로
@@ -350,19 +370,19 @@ docker run --rm \
 예를 들어 호스트에 아래 디렉터리가 있으면:
 
 ```text
-~/dev/test/zeroShot/workspace/my-app
+~/dev/test/zeroShot/root/workspace/my-app
 ```
 
 컨테이너/UI 기준으로는 다음 경로로 보입니다.
 
 ```text
-/project/my-app
+/root/workspace/my-app
 ```
 
 이 프로젝트에서 Build를 실행하면 결과는 호스트 기준으로 여기에 쌓입니다.
 
 ```text
-~/dev/test/zeroShot/workspace/my-app/.work.history
+~/dev/test/zeroShot/root/workspace/my-app/.work.history
 ```
 
 ## 참고

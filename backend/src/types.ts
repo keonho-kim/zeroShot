@@ -14,6 +14,10 @@ export interface AppDefaults {
 export interface AppConfig {
   bootstrapRoots: string[];
   allowedRoots: string[];
+  server: {
+    host: string;
+    port: number;
+  };
   defaults: AppDefaults;
 }
 

@@ -18,10 +18,9 @@ FROM oven/bun:1.3.11 AS runtime
 WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3000
-ENV ZEROSHOT_BOOTSTRAP_ROOTS=/project
 
 COPY --from=build /app /app
 
 EXPOSE 3000
 
-CMD ["bun", "run", "serve", "--root=/project"]
+CMD ["bun", "run", "serve"]

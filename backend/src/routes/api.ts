@@ -5,7 +5,7 @@ import { loadAppConfig, saveAppConfig } from "../config/app-config.js";
 import { loadCodexSettings, saveCodexSettings } from "../config/codex-config.js";
 import { assertPathWithinRoots, isWithin, listDirectoryEntries } from "../core/path-guards.js";
 import { readAuthStatus, saveAuthFile } from "../services/auth-service.js";
-import { buildArchitectDecisions } from "../services/architect-service.js";
+import { buildArchitectDecisions, type ArchitectProgressEvent } from "../services/architect-service.js";
 import { createDirectory, deleteEntry, readProductHtml, writeProductHtml, writeProductOrUpdate } from "../services/file-service.js";
 import { readRunDetail, listRuns } from "../services/history-service.js";
 import { jobManager } from "../services/job-manager.js";
@@ -91,6 +91,7 @@ router.get("/projects/tree", asyncHandler(async (req: Request, res: Response) =>
   const validated = await assertPathWithinRoots(targetPath, browsableRoots, "browsable roots");
   const entries = await listDirectoryEntries(validated, validated, {
     directoriesOnly: true,
+    hideHidden: true,
     allowedRoots: config.allowedRoots
   });
   res.json({ path: validated, entries });
@@ -104,7 +105,7 @@ router.post("/projects/allow", asyncHandler(async (req: Request, res: Response) 
   }
 
   const config = await loadAppConfig();
-  const validated = await assertPathWithinRoots(body.path, config.bootstrapRoots, "bootstrap roots");
+  const validated = await assertPathWithinRoots(body.path, config.bootstrapRoots, "home directory");
   const nextAllowedRoots = Array.from(new Set([...config.allowedRoots, validated]));
 
   const nextConfig = {
@@ -155,7 +156,7 @@ router.delete("/projects/directory", asyncHandler(async (req: Request, res: Resp
   const validated = await assertPathWithinRoots(body.path, browsableRoots, "browsable roots");
 
   if (config.bootstrapRoots.includes(validated)) {
-    res.status(400).json({ message: "Cannot delete a bootstrap root directory" });
+    res.status(400).json({ message: "Cannot delete the home directory root" });
     return;
   }
 
@@ -208,6 +209,52 @@ router.post("/architect/decisions", asyncHandler(async (req: Request, res: Respo
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     res.status(502).json({ message: `Codex could not produce architect decisions: ${message}` });
+  }
+}));
+
+router.post("/architect/decisions/stream", asyncHandler(async (req: Request, res: Response) => {
+  const auth = await readAuthStatus();
+  if (!auth.valid) {
+    res.status(412).json(auth);
+    return;
+  }
+
+  const body = req.body as { projectRoot?: string; goal?: string; locale?: string; model?: string };
+  const projectRoot = await getValidatedProjectRoot(String(body.projectRoot ?? ""));
+  if (typeof body.goal !== "string" || !body.goal.trim()) {
+    res.status(400).json({ message: "Architect goal is required" });
+    return;
+  }
+
+  res.writeHead(200, {
+    "Content-Type": "text/event-stream",
+    "Cache-Control": "no-cache",
+    Connection: "keep-alive"
+  });
+
+  let seq = 0;
+  const writeEvent = (type: string, data: object) => {
+    seq += 1;
+    res.write(`id: ${seq}\n`);
+    res.write(`event: ${type}\n`);
+    res.write(`data: ${JSON.stringify(data)}\n\n`);
+  };
+
+  try {
+    const decisions = await buildArchitectDecisions({
+      projectRoot,
+      goal: body.goal.trim(),
+      locale: body.locale === "ko" ? "ko" : "en",
+      reasoning: (await loadAppConfig()).defaults.planReasoning,
+      model: typeof body.model === "string" && body.model.trim() ? body.model.trim() : undefined,
+      onProgress: (event: ArchitectProgressEvent) => writeEvent("progress", event)
+    });
+    writeEvent("complete", { decisions });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    writeEvent("error", { message: `Codex could not produce architect decisions: ${message}` });
+  } finally {
+    res.end();
   }
 }));
 

@@ -55,6 +55,22 @@ export function SettingsPage() {
                 />
               </div>
               <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="mb-2 block text-sm font-medium">Host</label>
+                  <Input
+                    value={appSettings.server.host}
+                    onChange={(event) => setAppSettings({ ...appSettings, server: { ...appSettings.server, host: event.target.value } })}
+                  />
+                </div>
+                <div>
+                  <label className="mb-2 block text-sm font-medium">Port</label>
+                  <Input
+                    value={String(appSettings.server.port)}
+                    onChange={(event) => setAppSettings({ ...appSettings, server: { ...appSettings.server, port: Number(event.target.value) || 0 } })}
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
                 <Input value={String(appSettings.defaults.maxIters)} onChange={(event) => setAppSettings({ ...appSettings, defaults: { ...appSettings.defaults, maxIters: Number(event.target.value) || 0 } })} />
                 <Input value={String(appSettings.defaults.stallLimit)} onChange={(event) => setAppSettings({ ...appSettings, defaults: { ...appSettings.defaults, stallLimit: Number(event.target.value) || 0 } })} />
                 <Select value={appSettings.defaults.approval} onChange={(event) => setAppSettings({ ...appSettings, defaults: { ...appSettings.defaults, approval: event.target.value } })}>

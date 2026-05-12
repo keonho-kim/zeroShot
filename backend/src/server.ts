@@ -4,11 +4,14 @@ import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { apiRouter } from "./routes/api.js";
 import { getWorkspaceRoot } from "./core/workspace.js";
+import { loadAppConfig } from "./config/app-config.js";
 
 const app = express();
-const port = Number(process.env.PORT ?? 3000);
+const config = await loadAppConfig();
+const port = Number(process.env.PORT ?? config.server.port);
+const host = process.env.HOST ?? config.server.host;
 const workspaceRoot = getWorkspaceRoot();
-const frontendDist = join(workspaceRoot, "frontend", "dist");
+const frontendDist = process.env.ZEROSHOT_FRONTEND_DIST ?? join(workspaceRoot, "frontend", "dist");
 
 app.use(cors());
 app.use(express.json({ limit: "10mb" }));
@@ -27,6 +30,9 @@ app.use((error: Error & { statusCode?: number }, _req: Request, res: Response, _
   });
 });
 
-app.listen(port, () => {
-  console.log(`[zeroshot-backend] listening on http://localhost:${port}`);
+app.listen(port, host, () => {
+  console.log(`[zeroshot-backend] listening on http://${host}:${port}`);
+  if (host === "0.0.0.0") {
+    console.log(`[zeroshot-backend] local access: http://127.0.0.1:${port}`);
+  }
 });

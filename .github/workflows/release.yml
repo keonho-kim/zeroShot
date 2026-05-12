@@ -4,6 +4,7 @@ on:
   push:
     tags:
       - "v*.*.*"
+      - "v.dev.*"
 
 permissions:
   contents: write
@@ -29,7 +30,11 @@ jobs:
 
       - name: Check package version
         run: |
-          VERSION="${GITHUB_REF_NAME#v}"
+          if [[ "$GITHUB_REF_NAME" == v.dev.* ]]; then
+            VERSION="0.0.0-${GITHUB_REF_NAME#v.}"
+          else
+            VERSION="${GITHUB_REF_NAME#v}"
+          fi
           PACKAGE_VERSION="$(bun --print 'require("./cli/package.json").version')"
 
           if [ "$VERSION" != "$PACKAGE_VERSION" ]; then
@@ -37,24 +42,42 @@ jobs:
             exit 1
           fi
 
-      - name: Build CLI
-        run: bun run --cwd cli build
+      - name: Build release artifacts
+        run: bun run build
+
+      - name: Stage app artifacts in CLI package
+        run: |
+          rm -rf cli/app
+          mkdir -p cli/app/backend cli/app/frontend
+          cp -R backend/dist cli/app/backend/dist
+          cp -R frontend/dist cli/app/frontend/dist
 
       - name: Pack release artifact
         run: |
-          VERSION="${GITHUB_REF_NAME#v}"
+          if [[ "$GITHUB_REF_NAME" == v.dev.* ]]; then
+            RELEASE_VERSION="${GITHUB_REF_NAME#v.}"
+            PACKAGE_VERSION="0.0.0-${RELEASE_VERSION}"
+          else
+            RELEASE_VERSION="${GITHUB_REF_NAME#v}"
+            PACKAGE_VERSION="$RELEASE_VERSION"
+          fi
           mkdir -p release
           cd cli
           bun pm pack --destination ../release
           cd ..
-          mv "release/zeroshot-cli-${VERSION}.tgz" "release/zeroShot-${VERSION}.tgz"
+          mv "release/zeroshot-cli-${PACKAGE_VERSION}.tgz" "release/zeroShot-${RELEASE_VERSION}.tgz"
 
       - name: Copy installer
         run: |
-          VERSION="${GITHUB_REF_NAME#v}"
+          if [[ "$GITHUB_REF_NAME" == v.dev.* ]]; then
+            VERSION="${GITHUB_REF_NAME#v.}"
+          else
+            VERSION="${GITHUB_REF_NAME#v}"
+          fi
           sed \
             -e "s|^REPOSITORY=.*|REPOSITORY=\"${GITHUB_REPOSITORY}\"|" \
             -e "s|^VERSION=.*|VERSION=\"${VERSION}\"|" \
+            -e "s|^TAG=.*|TAG=\"${GITHUB_REF_NAME}\"|" \
             install.sh > release/install.sh
           chmod +x release/install.sh
 
@@ -62,7 +85,11 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          VERSION="${GITHUB_REF_NAME#v}"
+          if [[ "$GITHUB_REF_NAME" == v.dev.* ]]; then
+            VERSION="${GITHUB_REF_NAME#v.}"
+          else
+            VERSION="${GITHUB_REF_NAME#v}"
+          fi
           TITLE="ZeroShot ${GITHUB_REF_NAME}"
           NOTES="Install with: curl -fsSL https://github.com/${GITHUB_REPOSITORY}/releases/download/${GITHUB_REF_NAME}/install.sh | sh"
 

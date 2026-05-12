@@ -1,5 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
-import { ArrowLeft, ArrowRight, Check, Eye, Layers3, Send, Sparkles, X } from "lucide-react";
+import { AlertCircle, ArrowLeft, ArrowRight, Check, CheckCircle2, ChevronDown, Clock, Eye, Layers3, LoaderCircle, Send, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useAppStore } from "../app/store";
@@ -16,8 +16,29 @@ import {
   type ArchitectAnswers,
   type ArchitectDecisionSet
 } from "../entities/architect/architect-core";
-import { requestArchitectDecisions, saveProductHtml, startBuild } from "../lib/api";
+import { requestArchitectDecisionsStream, saveProductHtml, startBuild, type ArchitectProgressEvent } from "../lib/api";
 import { cn } from "../lib/utils";
+
+interface ArchitectTimelineItem extends ArchitectProgressEvent {
+  updates: string[];
+}
+
+function upsertTimelineItem(items: ArchitectTimelineItem[], event: ArchitectProgressEvent): ArchitectTimelineItem[] {
+  const index = items.findIndex((item) => item.id === event.id);
+  if (index === -1) {
+    return [...items, { ...event, updates: [event.detail] }];
+  }
+
+  return items.map((item, itemIndex) => {
+    if (itemIndex !== index) {
+      return item;
+    }
+    const updates = item.updates[item.updates.length - 1] === event.detail
+      ? item.updates
+      : [...item.updates, event.detail];
+    return { ...item, ...event, updates };
+  });
+}
 
 export function ArchitectPage() {
   const navigate = useNavigate();
@@ -37,6 +58,10 @@ export function ArchitectPage() {
   const [blueprintOpen, setBlueprintOpen] = useState(false);
   const [tutorialOpen, setTutorialOpen] = useState(false);
   const [buildPromptOpen, setBuildPromptOpen] = useState(false);
+  const [architectPending, setArchitectPending] = useState(false);
+  const [architectError, setArchitectError] = useState("");
+  const [timelineItems, setTimelineItems] = useState<ArchitectTimelineItem[]>([]);
+  const [expandedTimelineId, setExpandedTimelineId] = useState<string | null>(null);
 
   const decisions = decisionSet?.decisions ?? [];
   const currentDecision = decisions[stepIndex];
@@ -47,21 +72,6 @@ export function ArchitectPage() {
     () => blueprintToProductMarkdown(blueprintHtml),
     [blueprintHtml]
   );
-
-  const architectMutation = useMutation({
-    mutationFn: async () => requestArchitectDecisions({ projectRoot, goal: userBrief, locale }),
-    onSuccess: (nextDecisionSet) => {
-      setSubmittedBrief(userBrief.trim());
-      setDecisionSet(nextDecisionSet);
-      setAnswers({});
-      setStepIndex(0);
-      setBlueprintHtml("");
-      setBlueprintReady(false);
-      setBlueprintOpen(false);
-      setBuildPromptOpen(false);
-      setTutorialOpen(false);
-    }
-  });
 
   const saveBlueprintMutation = useMutation({
     mutationFn: async () => {
@@ -119,13 +129,43 @@ export function ArchitectPage() {
     setAnswers((current) => ({ ...current, [currentDecision.id]: optionId }));
   };
 
-  const requestDecisions = () => {
+  const requestDecisions = async () => {
     const trimmed = userBrief.trim();
-    if (!trimmed) {
+    if (!trimmed || architectPending) {
       return;
     }
     setUserBrief(trimmed);
-    architectMutation.mutate();
+    setSubmittedBrief("");
+    setDecisionSet(null);
+    setAnswers({});
+    setStepIndex(0);
+    setBlueprintHtml("");
+    setBlueprintReady(false);
+    setBlueprintOpen(false);
+    setBuildPromptOpen(false);
+    setTutorialOpen(false);
+    setArchitectError("");
+    setTimelineItems([]);
+    setExpandedTimelineId(null);
+    setArchitectPending(true);
+
+    try {
+      const nextDecisionSet = await requestArchitectDecisionsStream(
+        { projectRoot, goal: trimmed, locale },
+        (event) => {
+          setTimelineItems((items) => upsertTimelineItem(items, event));
+          setExpandedTimelineId(event.id);
+        }
+      );
+      setSubmittedBrief(trimmed);
+      setDecisionSet(nextDecisionSet);
+      setTimelineItems([]);
+      setExpandedTimelineId(null);
+    } catch (error) {
+      setArchitectError(error instanceof Error ? error.message : String(error));
+    } finally {
+      setArchitectPending(false);
+    }
   };
 
   const goNext = () => {
@@ -153,37 +193,76 @@ export function ArchitectPage() {
           setBlueprintOpen(true);
         }}>
           <Eye className="size-4" />
-          VIEW BLUEPRINT
+          {locale === "ko" ? "제품 미리보기" : "VIEW PRODUCT"}
         </Button>
       ) : null}
       <PageHeader title="ARCHITECT" projectRoot={projectRoot} />
       <div className="architect-chat">
         <section className="architect-thread" aria-label="Architect conversation">
-          <div className="chat-bubble assistant">
-            <Sparkles className="size-4" />
-            <span>{locale === "ko" ? "만들고 싶은 제품을 설명하면 Codex가 결정해야 할 JSON 옵션을 정리합니다." : "Describe the product. Codex will turn it into JSON decisions that must be resolved before PRODUCT.html."}</span>
-          </div>
-
           {!decisionSet ? (
             <Card className="architect-input-card">
               <div>
-                <p className="decision-kicker">{locale === "ko" ? "Codex conversation" : "Codex conversation"}</p>
-                <h2>{locale === "ko" ? "무엇을 만들까요?" : "What should ZeroShot build?"}</h2>
-                <p>{locale === "ko" ? "목표 사용자, 핵심 작업, 원하는 결과를 한 번에 적어주세요." : "Write the target user, core workflow, and expected outcome in one brief."}</p>
+                <p className="decision-kicker">{locale === "ko" ? "Product brief" : "Product brief"}</p>
+                <h2>{locale === "ko" ? "어떤 제품을 만들까요?" : "What product should we shape?"}</h2>
+                <p>{locale === "ko" ? "대상 사용자, 해결할 문제, 첫 화면에서 필요한 행동을 적어주세요." : "Describe the user, problem, and first actions the product should support."}</p>
               </div>
               <Textarea
                 value={userBrief}
                 onChange={(event) => setUserBrief(event.target.value)}
-                placeholder={locale === "ko" ? "예: 동네 베이커리가 오늘 생산량과 예약 주문을 관리하는 모바일 우선 웹앱..." : "Example: A mobile-first web app for a neighborhood bakery to manage daily production and preorders..."}
+                placeholder={locale === "ko" ? "예: 기관 알림, 준비물, 일정, 선생님 메시지를 한곳에서 확인하고 바로 대응하는 보호자용 앱" : "Example: A parent app for checking school notices, supplies, schedules, and teacher messages in one place."}
               />
-              {architectMutation.isError ? (
-                <p className="architect-error">{architectMutation.error.message}</p>
+              {architectError ? (
+                <p className="architect-error">{architectError}</p>
               ) : null}
               <div className="decision-actions">
-                <Button disabled={!userBrief.trim() || architectMutation.isPending} onClick={requestDecisions}>
+                <Button disabled={!userBrief.trim() || architectPending} onClick={requestDecisions}>
                   <Send className="size-4" />
-                  {architectMutation.isPending ? "Asking Codex" : "Ask Codex"}
+                  {architectPending ? (locale === "ko" ? "제품 방향 정리 중" : "Shaping product") : (locale === "ko" ? "제품 방향 잡기" : "Shape product")}
                 </Button>
+              </div>
+            </Card>
+          ) : null}
+
+          {!decisionSet && timelineItems.length > 0 ? (
+            <Card className="architect-timeline" aria-label="Architect progress">
+              <div className="timeline-heading">
+                <p className="decision-kicker">{locale === "ko" ? "Progress" : "Progress"}</p>
+                <h2>{locale === "ko" ? "제품 방향을 정리하고 있어요." : "Shaping the product direction."}</h2>
+              </div>
+              <div className="timeline-list">
+                {timelineItems.map((item) => {
+                  const expanded = expandedTimelineId === item.id;
+                  return (
+                    <div className={cn("timeline-item", item.status)} key={item.id}>
+                      <div className="timeline-status" aria-hidden="true">
+                        {item.status === "completed" ? <CheckCircle2 className="size-4" /> : item.status === "failed" ? <AlertCircle className="size-4" /> : <LoaderCircle className="size-4 animate-spin" />}
+                      </div>
+                      <button
+                        type="button"
+                        className="timeline-summary"
+                        onClick={() => setExpandedTimelineId(expanded ? null : item.id)}
+                        aria-expanded={expanded}
+                      >
+                        <span>
+                          <strong>{item.title}</strong>
+                          <small>{item.detail}</small>
+                        </span>
+                        <span className="timeline-count">
+                          {item.updates.length}
+                          <Clock className="size-3" />
+                        </span>
+                        <ChevronDown className={cn("size-4 timeline-chevron", expanded && "open")} />
+                      </button>
+                      {expanded ? (
+                        <div className="timeline-details">
+                          {item.updates.map((update, index) => (
+                            <p key={`${item.id}-${index}`}>{update}</p>
+                          ))}
+                        </div>
+                      ) : null}
+                    </div>
+                  );
+                })}
               </div>
             </Card>
           ) : null}
@@ -191,13 +270,6 @@ export function ArchitectPage() {
           {submittedBrief ? (
             <div className="chat-bubble user">
               <span>{submittedBrief}</span>
-            </div>
-          ) : null}
-
-          {decisionSet ? (
-            <div className="chat-bubble assistant">
-              <Layers3 className="size-4" />
-              <span>{decisionSet.summary}</span>
             </div>
           ) : null}
 
@@ -238,10 +310,10 @@ export function ArchitectPage() {
               <div className="decision-actions">
                 <Button variant="outline" disabled={stepIndex === 0} onClick={() => setStepIndex((value) => Math.max(0, value - 1))}>
                   <ArrowLeft className="size-4" />
-                  Back
+                  {locale === "ko" ? "이전" : "Back"}
                 </Button>
                 <Button disabled={!currentSelection || saveBlueprintMutation.isPending || !canCreateBlueprint && stepIndex + 1 >= decisions.length} onClick={goNext}>
-                  {stepIndex + 1 >= decisions.length ? "Create PRODUCT.html" : "Next"}
+                  {stepIndex + 1 >= decisions.length ? (locale === "ko" ? "제품 화면 만들기" : "Create product preview") : (locale === "ko" ? "다음" : "Next")}
                   <ArrowRight className="size-4" />
                 </Button>
               </div>
@@ -250,10 +322,10 @@ export function ArchitectPage() {
 
           {isComplete ? (
             <Card className="decision-card complete">
-              <div className="decision-kicker">PRODUCT.html ready</div>
-              <h2>{locale === "ko" ? "Blueprint가 준비됐어요." : "Your blueprint is ready."}</h2>
-              <p>{locale === "ko" ? "오른쪽 위 VIEW BLUEPRINT 버튼으로 Codex 결정 JSON에서 만든 PRODUCT.html을 확인하세요." : "Use the VIEW BLUEPRINT button at the top-right to inspect the PRODUCT.html generated from the Codex decision JSON."}</p>
-              {saveBlueprintMutation.isError ? <p className="architect-error">PRODUCT.html could not be saved.</p> : null}
+              <div className="decision-kicker">{locale === "ko" ? "Product preview ready" : "Product preview ready"}</div>
+              <h2>{locale === "ko" ? "제품 미리보기가 준비됐어요." : "Your product preview is ready."}</h2>
+              <p>{locale === "ko" ? "오른쪽 위 제품 미리보기 버튼으로 첫 화면 흐름을 확인하세요." : "Use the product preview button at the top-right to inspect the first-screen flow."}</p>
+              {saveBlueprintMutation.isError ? <p className="architect-error">{locale === "ko" ? "제품 미리보기를 저장하지 못했습니다." : "The product preview could not be saved."}</p> : null}
             </Card>
           ) : null}
         </section>
@@ -261,7 +333,7 @@ export function ArchitectPage() {
       {tutorialOpen ? (
         <div className="blueprint-tutorial" role="dialog" aria-modal="true" aria-label="Blueprint tutorial">
           <div className="tutorial-callout">
-            <p>{locale === "ko" ? "여기를 눌러 방금 만든 PRODUCT.html을 확인하세요." : "Tap here to view the PRODUCT.html blueprint you just created."}</p>
+            <p>{locale === "ko" ? "여기를 눌러 방금 만든 제품 미리보기를 확인하세요." : "Tap here to view the product preview you just created."}</p>
           </div>
         </div>
       ) : null}
@@ -280,7 +352,7 @@ export function ArchitectPage() {
           <Card className="app-modal">
             <p className="modal-eyebrow">BUILD</p>
             <h2>{locale === "ko" ? "이제 BUILD를 시작할까요?" : "Ready to start BUILD?"}</h2>
-            <p>{locale === "ko" ? "PRODUCT.html을 확인했습니다. 이 blueprint를 바탕으로 빌드를 시작할 수 있습니다." : "You have reviewed PRODUCT.html. BUILD can now use this blueprint as the product source."}</p>
+            <p>{locale === "ko" ? "제품 미리보기를 확인했습니다. 이 방향을 바탕으로 빌드를 시작할 수 있습니다." : "You have reviewed the product preview. BUILD can now use this direction as the product source."}</p>
             <div className="modal-actions">
               <Button variant="outline" onClick={() => setBuildPromptOpen(false)}>NO</Button>
               <Button disabled={buildMutation.isPending || currentJob?.status === "running"} onClick={() => buildMutation.mutate()}>

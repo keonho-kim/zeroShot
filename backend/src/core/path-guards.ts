@@ -73,7 +73,7 @@ export async function resolveUserFilePath(projectRoot: string, userRelativePath 
 export async function listDirectoryEntries(
   rootPath: string,
   currentPath: string,
-  options?: { directoriesOnly?: boolean; includeFiles?: boolean; hideWorkHistory?: boolean; allowedRoots?: string[] }
+  options?: { directoriesOnly?: boolean; includeFiles?: boolean; hideWorkHistory?: boolean; hideHidden?: boolean; allowedRoots?: string[] }
 ): Promise<DirectoryEntry[]> {
   const entries = await readdir(currentPath, { withFileTypes: true });
   const rootReal = await resolveExistingPath(rootPath);
@@ -85,6 +85,9 @@ export async function listDirectoryEntries(
         return null;
       }
       if (entry.name === ".git" || entry.name === "node_modules") {
+        return null;
+      }
+      if (options?.hideHidden && entry.name.startsWith(".")) {
         return null;
       }
 

@@ -8,26 +8,39 @@ interface Props {
   rightAction?: "settings";
 }
 
+function formatProjectLabel(projectRoot: string): string {
+  const parts = projectRoot.split("/").filter(Boolean);
+  return parts.at(-1) || projectRoot;
+}
+
 export function PageHeader({ title, projectRoot, rightAction }: Props) {
   const navigate = useNavigate();
 
   return (
-    <div className="mb-8 flex items-start justify-between gap-4">
-      <div className="flex flex-col gap-2">
-        <Button variant="ghost" onClick={() => navigate("/home")} className="-ml-3 text-xs tracking-[0.08em]">
-          <House className="size-4" />
-          HOME
+    <div className="page-header mb-8 flex items-start justify-between gap-4">
+      <div className="flex min-w-0 items-start gap-4">
+        <Button
+          variant="ghost"
+          onClick={() => navigate("/home")}
+          className="icon-button"
+          aria-label="Home"
+          title="Home"
+        >
+          <House aria-hidden="true" />
         </Button>
-        <div>
-          <h1 className="text-2xl font-semibold tracking-[-0.02em] text-[var(--foreground)] md:text-3xl">{title}</h1>
-          {projectRoot ? <p className="mt-1 break-all text-sm text-[var(--muted-foreground)]">{projectRoot}</p> : null}
+        <div className="min-w-0">
+          <h1 className="page-title">{title}</h1>
+          {projectRoot ? (
+            <p className="project-chip mt-2" title={projectRoot}>
+              {formatProjectLabel(projectRoot)}
+            </p>
+          ) : null}
         </div>
       </div>
       {rightAction === "settings" ? (
-        <Button variant="outline" asChild>
+        <Button variant="outline" asChild className="icon-button" aria-label="Settings" title="Settings">
           <Link to="/settings">
-            <Settings className="size-4" />
-            SETTING
+            <Settings aria-hidden="true" />
           </Link>
         </Button>
       ) : null}

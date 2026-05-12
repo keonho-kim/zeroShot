@@ -2,7 +2,15 @@
 set -eu
 
 REPOSITORY="${ZEROSHOT_REPOSITORY:-keonho-kim/zeroShot}"
-VERSION="${ZEROSHOT_VERSION:-0.1.0}"
+VERSION="${ZEROSHOT_VERSION:-dev.1}"
+case "$VERSION" in
+  dev.*)
+    TAG="${ZEROSHOT_TAG:-v.${VERSION}}"
+    ;;
+  *)
+    TAG="${ZEROSHOT_TAG:-v${VERSION}}"
+    ;;
+esac
 
 fail() {
   echo "$1" >&2
@@ -112,4 +120,4 @@ esac
 
 ensure_bun "$PLATFORM"
 
-bun install -g "https://github.com/${REPOSITORY}/releases/download/v${VERSION}/zeroShot-${VERSION}.tgz"
+bun install -g "https://github.com/${REPOSITORY}/releases/download/${TAG}/zeroShot-${VERSION}.tgz"

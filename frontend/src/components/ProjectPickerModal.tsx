@@ -1,6 +1,7 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { ChevronDown, ChevronLeft, ChevronRight, Folder, FolderOpen, FolderPlus, FolderTree, House, Plus, Trash2, X } from "lucide-react";
-import { Fragment, useEffect, useMemo, useState } from "react";
+import type { PointerEvent } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { createProjectDirectory, deleteProjectDirectory, fetchAppSettings, fetchProjectTree, type DirectoryEntry } from "../lib/api";
 import { useAppStore } from "../app/store";
 import { Button } from "./ui/button";
@@ -188,6 +189,16 @@ function TreeRow({
 export function ProjectPickerModal({ open, onClose }: Props) {
   const [pendingDeleteEntry, setPendingDeleteEntry] = useState<DirectoryEntry | null>(null);
   const [deleteConfirmationName, setDeleteConfirmationName] = useState("");
+  const [treeDragging, setTreeDragging] = useState(false);
+  const treeDragRef = useRef<{
+    pointerId: number;
+    x: number;
+    y: number;
+    scrollLeft: number;
+    scrollTop: number;
+    dragged: boolean;
+  } | null>(null);
+  const suppressTreeClickRef = useRef(false);
   const projectRoot = useAppStore((state) => state.projectRoot);
   const bootstrapRoots = useAppStore((state) => state.bootstrapRoots);
   const browserPath = useAppStore((state) => state.projectBrowserPath);
@@ -229,7 +240,7 @@ export function ProjectPickerModal({ open, onClose }: Props) {
     }
 
     setBootstrapRoots(settingsQuery.data.bootstrapRoots);
-    const initialPath = browserPath || projectRoot || settingsQuery.data.bootstrapRoots[0] || "";
+    const initialPath = browserPath || settingsQuery.data.bootstrapRoots[0] || projectRoot || "";
     if (!browserPath && initialPath) {
       setProjectBrowserPath(initialPath);
       setCandidateProjectPath(initialPath);
@@ -286,6 +297,56 @@ export function ProjectPickerModal({ open, onClose }: Props) {
   const canGoUp = !!currentPath && !bootstrapRoots.includes(currentPath);
   const breadcrumb = useMemo(() => currentPath.split("/").filter(Boolean), [currentPath]);
   const currentEntries = treeChildrenByPath[currentPath] ?? currentTreeQuery.data?.entries ?? [];
+
+  const startTreeDrag = (event: PointerEvent<HTMLDivElement>) => {
+    if (event.button !== 0) {
+      return;
+    }
+    if ((event.target as HTMLElement).closest("button,input,textarea,select,a")) {
+      return;
+    }
+
+    treeDragRef.current = {
+      pointerId: event.pointerId,
+      x: event.clientX,
+      y: event.clientY,
+      scrollLeft: event.currentTarget.scrollLeft,
+      scrollTop: event.currentTarget.scrollTop,
+      dragged: false
+    };
+    event.currentTarget.setPointerCapture(event.pointerId);
+  };
+
+  const moveTreeDrag = (event: PointerEvent<HTMLDivElement>) => {
+    const drag = treeDragRef.current;
+    if (!drag || drag.pointerId !== event.pointerId) {
+      return;
+    }
+
+    const deltaX = event.clientX - drag.x;
+    const deltaY = event.clientY - drag.y;
+    if (!drag.dragged && Math.hypot(deltaX, deltaY) > 6) {
+      drag.dragged = true;
+      suppressTreeClickRef.current = true;
+      setTreeDragging(true);
+    }
+
+    event.currentTarget.scrollLeft = drag.scrollLeft - deltaX;
+    event.currentTarget.scrollTop = drag.scrollTop - deltaY;
+  };
+
+  const stopTreeDrag = (event: PointerEvent<HTMLDivElement>) => {
+    const drag = treeDragRef.current;
+    if (drag?.pointerId === event.pointerId) {
+      treeDragRef.current = null;
+      setTreeDragging(false);
+      if (drag.dragged) {
+        window.setTimeout(() => {
+          suppressTreeClickRef.current = false;
+        }, 120);
+      }
+    }
+  };
 
   const selectProjectMutation = useMutation({
     mutationFn: async (path: string) => {
@@ -412,7 +473,7 @@ export function ProjectPickerModal({ open, onClose }: Props) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--overlay)] p-6">
-      <Card className="max-h-[88vh] w-full max-w-7xl overflow-hidden bg-[var(--panel)] p-0 shadow-[var(--shadow-popover)]">
+      <Card className="flex h-[min(88vh,780px)] w-full max-w-7xl flex-col overflow-hidden bg-[var(--panel)] p-0 shadow-[var(--shadow-popover)]">
         <div className="flex items-center justify-between px-6 py-4">
           <div>
             <p className="text-2xl font-semibold tracking-[-0.02em]">프로젝트 선택</p>
@@ -438,8 +499,8 @@ export function ProjectPickerModal({ open, onClose }: Props) {
             </div>
             <div className="flex min-w-0 flex-1 items-center gap-2 rounded-md bg-[var(--surface)] px-3 py-2 text-sm">
               <span className="shrink-0 font-medium">현재 경로</span>
-              <span className="min-w-0 truncate text-[var(--muted-foreground)]" title={currentPath || "Bootstrap roots"}>
-                {currentPath || "Bootstrap roots"}
+              <span className="min-w-0 truncate text-[var(--muted-foreground)]" title={currentPath || "Home directory"}>
+                {currentPath || "Home directory"}
               </span>
             </div>
             <div className="flex flex-wrap items-center gap-2 xl:justify-end">
@@ -459,17 +520,31 @@ export function ProjectPickerModal({ open, onClose }: Props) {
           <div className="mt-3 flex flex-wrap gap-2">
             {breadcrumb.length ? breadcrumb.map((part, index) => (
               <PathBadge key={`${part}-${index}`}>{part}</PathBadge>
-            )) : <PathBadge>bootstrap roots</PathBadge>}
+            )) : <PathBadge>home directory</PathBadge>}
           </div>
         </div>
 
-        <div className="flex min-h-[560px] min-w-0 flex-col">
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col">
           <div className="bg-[var(--surface)] px-4 py-3 text-sm text-[var(--muted-foreground)]">
             <span className="block truncate" title={currentPath ? `${currentPath} 탐색 중` : "탐색 시작점을 선택하세요"}>
               {currentPath ? `${currentPath} 탐색 중` : "탐색 시작점을 선택하세요"}
             </span>
           </div>
-          <div className="min-h-0 flex-1 overflow-auto">
+          <div
+            className={cn("project-tree-scroll min-h-0 flex-1 overflow-auto", treeDragging && "dragging")}
+            onPointerDown={startTreeDrag}
+            onPointerMove={moveTreeDrag}
+            onPointerUp={stopTreeDrag}
+            onPointerCancel={stopTreeDrag}
+            onClickCapture={(event) => {
+              if (!suppressTreeClickRef.current) {
+                return;
+              }
+              event.preventDefault();
+              event.stopPropagation();
+              suppressTreeClickRef.current = false;
+            }}
+          >
             <div className="flex flex-col gap-1 p-2">
               {pendingCreateDirParentPath === currentPath ? (
                 <div className="grid grid-cols-[32px_40px_minmax(0,1fr)] gap-3 px-3 py-2 md:grid-cols-[32px_40px_minmax(0,1fr)_auto] md:items-center">
