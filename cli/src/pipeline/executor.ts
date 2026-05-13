@@ -1,10 +1,10 @@
 import { Codex, type ApprovalMode, type ModelReasoningEffort, type SandboxMode, type ThreadEvent } from "@openai/codex-sdk";
 import { appendFile, mkdir, open, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import type { Gate, PhaseResult, PipelineContext } from "./types.js";
-import { slug } from "./utils.js";
-import { buildPrompt } from "./phase/common/prompt.js";
-import { finalOutputSchema } from "./schema.js";
+import type { Gate, PhaseResult, PipelineContext } from "@cli/pipeline/types.js";
+import { slug } from "@cli/pipeline/utils.js";
+import { buildPrompt } from "@cli/pipeline/phase/common/prompt.js";
+import { finalOutputSchema } from "@cli/pipeline/schema.js";
 
 async function nextPhaseLogDir(ctx: PipelineContext, phase: string): Promise<string> {
   ctx.phaseSeq += 1;
@@ -192,6 +192,7 @@ export async function runCodexPhase(
       approvalPolicy: asApprovalMode(ctx.options.approval),
       sandboxMode: asSandboxMode(ctx.options.sandbox),
       modelReasoningEffort: asReasoningEffort(reasoning),
+      additionalDirectories: ctx.options.additionalDirectories,
       ...(ctx.options.model ? { model: ctx.options.model } : {})
     });
     const { events } = await thread.runStreamed(prompt, { outputSchema: finalOutputSchema });

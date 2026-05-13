@@ -3,7 +3,7 @@ import { constants, existsSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawn } from "node:child_process";
-import type { AppDefaults, PipelineContext, PipelineOptions, RunMode } from "./types.js";
+import type { AppDefaults, PipelineContext, PipelineOptions, RunMode } from "@cli/pipeline/types.js";
 
 export function nowHuman(date = new Date()): string {
   const pad = (value: number) => String(value).padStart(2, "0");
@@ -65,6 +65,7 @@ export function mergeOptions(defaults: AppDefaults, options: PipelineOptions): P
     validateReasoning: options.validateReasoning ?? defaults.validateReasoning,
     closeoutReasoning: options.closeoutReasoning ?? defaults.closeoutReasoning,
     responseLanguage: options.responseLanguage ?? process.env.ZEROSHOT_RESPONSE_LANGUAGE ?? "en",
+    additionalDirectories: options.additionalDirectories ?? [],
     ...(options.model ? { model: options.model } : {})
   };
 }

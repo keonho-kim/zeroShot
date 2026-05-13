@@ -1,16 +1,16 @@
 import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
 import * as React from "react";
-import { cn } from "../../lib/utils";
+import { cn } from "@/utils/cn";
 
 const buttonVariants = cva(
-  "inline-flex min-h-11 items-center justify-center gap-2 rounded-[2px] border-2 border-[var(--border)] px-5 py-3 font-mono text-sm font-bold outline-none transition duration-150 active:translate-y-px focus-visible:shadow-[var(--shadow-focus)] disabled:cursor-not-allowed disabled:opacity-50 [&_svg]:size-4",
+  "inline-flex min-h-11 items-center justify-center gap-2 rounded-[1px] border-[3px] border-[var(--border)] px-5 py-3 font-mono text-sm font-black uppercase tracking-normal outline-none shadow-[var(--shadow-button)] transition duration-100 active:translate-x-1 active:translate-y-1 active:shadow-none focus-visible:shadow-[var(--shadow-focus)] disabled:cursor-not-allowed disabled:opacity-50 [&_svg]:size-4",
   {
     variants: {
       variant: {
-        default: "bg-[var(--foreground)] text-[var(--background)] hover:bg-[var(--accent)] hover:text-[var(--surface)]",
-        outline: "bg-[var(--surface)] text-[var(--foreground)] hover:bg-[var(--surface-hover)]",
-        ghost: "border-transparent bg-transparent text-[var(--muted-foreground)] hover:border-[var(--border)] hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)]",
+        default: "bg-[var(--foreground)] text-[var(--background)] hover:bg-[var(--accent)] hover:text-[var(--foreground)]",
+        outline: "bg-[var(--surface)] text-[var(--foreground)] hover:bg-[var(--arcade-cyan)]",
+        ghost: "bg-[var(--panel)] text-[var(--foreground)] hover:bg-[var(--arcade-yellow)]",
         destructive: "bg-[var(--danger-surface)] text-[var(--danger-foreground)] hover:bg-[var(--danger-surface-strong)]"
       }
     },

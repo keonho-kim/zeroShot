@@ -1,8 +1,12 @@
 {
   "extends": "../tsconfig.base.json",
   "compilerOptions": {
+    "baseUrl": ".",
     "composite": true,
     "outDir": "dist",
+    "paths": {
+      "@backend/*": ["./src/*"]
+    },
     "rootDir": "src"
   },
   "include": ["src"],

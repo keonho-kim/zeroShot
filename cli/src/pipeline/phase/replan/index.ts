@@ -1,6 +1,6 @@
-import { runCodexPhase } from "../../executor.js";
-import type { PhaseResult, PipelineContext } from "../../types.js";
-import { createPrompt } from "./prompt.js";
+import { runCodexPhase } from "@cli/pipeline/executor.js";
+import type { PhaseResult, PipelineContext } from "@cli/pipeline/types.js";
+import { createPrompt } from "@cli/pipeline/phase/replan/prompt.js";
 
 export async function replanPhase(ctx: PipelineContext, label: string): Promise<PhaseResult> {
   console.log("[replan] replan phase를 시작합니다.");

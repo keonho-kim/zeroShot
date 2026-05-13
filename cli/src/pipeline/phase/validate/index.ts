@@ -1,6 +1,6 @@
-import { runCodexPhase } from "../../executor.js";
-import type { PhaseResult, PipelineContext } from "../../types.js";
-import { createPrompt } from "./prompt.js";
+import { runCodexPhase } from "@cli/pipeline/executor.js";
+import type { PhaseResult, PipelineContext } from "@cli/pipeline/types.js";
+import { createPrompt } from "@cli/pipeline/phase/validate/prompt.js";
 
 export async function validatePhase(ctx: PipelineContext): Promise<PhaseResult> {
   console.log("[validate] validate phase를 시작합니다.");

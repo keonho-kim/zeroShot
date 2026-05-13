@@ -21,6 +21,18 @@ export function getAppConfigPath(): string {
   return process.env.ZEROSHOT_APP_CONFIG ?? join(homedir(), ".zeroshot", "config.toml");
 }
 
+export function getAppDataRoot(): string {
+  return process.env.ZEROSHOT_DATA_ROOT ?? join(homedir(), ".zeroshot");
+}
+
+export function getAppDatabasePath(): string {
+  return process.env.ZEROSHOT_APP_DB ?? join(getAppDataRoot(), "zeroshot.sqlite");
+}
+
+export function getAppEventsPath(): string {
+  return process.env.ZEROSHOT_APP_EVENTS ?? join(getAppDataRoot(), "events.jsonl");
+}
+
 export function getScriptsRoot(): string {
   return resolve(getWorkspaceRoot(), "scripts");
 }

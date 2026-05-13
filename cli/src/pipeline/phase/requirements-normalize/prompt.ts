@@ -1,4 +1,4 @@
-import type { PipelineContext } from "../../types.js";
+import type { PipelineContext } from "@cli/pipeline/types.js";
 
 export function createPrompt(ctx: PipelineContext): { goal: string; extra: string } {
   if (ctx.mode === "build") {

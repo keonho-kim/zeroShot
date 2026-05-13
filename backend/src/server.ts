@@ -2,9 +2,9 @@ import cors from "cors";
 import express, { type NextFunction, type Request, type Response } from "express";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
-import { apiRouter } from "./routes/api.js";
-import { getWorkspaceRoot } from "./core/workspace.js";
-import { loadAppConfig } from "./config/app-config.js";
+import { apiRouter } from "@backend/routes/api.js";
+import { getWorkspaceRoot } from "@backend/core/workspace.js";
+import { loadAppConfig } from "@backend/config/app-config.js";
 
 const app = express();
 const config = await loadAppConfig();

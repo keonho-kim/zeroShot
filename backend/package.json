@@ -1,6 +1,6 @@
 {
   "name": "@zeroshot/backend",
-  "version": "0.0.0-dev.1",
+  "version": "0.0.0-dev.2",
   "private": true,
   "type": "module",
   "exports": {
@@ -11,7 +11,7 @@
   },
   "scripts": {
     "dev": "bun --watch src/server.ts",
-    "build": "rm -rf dist tsconfig.tsbuildinfo && tsc -p tsconfig.json",
+    "build": "rm -rf dist tsconfig.tsbuildinfo && tsc -p tsconfig.json && tsc-alias -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {

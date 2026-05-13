@@ -2,7 +2,7 @@ import { afterEach, describe, expect, test } from "bun:test";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir, homedir } from "node:os";
 import { join } from "node:path";
-import { loadAppConfig, saveAppConfig } from "./app-config";
+import { loadAppConfig, saveAppConfig } from "@backend/config/app-config";
 
 let configDir = "";
 const originalConfigPath = process.env.ZEROSHOT_APP_CONFIG;
@@ -56,6 +56,10 @@ allowed_roots = ["~/zeroshot-projects"]
     await saveAppConfig({
       bootstrapRoots: ["/tmp/ignored"],
       allowedRoots: [join(configDir, "workspace")],
+      resourceRoots: {
+        skills: join(configDir, "skills"),
+        designTemplates: join(configDir, "design-templates")
+      },
       server: {
         host: "127.0.0.1",
         port: 3000

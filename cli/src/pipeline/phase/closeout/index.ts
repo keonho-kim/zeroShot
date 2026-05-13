@@ -1,8 +1,8 @@
 import { appendFile, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { recordPhaseResult } from "../../executor.js";
-import type { PhaseResult, PipelineContext } from "../../types.js";
-import { nowHuman } from "../../utils.js";
+import { recordPhaseResult } from "@cli/pipeline/executor.js";
+import type { PhaseResult, PipelineContext } from "@cli/pipeline/types.js";
+import { nowHuman } from "@cli/pipeline/utils.js";
 
 function readOptional(path: string): Promise<string> {
   return readFile(path, "utf8").catch(() => "");

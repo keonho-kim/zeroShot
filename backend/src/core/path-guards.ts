@@ -1,8 +1,8 @@
-import { realpath, readdir, readFile, stat, writeFile, mkdir, lstat } from "node:fs/promises";
+import { realpath, readdir, readFile, stat, writeFile, mkdir } from "node:fs/promises";
 import { dirname, join, relative, resolve } from "node:path";
-import { expandHomePath } from "./path-input.js";
-import type { DirectoryEntry } from "../types.js";
-import { readProjectHistoryMeta } from "../services/project-service.js";
+import { expandHomePath } from "@backend/core/path-input.js";
+import type { DirectoryEntry } from "@backend/types.js";
+import { readProjectHistoryMeta } from "@backend/services/project-service.js";
 
 function normalize(path: string): string {
   return path.replace(/\\/g, "/");
@@ -73,11 +73,19 @@ export async function resolveUserFilePath(projectRoot: string, userRelativePath 
 export async function listDirectoryEntries(
   rootPath: string,
   currentPath: string,
-  options?: { directoriesOnly?: boolean; includeFiles?: boolean; hideWorkHistory?: boolean; hideHidden?: boolean; allowedRoots?: string[] }
+  options?: {
+    directoriesOnly?: boolean;
+    includeFiles?: boolean;
+    hideWorkHistory?: boolean;
+    hideHidden?: boolean;
+    allowedRoots?: string[];
+    includeHistoryMeta?: boolean;
+  }
 ): Promise<DirectoryEntry[]> {
   const entries = await readdir(currentPath, { withFileTypes: true });
   const rootReal = await resolveExistingPath(rootPath);
   const allowedRoots = options?.allowedRoots ? await resolveRoots(options.allowedRoots) : [];
+  const includeHistoryMeta = options?.includeHistoryMeta ?? true;
 
   const mapped = await Promise.all(
     entries.map(async (entry) => {
@@ -92,8 +100,7 @@ export async function listDirectoryEntries(
       }
 
       const absolute = join(currentPath, entry.name);
-      const stats = await lstat(absolute);
-      const isDirectory = stats.isDirectory();
+      const isDirectory = entry.isDirectory();
 
       if (options?.directoriesOnly && !isDirectory) {
         return null;
@@ -102,14 +109,19 @@ export async function listDirectoryEntries(
         return null;
       }
 
-      const historyMeta = isDirectory ? await readProjectHistoryMeta(absolute) : { hasWorkHistory: false, runsCount: 0 };
+      const historyMeta = isDirectory && includeHistoryMeta
+        ? await readProjectHistoryMeta(absolute)
+        : { hasWorkHistory: false, runsCount: 0 };
+      const resolvedEntryPath = isDirectory && allowedRoots.length
+        ? await resolveExistingPath(absolute).catch(() => absolute)
+        : absolute;
 
       return {
         name: entry.name,
         path: absolute,
         relativePath: normalize(relative(rootReal, absolute)),
         isDirectory,
-        isAllowedRoot: isDirectory ? allowedRoots.includes(await resolveExistingPath(absolute).catch(() => absolute)) : false,
+        isAllowedRoot: isDirectory ? allowedRoots.includes(resolvedEntryPath) : false,
         hasWorkHistory: historyMeta.hasWorkHistory,
         runsCount: historyMeta.runsCount
       } satisfies DirectoryEntry;

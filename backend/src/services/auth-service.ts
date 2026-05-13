@@ -1,7 +1,7 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
-import type { AuthStatus } from "../types.js";
+import type { AuthStatus } from "@backend/types.js";
 
 export function getAuthPath(): string {
   return join(homedir(), ".codex", "auth.json");

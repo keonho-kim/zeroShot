@@ -14,6 +14,10 @@ export interface AppDefaults {
 export interface AppConfig {
   bootstrapRoots: string[];
   allowedRoots: string[];
+  resourceRoots: {
+    skills: string;
+    designTemplates: string;
+  };
   server: {
     host: string;
     port: number;
@@ -67,6 +71,7 @@ export interface ProjectState {
   projectRoot: string;
   hasProduct: boolean;
   hasProductHtml: boolean;
+  hasDesign: boolean;
   hasUpdate: boolean;
   isDirectoryEmpty: boolean;
   buildEnabled: boolean;
@@ -101,6 +106,72 @@ export interface PipelineOptions {
   validateReasoning?: string;
   closeoutReasoning?: string;
   responseLanguage?: string;
+  additionalDirectories?: string[];
+}
+
+export interface ProjectSettings {
+  projectRoot: string;
+  activeSkillId?: string;
+  activeDesignTemplateId?: string;
+}
+
+export type DesignRuntimeMode = "codex" | "figma" | "powerpoint";
+
+export interface DesignRuntimeSection {
+  id: string;
+  title: string;
+  body: string;
+}
+
+export interface DesignRuntimeAction {
+  label: string;
+  detail: string;
+  owner: "codex" | "designer" | "reviewer";
+}
+
+export interface DesignRuntimeArtifact {
+  path: string;
+  type: string;
+  title: string;
+  description: string;
+}
+
+export interface DesignRuntimeResponse {
+  id: string;
+  projectRoot: string;
+  mode: DesignRuntimeMode;
+  title: string;
+  summary: string;
+  generatedAt: string;
+  designMarkdown: string;
+  sections: DesignRuntimeSection[];
+  actions: DesignRuntimeAction[];
+  artifacts: DesignRuntimeArtifact[];
+}
+
+export interface DesignProgressEvent {
+  id: string;
+  title: string;
+  detail: string;
+  status: "running" | "completed" | "failed";
+}
+
+export interface ResourceFileSummary {
+  path: string;
+  kind: "reference" | "asset" | "example" | "other";
+  size: number;
+}
+
+export interface ResourceManifest {
+  id: string;
+  name: string;
+  description: string;
+  category?: string;
+  tags: string[];
+  root: string;
+  manifestPath: string;
+  body: string;
+  files: ResourceFileSummary[];
 }
 
 export interface PipelineCommandSpec {

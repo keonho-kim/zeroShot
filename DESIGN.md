@@ -1,29 +1,29 @@
-# Design System: ZeroShot Grid Workbench
+# Design System: ZeroShot Pixel Brutalist Workbench
 **Project ID:** local-zeroshot
 
 ## 1. Visual Theme & Atmosphere
 
-ZeroShot should feel like a stark AI development workbench: bright, gridded, mechanical, and immediately operational. The reference direction is `NEW-DESIGN.html`: a light canvas, hard black grid lines, flat white surfaces, oversized editorial serif labels, and monospace operational controls.
+ZeroShot should feel like an 8-bit arcade control deck rebuilt as a serious engineering workbench. The interface is bright, square, tactile, and operational: hard black outlines, chunky pixel-like shadows, saturated arcade accents, checker-grid backgrounds, and compact monospace controls.
 
 The product is not a landing page. It is a tool for choosing a project, shaping a blueprint, and running Codex. ARCHITECT should feel like a focused design station. BUILD should feel like a production console with visible state, source selection, and live logs.
 
 ## 2. Color Palette & Roles
 
-- **Grid Canvas (`oklch(96% 0.004 100)`):** Main background and page grid.
-- **Workbench Surface (`oklch(100% 0 0)`):** Cards, panels, modals, and control surfaces.
-- **Ink Line (`oklch(15% 0.02 100)`):** Text, borders, active states, primary buttons, and hard shadows.
-- **Muted Copy (`oklch(40% 0.02 100)`):** Descriptions, metadata, helper text, and inactive labels.
-- **Accent Red (`oklch(60% 0.22 25)`):** Focus rings, destructive emphasis, and important hover accents.
-- **Success Green (`oklch(55% 0.16 145)`):** Ready, complete, and successful run state.
-- **Warning Amber (`oklch(76% 0.16 80)`):** Review-needed and blocked state.
-- **Info Blue (`oklch(58% 0.16 245)`):** Secondary informational emphasis.
+- **Cabinet Canvas (`#f5f0dc`):** Main background.
+- **Screen Surface (`#fffdf2`):** Cards, panels, modals, and control surfaces.
+- **Pixel Line (`#101010`):** Text, borders, active states, and hard shadows.
+- **Muted Copy (`#4f4a3f`):** Descriptions, metadata, helper text, and inactive labels.
+- **Arcade Cyan (`#00d9ff`):** Navigation highlights and informational emphasis.
+- **Arcade Yellow (`#ffe14a`):** Project slot and active workbench surfaces.
+- **Arcade Pink (`#ff4fa3`):** Focus rings, destructive emphasis, and important hover accents.
+- **Arcade Green (`#24d17e`):** Ready, complete, and successful run state.
 
 ## 3. Typography Rules
 
-Use a display serif stack for large page and mode labels. Use a monospace stack for body text, controls, metadata, paths, counters, and log-like surfaces. Letter spacing remains normal. Do not scale font size with viewport width.
+Use a heavy monospace stack throughout the product. Page and mode labels should read like cabinet marquee text: uppercase, square, and compact. Letter spacing remains normal. Do not scale font size with viewport width.
 
-- **Page Title:** 32-60px serif, normal weight, uppercase for route names.
-- **Mode Title:** 44-92px serif, normal weight, compact line height.
+- **Page Title:** 28-56px monospace, 900 weight, uppercase for route names.
+- **Mode Title:** 44-92px monospace, 900 weight, compact line height.
 - **Section Heading:** 18-24px monospace or serif depending on hierarchy.
 - **Control Label:** 12-14px monospace, 700-800 weight.
 - **Body Text:** 14-16px monospace, 1.5-1.65 line height.
@@ -32,16 +32,16 @@ Use a display serif stack for large page and mode labels. Use a monospace stack 
 
 ## 4. Component Styling
 
-- **Buttons:** Use 2px Ink Line borders, 2px radius, monospace labels, and flat surfaces. Primary buttons invert to Ink Line background with Grid Canvas text.
-- **Cards and Panels:** Use flat Workbench Surface fills, 2px Ink Line borders, 2px radius, and offset hard shadows. Avoid nested card styling.
-- **Inputs and Forms:** Use Workbench Surface, 2px Ink Line borders, 2px radius, and Accent Red focus rings.
-- **Phase Cards:** ARCHITECT and BUILD read as large selectable workbench modes. The serif title should dominate the card.
+- **Buttons:** Use 3px Pixel Line borders, square or near-square corners, uppercase monospace labels, and 4px pixel shadows. Primary buttons invert to Pixel Line background with Cabinet Canvas text.
+- **Cards and Panels:** Use flat Screen Surface fills, 3px Pixel Line borders, square corners, and offset hard shadows. Avoid nested card styling.
+- **Inputs and Forms:** Use Screen Surface, 3px Pixel Line borders, square corners, and Arcade Pink focus rings.
+- **Phase Cards:** ARCHITECT, DESIGN, and BUILD read as large arcade mode tiles. The title should dominate the card.
 - **Status Surfaces:** Project state, run counts, and file availability are compact bordered grid tiles.
-- **Code and Terminal Surfaces:** Logs invert to Ink Line background with Grid Canvas text, stable max heights, and safe wrapping.
+- **Code and Terminal Surfaces:** Logs invert to Pixel Line background with Cabinet Canvas text, stable max heights, and safe wrapping.
 
 ## 5. Layout Principles
 
-The first screen should show the current project slot, quick project selection, and ARCHITECT / BUILD choices in a clear grid. Use large first-read labels and compact operational metadata.
+The first screen should show the current project slot, quick project selection, and ARCHITECT / DESIGN / BUILD choices in a clear one-column arcade stack. Use large first-read labels and compact operational metadata.
 
 Project paths should not dominate phase pages. Show a compact project label in the header and keep the full path available through `title` text or focused project selection surfaces.
 

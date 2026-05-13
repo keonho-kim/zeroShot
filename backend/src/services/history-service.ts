@@ -1,6 +1,6 @@
 import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
-import type { RunDetail, RunSummary } from "../types.js";
+import type { RunDetail, RunSummary } from "@backend/types.js";
 
 const DOCUMENT_NAMES = [
   "REQUIREMENTS.md",

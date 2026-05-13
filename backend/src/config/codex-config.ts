@@ -2,7 +2,7 @@ import { parse, stringify } from "@iarna/toml";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
-import type { CodexSettings } from "../types.js";
+import type { CodexSettings } from "@backend/types.js";
 
 export function getCodexConfigPath(): string {
   return join(homedir(), ".codex", "config.toml");

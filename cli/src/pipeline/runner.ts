@@ -1,12 +1,12 @@
-import type { AppDefaults, Gate, PipelineOptions, PipelineContext, RunMode } from "./types.js";
-import { archiveUpdateInput, assertDirectory, createInitialContext } from "./utils.js";
-import { closeoutPhase } from "./phase/closeout/index.js";
-import { iterOnce } from "./phase/implement/index.js";
-import { preparePhase } from "./phase/prepare/index.js";
-import { replanPhase } from "./phase/replan/index.js";
-import { requirementsNormalizePhase } from "./phase/requirements-normalize/index.js";
-import { syncProductPhase } from "./phase/sync-product/index.js";
-import { validatePhase } from "./phase/validate/index.js";
+import type { AppDefaults, Gate, PipelineOptions, PipelineContext, RunMode } from "@cli/pipeline/types.js";
+import { archiveUpdateInput, assertDirectory, createInitialContext } from "@cli/pipeline/utils.js";
+import { closeoutPhase } from "@cli/pipeline/phase/closeout/index.js";
+import { iterOnce } from "@cli/pipeline/phase/implement/index.js";
+import { preparePhase } from "@cli/pipeline/phase/prepare/index.js";
+import { replanPhase } from "@cli/pipeline/phase/replan/index.js";
+import { requirementsNormalizePhase } from "@cli/pipeline/phase/requirements-normalize/index.js";
+import { syncProductPhase } from "@cli/pipeline/phase/sync-product/index.js";
+import { validatePhase } from "@cli/pipeline/phase/validate/index.js";
 
 function printFinalSummary(ctx: PipelineContext, pipelineFailed: boolean, failureReason: string): number {
   console.log("[build] ============================================================");

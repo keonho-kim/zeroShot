@@ -1,6 +1,6 @@
 import { join } from "node:path";
-import { getWorkspaceRoot } from "./workspace.js";
-import type { AppDefaults, PipelineCommandSpec, PipelineOptions, RunMode } from "../types.js";
+import { getWorkspaceRoot } from "@backend/core/workspace.js";
+import type { AppDefaults, PipelineCommandSpec, PipelineOptions, RunMode } from "@backend/types.js";
 
 export function buildPipelineCommandSpec(
   mode: RunMode,
@@ -35,6 +35,10 @@ export function buildPipelineCommandSpec(
 
   if (options.responseLanguage) {
     args.push("--response-language", options.responseLanguage);
+  }
+
+  for (const directory of options.additionalDirectories ?? []) {
+    args.push("--add-dir", directory);
   }
 
   if (options.model) {

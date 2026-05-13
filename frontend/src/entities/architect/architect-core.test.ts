@@ -7,7 +7,7 @@ import {
   isDecisionAnswered,
   selectedOption,
   type ArchitectDecisionSet
-} from "./architect-core";
+} from "@/entities/architect/architect-core";
 
 const decisionSet: ArchitectDecisionSet = {
   title: "Bakery planner",
@@ -80,13 +80,18 @@ describe("architect core", () => {
       decisionSet,
       answers: { workflow: "production", audience: "owner" },
       projectRoot: "/tmp/project",
-      userBrief: "A bakery needs a daily planning app."
+      userBrief: "A bakery needs a daily planning app.",
+      resources: {
+        skillName: "Web App",
+        designTemplateName: "Dashboard"
+      }
     });
 
     expect(html).toContain("width:min(100%,430px)");
     expect(html).toContain("The first screen must prioritize daily production targets");
     expect(html).toContain("application/json");
     expect(html).toContain("/tmp/project");
+    expect(html).toContain("Design template: Dashboard");
     expect(blueprintToProductMarkdown(html)).toContain("Use PRODUCT.html as the canonical interactive blueprint");
   });
 });

@@ -1,0 +1,103 @@
+html {
+  color-scheme: light;
+  background: var(--background);
+}
+
+* {
+  border-color: var(--border);
+}
+
+body {
+  background:
+    linear-gradient(45deg, rgb(16 16 16 / 7%) 25%, transparent 25%),
+    linear-gradient(-45deg, rgb(16 16 16 / 7%) 25%, transparent 25%),
+    linear-gradient(var(--border) 2px, transparent 2px),
+    linear-gradient(90deg, var(--border) 2px, transparent 2px),
+    var(--background);
+  background-position: 0 0, 0 8px, 0 0, 0 0, 0 0;
+  background-size: 16px 16px, 16px 16px, 64px 64px, 64px 64px, auto;
+  color: var(--foreground);
+  min-height: 100vh;
+  text-rendering: optimizeLegibility;
+  font-family: var(--font-body);
+}
+
+body.home-page {
+  background:
+    linear-gradient(45deg, rgb(16 16 16 / 7%) 25%, transparent 25%),
+    linear-gradient(-45deg, rgb(16 16 16 / 7%) 25%, transparent 25%),
+    linear-gradient(var(--border) 2px, transparent 2px),
+    linear-gradient(90deg, var(--border) 2px, transparent 2px),
+    var(--background);
+  background-position: 0 0, 0 8px, 0 0, 0 0, 0 0;
+  background-size: 16px 16px, 16px 16px, 64px 64px, 64px 64px, auto;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+body,
+input,
+textarea,
+select {
+  color: var(--foreground);
+}
+
+::selection {
+  background: var(--surface-active);
+  color: var(--foreground);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-subtle);
+}
+
+input[type="file"] {
+  color: var(--muted-foreground);
+  font-size: 0.875rem;
+}
+
+input[type="file"]::file-selector-button {
+  margin-right: 0.75rem;
+  border: 3px solid var(--border);
+  border-radius: 1px;
+  background: var(--surface);
+  color: var(--foreground);
+  padding: 0.5rem 0.75rem;
+  transition:
+    background-color 150ms ease,
+    color 150ms ease;
+}
+
+input[type="file"]::file-selector-button:hover {
+  background: var(--surface-hover);
+}
+
+button,
+input,
+textarea,
+select {
+  image-rendering: pixelated;
+}
+
+textarea,
+select {
+  border-width: 3px;
+  border-radius: 1px;
+  font-weight: 700;
+}
+
+.rounded,
+.rounded-md,
+.rounded-lg,
+.rounded-xl,
+.rounded-2xl {
+  border-radius: 1px !important;
+}
+
+pre,
+code {
+  color: inherit;
+}

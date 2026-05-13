@@ -1,5 +1,7 @@
 import { Codex, type ApprovalMode, type ModelReasoningEffort, type SandboxMode, type ThreadEvent } from "@openai/codex-sdk";
 import { z } from "zod";
+import { buildArchitectPrompt } from "@backend/prompts/architect/decision-prompt.js";
+import { ensureDevelopmentLanguageDecision } from "@backend/prompts/architect/development-stack-decision.js";
 
 const architectDecisionSchema = {
   type: "object",
@@ -76,25 +78,7 @@ function asReasoningEffort(value: string): ModelReasoningEffort {
   throw new Error(`Unsupported reasoning effort: ${value}`);
 }
 
-function buildArchitectPrompt(goal: string, locale: string): string {
-  return `You are ZeroShot ARCHITECT.
-
-The user is describing a product they want to build. Convert the conversation into a few concrete product decisions that the user must choose before implementation can begin.
-
-Rules:
-- Return only JSON matching the provided schema.
-- Do not edit files, run commands, or inspect the repository unless it is necessary to understand the workspace.
-- Ask for 2 to 5 decisions.
-- Each decision must include 2 to 5 mutually exclusive options.
-- Options must be concrete product directions, not vague preferences.
-- The option productRequirement must be written as an implementation-ready requirement for PRODUCT.html.
-- The summary must sound like product copy for the user. Do not mention Codex, JSON, prompts, schemas, or PRODUCT.html in title, summary, decision titles, prompts, labels, or details.
-- Do not include "unsure", "autopilot", or fallback options.
-- Use ${locale === "ko" ? "Korean" : "English"} for all user-facing text.
-
-User conversation:
-${goal}`;
-}
+export { ensureDevelopmentLanguageDecision } from "@backend/prompts/architect/development-stack-decision.js";
 
 function progressText(locale: string, ko: string, en: string): string {
   return locale === "ko" ? ko : en;
@@ -197,6 +181,8 @@ export async function buildArchitectDecisions(params: {
   locale: string;
   reasoning: string;
   model?: string;
+  resourceContext?: string;
+  additionalDirectories?: string[];
   onProgress?: (event: ArchitectProgressEvent) => void;
 }): Promise<ArchitectDecisionResponse> {
   const codex = new Codex();
@@ -206,10 +192,11 @@ export async function buildArchitectDecisions(params: {
     approvalPolicy: "never" satisfies ApprovalMode,
     sandboxMode: "read-only" satisfies SandboxMode,
     modelReasoningEffort: asReasoningEffort(params.reasoning),
+    additionalDirectories: params.additionalDirectories ?? [],
     ...(params.model ? { model: params.model } : {})
   });
 
-  const { events } = await thread.runStreamed(buildArchitectPrompt(params.goal, params.locale), {
+  const { events } = await thread.runStreamed(buildArchitectPrompt(params.goal, params.locale, params.resourceContext ?? ""), {
     outputSchema: architectDecisionSchema
   });
   let finalResponse = "";
@@ -235,5 +222,5 @@ export async function buildArchitectDecisions(params: {
   }
 
   const parsed = architectDecisionResponseSchema.parse(JSON.parse(finalResponse));
-  return parsed;
+  return ensureDevelopmentLanguageDecision(parsed, params.goal, params.locale);
 }

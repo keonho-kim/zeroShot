@@ -1,5 +1,5 @@
-import type { PipelineContext } from "../../types.js";
-import { nowHuman } from "../../utils.js";
+import type { PipelineContext } from "@cli/pipeline/types.js";
+import { nowHuman } from "@cli/pipeline/utils.js";
 
 function currentRunFileBlock(ctx: PipelineContext): string {
   return `Current run files to read if they exist:
@@ -35,6 +35,14 @@ function previousRunFileBlock(ctx: PipelineContext): string {
 - ${ctx.previousRunDir}/CHANGES.md
 - ${ctx.previousRunDir}/FINAL_REPORT.md
 - ${ctx.previousRunDir}/logs/000-manifest.tsv`;
+}
+
+function additionalDirectoryBlock(ctx: PipelineContext): string {
+  if (!ctx.options.additionalDirectories.length) {
+    return "";
+  }
+  return `Additional read roots available to this run:
+${ctx.options.additionalDirectories.map((directory) => `- ${directory}`).join("\n")}`;
 }
 
 function commonContract(): string {
@@ -204,6 +212,8 @@ ${currentRunFileBlock(ctx)}
 ${updateInputFileBlock(ctx)}
 
 ${previousRunFileBlock(ctx)}
+
+${additionalDirectoryBlock(ctx)}
 
 ${commonContract()}
 

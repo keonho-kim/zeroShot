@@ -1,6 +1,6 @@
 import { mkdir, writeFile } from "node:fs/promises";
-import { writeSchema } from "../../schema.js";
-import type { PipelineContext } from "../../types.js";
+import { writeSchema } from "@cli/pipeline/schema.js";
+import type { PipelineContext } from "@cli/pipeline/types.js";
 import {
   fileExists,
   findLatestRunDir,
@@ -8,7 +8,7 @@ import {
   nextRunDir,
   setupRunPaths,
   writeRunMeta
-} from "../../utils.js";
+} from "@cli/pipeline/utils.js";
 
 async function ensureEnvAndTools(ctx: PipelineContext): Promise<void> {
   console.log("[env] 환경 변수와 필수 도구를 점검합니다.");

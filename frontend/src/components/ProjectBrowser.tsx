@@ -1,9 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { fetchProjectTree } from "../lib/api";
-import { Button } from "./ui/button";
-import { Card } from "./ui/card";
-import { cn } from "../lib/utils";
+import { fetchProjectTree } from "@/lib/api";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { cn } from "@/utils/cn";
 
 interface Props {
   value: string;

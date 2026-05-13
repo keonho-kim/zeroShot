@@ -1,0 +1,220 @@
+.home-shell {
+  position: relative;
+}
+
+.home-console {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  border: 3px solid var(--border);
+  border-radius: 1px;
+  background: var(--arcade-yellow);
+  box-shadow: var(--shadow-card);
+  padding: 1.25rem;
+}
+
+.home-console-topline,
+.action-card-eyebrow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--primary);
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 0.75rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.home-console-title {
+  color: var(--foreground);
+  font-family: var(--font-display);
+  font-size: clamp(2.25rem, 5vw, 5.75rem);
+  font-weight: 950;
+  line-height: 1;
+  overflow-wrap: anywhere;
+  text-shadow: 4px 4px 0 var(--arcade-cyan);
+}
+
+.home-console-path {
+  color: var(--muted-foreground);
+  font-size: 0.875rem;
+  line-height: 1.6;
+  margin-top: 0.5rem;
+  max-width: 64rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.home-status-grid {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.home-status-grid div {
+  border: 3px solid var(--border);
+  border-radius: 1px;
+  background: var(--panel);
+  min-width: 0;
+  padding: 0.875rem;
+}
+
+.home-status-grid span,
+.home-status-grid strong {
+  display: block;
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  line-height: 1.2;
+}
+
+.home-status-grid span {
+  color: var(--text-subtle);
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.home-status-grid strong {
+  color: var(--foreground);
+  font-size: 1rem;
+  font-weight: 950;
+  margin-top: 0.375rem;
+}
+
+.action-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  border: 3px solid var(--border);
+  border-radius: 1px;
+  background: var(--panel);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+  padding: 1.5rem;
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease,
+    transform 100ms ease;
+}
+
+.action-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgb(16 16 16 / 12%) 50%, transparent 50%),
+    linear-gradient(rgb(16 16 16 / 12%) 50%, transparent 50%);
+  background-size: 8px 8px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 150ms ease;
+}
+
+.action-card:hover:not(:disabled) {
+  border-color: var(--border);
+  background: var(--action-accent);
+  color: var(--foreground);
+  transform: translate(-4px, -4px);
+}
+
+.action-card:hover:not(:disabled)::before {
+  opacity: 1;
+}
+
+.action-card:hover:not(:disabled) .action-card-eyebrow,
+.action-card:hover:not(:disabled) .action-card-icon {
+  color: var(--foreground);
+}
+
+.action-card:hover:not(:disabled) .action-card-icon {
+  background: var(--panel);
+  border-color: var(--border);
+}
+
+.action-card:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.action-card:focus-visible {
+  outline: none;
+  box-shadow:
+    var(--shadow-card),
+    var(--shadow-focus);
+}
+
+.action-card-cyan {
+  --action-accent: var(--arcade-cyan);
+}
+
+.action-card-mint {
+  --action-accent: var(--arcade-green);
+}
+
+.action-card-amber {
+  --action-accent: var(--arcade-pink);
+}
+
+.home-action-stack {
+  display: grid;
+  gap: 1.25rem;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.action-card-icon {
+  display: grid;
+  height: 3.25rem;
+  width: 3.25rem;
+  place-items: center;
+  border: 3px solid var(--border);
+  border-radius: 1px;
+  background: var(--action-accent);
+  color: var(--action-accent);
+}
+
+.action-card-icon svg {
+  height: 1.45rem;
+  width: 1.45rem;
+}
+
+.action-card-title {
+  color: inherit;
+  font-family: var(--font-display);
+  font-size: clamp(2.75rem, 6vw, 5.75rem);
+  font-weight: 950;
+  letter-spacing: 0;
+  line-height: 1;
+  margin-top: auto;
+  text-shadow: 4px 4px 0 var(--panel);
+}
+
+.action-card-description {
+  color: inherit;
+  font-size: 0.9375rem;
+  line-height: 1.65;
+  max-width: 32rem;
+}
+
+@media (min-width: 768px) {
+  .home-console {
+    padding: 1.5rem;
+  }
+
+  .home-status-grid {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  }
+
+  .action-card {
+    padding: 2rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .page-title {
+    font-size: 1.5rem;
+  }
+
+  .home-console-path {
+    white-space: normal;
+  }
+}

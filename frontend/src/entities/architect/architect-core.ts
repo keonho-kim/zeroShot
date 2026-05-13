@@ -23,6 +23,11 @@ export interface ArchitectDecisionSet {
 
 export type ArchitectAnswers = Record<string, string>;
 
+export interface BlueprintResourceSummary {
+  skillName?: string;
+  designTemplateName?: string;
+}
+
 export function detectLocale(language: string): Locale {
   return language.toLowerCase().startsWith("ko") ? "ko" : "en";
 }
@@ -46,6 +51,7 @@ export function buildBlueprintHtml(params: {
   answers: ArchitectAnswers;
   projectRoot: string;
   userBrief: string;
+  resources?: BlueprintResourceSummary;
 }): string {
   const selectedSections = params.decisionSet.decisions.map((decision) => ({
     title: decision.section,
@@ -58,13 +64,18 @@ export function buildBlueprintHtml(params: {
     answers: params.answers
   }, null, 2);
 
-  const body = selectedSections.map((section) => `
-    <section class="card">
-      <h2>${escapeHtml(section.title)}</h2>
+  const resourceItems = [
+    params.resources?.skillName ? `Skill: ${params.resources.skillName}` : "",
+    params.resources?.designTemplateName ? `Design template: ${params.resources.designTemplateName}` : ""
+  ].filter(Boolean);
+
+  const body = selectedSections.map((section, index) => `
+    <section class="card" data-od-id="decision-section-${index + 1}" data-od-edit="container" data-od-label="${escapeHtml(section.title)}">
+      <h2 data-od-id="decision-section-${index + 1}-title" data-od-edit="text" data-od-label="${escapeHtml(section.title)} title">${escapeHtml(section.title)}</h2>
       ${section.option ? `
-        <article class="decision">
-          <strong>${escapeHtml(section.option.label)}</strong>
-          <p>${escapeHtml(section.option.productRequirement)}</p>
+        <article class="decision" data-od-id="decision-section-${index + 1}-choice" data-od-edit="container" data-od-label="${escapeHtml(section.option.label)}">
+          <strong data-od-id="decision-section-${index + 1}-choice-label" data-od-edit="text">${escapeHtml(section.option.label)}</strong>
+          <p data-od-id="decision-section-${index + 1}-choice-requirement" data-od-edit="text">${escapeHtml(section.option.productRequirement)}</p>
         </article>
       ` : ""}
     </section>
@@ -101,21 +112,29 @@ window.addEventListener("scroll",()=>{const nearEnd=window.innerHeight+window.sc
 </script>
 </head>
 <body>
-<main class="phone">
-  <header class="hero">
-    <p class="eyebrow">PRODUCT Blueprint</p>
-    <h1>${escapeHtml(params.decisionSet.title)}</h1>
-    <p class="sub">${escapeHtml(params.decisionSet.summary)}</p>
-    <p class="sub">Workspace: ${escapeHtml(params.projectRoot || "Not selected")}</p>
+<main class="phone" data-od-id="product-blueprint" data-od-edit="container" data-od-label="Product blueprint">
+  <header class="hero" data-od-id="blueprint-hero" data-od-edit="container" data-od-label="Hero">
+    <p class="eyebrow" data-od-id="blueprint-eyebrow" data-od-edit="text" data-od-label="Eyebrow">PRODUCT Blueprint</p>
+    <h1 data-od-id="blueprint-title" data-od-edit="text" data-od-label="Title">${escapeHtml(params.decisionSet.title)}</h1>
+    <p class="sub" data-od-id="blueprint-summary" data-od-edit="text" data-od-label="Summary">${escapeHtml(params.decisionSet.summary)}</p>
+    <p class="sub" data-od-id="blueprint-workspace" data-od-edit="text" data-od-label="Workspace">Workspace: ${escapeHtml(params.projectRoot || "Not selected")}</p>
   </header>
-  <section class="card">
-    <h2>${params.locale === "ko" ? "사용자 설명" : "User brief"}</h2>
-    <article class="decision">
-      <p>${escapeHtml(params.userBrief)}</p>
+  <section class="card" data-od-id="user-brief-section" data-od-edit="container" data-od-label="${params.locale === "ko" ? "사용자 설명" : "User brief"}">
+    <h2 data-od-id="user-brief-title" data-od-edit="text">${params.locale === "ko" ? "사용자 설명" : "User brief"}</h2>
+    <article class="decision" data-od-id="user-brief-card" data-od-edit="container">
+      <p data-od-id="user-brief-body" data-od-edit="text">${escapeHtml(params.userBrief)}</p>
     </article>
   </section>
   ${body}
-  <footer class="footer">End of blueprint. You can now start BUILD.</footer>
+  ${resourceItems.length ? `
+  <section class="card" data-od-id="design-materials-section" data-od-edit="container" data-od-label="${params.locale === "ko" ? "디자인 자료" : "Design materials"}">
+    <h2 data-od-id="design-materials-title" data-od-edit="text">${params.locale === "ko" ? "디자인 자료" : "Design materials"}</h2>
+    <article class="decision" data-od-id="design-materials-card" data-od-edit="container">
+      ${resourceItems.map((item, index) => `<p data-od-id="design-material-${index + 1}" data-od-edit="text">${escapeHtml(item)}</p>`).join("")}
+    </article>
+  </section>
+  ` : ""}
+  <footer class="footer" data-od-id="blueprint-footer" data-od-edit="text" data-od-label="Footer">End of blueprint. You can now start BUILD.</footer>
 </main>
 </body>
 </html>`;

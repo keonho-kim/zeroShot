@@ -1,0 +1,59 @@
+@media (min-width: 760px) {
+  .build-workspace {
+    grid-template-columns: minmax(320px, 0.9fr) minmax(360px, 1.1fr);
+  }
+
+  .design-runtime-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .design-resource-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .design-artifact-layout {
+    grid-template-columns: minmax(0, 1.35fr) minmax(240px, 0.65fr);
+  }
+
+  .design-artifact-layout.enterprise {
+    grid-template-columns: minmax(190px, 0.55fr) minmax(360px, 1.25fr) minmax(280px, 0.7fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .architect-chat:has(.product-html-preview) {
+    align-items: stretch;
+    grid-template-columns: minmax(420px, 0.95fr) minmax(440px, 1.05fr);
+  }
+
+  .design-editor-grid,
+  .design-result-grid {
+    align-items: start;
+    grid-template-columns: minmax(420px, 0.95fr) minmax(440px, 1.05fr);
+  }
+}
+
+@media (max-width: 520px) {
+  main {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+
+  .chat-bubble,
+  .decision-card,
+  .work-flashcard,
+  .app-modal {
+    border-radius: 1px;
+  }
+
+  .decision-actions > *,
+  .modal-actions > *,
+  .work-card-actions > * {
+    flex: 1 1 100%;
+  }
+
+  .product-html-preview,
+  .product-html-preview iframe {
+    min-height: 460px;
+  }
+}

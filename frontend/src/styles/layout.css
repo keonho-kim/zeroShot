@@ -1,0 +1,95 @@
+.builder-shell {
+  margin: 0 auto;
+  width: min(100%, 1320px);
+}
+
+.page-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  margin-inline: calc(50% - 50vw);
+  border-block: 3px solid var(--border);
+  background:
+    linear-gradient(90deg, transparent calc(100% - 1px), rgb(16 16 16 / 22%) calc(100% - 1px)),
+    var(--panel);
+  background-size: 32px 100%, auto;
+  box-shadow: 0 6px 0 var(--border);
+  padding: 0.625rem clamp(1rem, 4vw, 2rem);
+  font-family: var(--font-body);
+}
+
+.page-header-inner {
+  display: grid;
+  align-items: stretch;
+  gap: 1rem;
+  grid-template-columns: minmax(5.75rem, auto) minmax(0, 1fr) minmax(5.75rem, auto);
+  margin: 0 auto;
+  max-width: 1320px;
+}
+
+.page-title-block {
+  display: grid;
+  min-width: 0;
+  place-items: center;
+  text-align: center;
+}
+
+.page-title {
+  color: var(--foreground);
+  font-family: var(--font-display);
+  font-size: clamp(1.9rem, 4vw, 3.5rem);
+  font-weight: 950;
+  letter-spacing: 0;
+  line-height: 1;
+  text-transform: uppercase;
+  text-shadow: 3px 3px 0 var(--arcade-cyan);
+}
+
+.nav-tile {
+  min-height: 4.25rem;
+  min-width: 5.75rem;
+  flex: 0 0 auto;
+  align-self: stretch;
+  border: 3px solid var(--border);
+  border-radius: 1px;
+  background: var(--arcade-yellow);
+  box-shadow: var(--shadow-button);
+  color: var(--foreground);
+  display: inline-flex;
+  flex-direction: column;
+  font-size: 0.72rem;
+  font-weight: 950;
+  gap: 0.25rem;
+  line-height: 1;
+  padding: 0.55rem 0.75rem;
+}
+
+.nav-tile:hover {
+  background: var(--arcade-cyan);
+}
+
+.nav-tile svg {
+  height: 1.25rem;
+  width: 1.25rem;
+}
+
+.nav-tile-spacer {
+  min-width: 5.75rem;
+}
+
+.project-chip {
+  display: inline-flex;
+  max-width: min(32rem, 70vw);
+  align-items: center;
+  border: 3px solid var(--success-border);
+  border-radius: 1px;
+  background: var(--success-surface);
+  color: var(--success-foreground);
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1;
+  overflow: hidden;
+  padding: 0.45rem 0.6rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

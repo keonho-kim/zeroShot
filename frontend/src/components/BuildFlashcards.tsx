@@ -1,10 +1,10 @@
 import { AlertCircle, ArrowLeft, ArrowRight, CheckCircle2, Circle, Loader2, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import type { LogLine } from "../app/store";
-import type { JobSnapshot } from "../lib/api";
-import { Button } from "./ui/button";
-import { Card } from "./ui/card";
+import type { LogLine } from "@/stores/app-store";
+import type { JobSnapshot } from "@/types/api";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 
 interface Props {
   job: JobSnapshot | null;

@@ -1,122 +1,23 @@
 import axios from "axios";
-
-export interface AuthStatus {
-  exists: boolean;
-  valid: boolean;
-  path: string;
-  message: string;
-}
-
-export interface DirectoryEntry {
-  name: string;
-  path: string;
-  relativePath: string;
-  isDirectory: boolean;
-  isAllowedRoot?: boolean;
-  hasWorkHistory?: boolean;
-  runsCount?: number;
-}
-
-export interface ProjectState {
-  projectRoot: string;
-  hasProduct: boolean;
-  hasProductHtml: boolean;
-  hasUpdate: boolean;
-  isDirectoryEmpty: boolean;
-  buildEnabled: boolean;
-  workHistoryExists: boolean;
-  runsCount: number;
-  latestRunName?: string;
-  updateEnabled: boolean;
-}
-
-export interface RunSummary {
-  name: string;
-  path: string;
-  createdAt?: string;
-  mode?: string;
-}
-
-export interface RunDetail {
-  summary: RunSummary;
-  meta: Record<string, string>;
-  manifest: string;
-  documents: Record<string, string>;
-}
-
-export interface AppConfig {
-  bootstrapRoots: string[];
-  allowedRoots: string[];
-  server: {
-    host: string;
-    port: number;
-  };
-  defaults: {
-    approval: string;
-    sandbox: string;
-    maxIters: number;
-    stallLimit: number;
-    planReasoning: string;
-    execReasoning: string;
-    validateReasoning: string;
-    closeoutReasoning: string;
-  };
-}
-
-export interface CodexSettings {
-  modelProviders: Array<{ id: string; name: string; baseUrl: string; envKey?: string }>;
-  profiles: Array<{ id: string; modelProvider: string; model: string }>;
-  defaults: {
-    profile?: string;
-    model?: string;
-    modelProvider?: string;
-    approvalPolicy?: string;
-    sandboxMode?: string;
-  };
-}
-
-export interface JobSnapshot {
-  id: string;
-  mode: "build" | "update";
-  projectRoot: string;
-  status: "idle" | "running" | "completed" | "failed";
-  createdAt: string;
-  startedAt?: string;
-  finishedAt?: string;
-  exitCode?: number;
-}
-
-export interface PipelineOptions {
-  responseLanguage?: string;
-}
-
-export interface ArchitectDecisionOption {
-  id: string;
-  label: string;
-  detail: string;
-  productRequirement: string;
-}
-
-export interface ArchitectDecision {
-  id: string;
-  title: string;
-  prompt: string;
-  section: string;
-  options: ArchitectDecisionOption[];
-}
-
-export interface ArchitectDecisionResponse {
-  title: string;
-  summary: string;
-  decisions: ArchitectDecision[];
-}
-
-export interface ArchitectProgressEvent {
-  id: string;
-  title: string;
-  detail: string;
-  status: "running" | "completed" | "failed";
-}
+import type {
+  AppConfig,
+  ArchitectDecisionResponse,
+  ArchitectProgressEvent,
+  AuthStatus,
+  CodexSettings,
+  DesignProgressEvent,
+  DesignRuntimeMode,
+  DesignRuntimeResponse,
+  DirectoryEntry,
+  JobSnapshot,
+  PipelineOptions,
+  ProductArtifactFile,
+  ProjectSettings,
+  ProjectState,
+  ResourceManifest,
+  RunDetail,
+  RunSummary
+} from "@/types/api";
 
 const client = axios.create({
   baseURL: "/api"
@@ -150,6 +51,14 @@ export async function fetchProjectState(projectRoot: string) {
   return (await client.get<ProjectState>("/projects/state", { params: { projectRoot } })).data;
 }
 
+export async function fetchProjectSettings(projectRoot: string) {
+  return (await client.get<ProjectSettings>("/projects/settings", { params: { projectRoot } })).data;
+}
+
+export async function saveProjectSettings(payload: ProjectSettings) {
+  return (await client.put<ProjectSettings>("/projects/settings", payload)).data;
+}
+
 export async function fetchProductHtml(projectRoot: string) {
   return (await client.get<string>("/projects/product-html", { params: { projectRoot }, responseType: "text" })).data;
 }
@@ -158,7 +67,25 @@ export async function saveProductHtml(payload: { projectRoot: string; content: s
   await client.put("/projects/product-html", payload);
 }
 
-export async function requestArchitectDecisions(payload: { projectRoot: string; goal: string; locale: string }) {
+export async function fetchProductArtifact(projectRoot: string) {
+  return (await client.get<ProductArtifactFile>("/projects/product-artifact", { params: { projectRoot } })).data;
+}
+
+export async function saveProductArtifact(payload: { projectRoot: string; content: string; markdownMirror: string; etag?: string }) {
+  return (await client.put<ProductArtifactFile>("/projects/product-artifact", payload)).data;
+}
+
+export async function fetchLatestDesign(projectRoot: string) {
+  return (await client.get<DesignRuntimeResponse | null>("/design/latest", { params: { projectRoot } })).data;
+}
+
+export async function requestArchitectDecisions(payload: {
+  projectRoot: string;
+  goal: string;
+  locale: string;
+  activeSkillId?: string;
+  activeDesignTemplateId?: string;
+}) {
   return (await client.post<ArchitectDecisionResponse>("/architect/decisions", payload)).data;
 }
 
@@ -178,7 +105,13 @@ function parseStreamEvent(raw: string): { event: string; data: unknown } | null 
 }
 
 export async function requestArchitectDecisionsStream(
-  payload: { projectRoot: string; goal: string; locale: string },
+  payload: {
+    projectRoot: string;
+    goal: string;
+    locale: string;
+    activeSkillId?: string;
+    activeDesignTemplateId?: string;
+  },
   onProgress: (event: ArchitectProgressEvent) => void
 ) {
   const response = await fetch("/api/architect/decisions/stream", {
@@ -229,6 +162,65 @@ export async function requestArchitectDecisionsStream(
   throw new Error("Architect stream ended before decisions were returned.");
 }
 
+export async function requestDesignRuntimeStream(
+  payload: {
+    projectRoot: string;
+    mode: DesignRuntimeMode;
+    goal: string;
+    locale: string;
+    activeSkillId?: string;
+    activeDesignTemplateId?: string;
+  },
+  onProgress: (event: DesignProgressEvent) => void
+) {
+  const response = await fetch("/api/design/runtime/stream", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || "Design runtime request failed.");
+  }
+  if (!response.body) {
+    throw new Error("Design runtime stream is unavailable.");
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  while (true) {
+    const { done, value } = await reader.read();
+    buffer += decoder.decode(value, { stream: !done });
+    const parts = buffer.split("\n\n");
+    buffer = parts.pop() ?? "";
+
+    for (const part of parts) {
+      const parsed = parseStreamEvent(part);
+      if (!parsed) {
+        continue;
+      }
+      if (parsed.event === "progress") {
+        onProgress(parsed.data as DesignProgressEvent);
+      }
+      if (parsed.event === "complete") {
+        return (parsed.data as { design: DesignRuntimeResponse }).design;
+      }
+      if (parsed.event === "error") {
+        throw new Error((parsed.data as { message: string }).message);
+      }
+    }
+
+    if (done) {
+      break;
+    }
+  }
+
+  throw new Error("Design runtime stream ended before a design response was returned.");
+}
+
 export async function startBuild(payload: { projectRoot: string; productContent?: string; options?: PipelineOptions }) {
   return (await client.post<JobSnapshot>("/build", payload)).data;
 }
@@ -255,6 +247,10 @@ export async function fetchAppSettings() {
 
 export async function saveAppSettings(payload: AppConfig) {
   await client.put("/settings/app", payload);
+}
+
+export async function fetchResources() {
+  return (await client.get<{ skills: ResourceManifest[]; designTemplates: ResourceManifest[] }>("/resources")).data;
 }
 
 export async function fetchCodexSettings() {

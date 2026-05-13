@@ -1,14 +1,18 @@
 import { parse, stringify } from "@iarna/toml";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
-import { dirname } from "node:path";
-import { expandHomePath } from "../core/path-input.js";
-import { getAppConfigPath } from "../core/workspace.js";
-import type { AppConfig } from "../types.js";
+import { dirname, join } from "node:path";
+import { expandHomePath } from "@backend/core/path-input.js";
+import { getAppConfigPath } from "@backend/core/workspace.js";
+import type { AppConfig } from "@backend/types.js";
 
 const defaultConfig: AppConfig = {
   bootstrapRoots: [homedir()],
   allowedRoots: [],
+  resourceRoots: {
+    skills: join(homedir(), ".zeroshot", "skills"),
+    designTemplates: join(homedir(), ".zeroshot", "design-templates")
+  },
   server: {
     host: "127.0.0.1",
     port: 3000
@@ -41,6 +45,17 @@ function toNumber(value: unknown, fallback: number): number {
   return typeof value === "number" && Number.isFinite(value) ? value : fallback;
 }
 
+function readResourceRoots(parsed: Record<string, unknown>): AppConfig["resourceRoots"] {
+  const resourceRoots = typeof parsed.resource_roots === "object" && parsed.resource_roots !== null
+    ? parsed.resource_roots as Record<string, unknown>
+    : {};
+
+  return {
+    skills: expandHomePath(toString(resourceRoots.skills, defaultConfig.resourceRoots.skills)),
+    designTemplates: expandHomePath(toString(resourceRoots.design_templates, defaultConfig.resourceRoots.designTemplates))
+  };
+}
+
 async function ensureConfigFile(): Promise<string> {
   const filePath = getAppConfigPath();
   await mkdir(dirname(filePath), { recursive: true });
@@ -56,11 +71,15 @@ async function ensureConfigFile(): Promise<string> {
     return existing;
   }
 
-  const payload = stringify({
-    host: defaultConfig.server.host,
-    port: defaultConfig.server.port,
-    allowed_roots: defaultConfig.allowedRoots,
-    default_approval: defaultConfig.defaults.approval,
+    const payload = stringify({
+      host: defaultConfig.server.host,
+      port: defaultConfig.server.port,
+      allowed_roots: defaultConfig.allowedRoots,
+      resource_roots: {
+        skills: defaultConfig.resourceRoots.skills,
+        design_templates: defaultConfig.resourceRoots.designTemplates
+      },
+      default_approval: defaultConfig.defaults.approval,
     default_sandbox: defaultConfig.defaults.sandbox,
     max_iters: defaultConfig.defaults.maxIters,
     stall_limit: defaultConfig.defaults.stallLimit,
@@ -80,6 +99,7 @@ export async function loadAppConfig(): Promise<AppConfig> {
   return {
     bootstrapRoots: defaultConfig.bootstrapRoots,
     allowedRoots: normalizeRoots(parsed.allowed_roots, defaultConfig.allowedRoots),
+    resourceRoots: readResourceRoots(parsed),
     server: {
       host: toString(parsed.host, defaultConfig.server.host),
       port: toNumber(parsed.port, defaultConfig.server.port)
@@ -102,6 +122,10 @@ export async function saveAppConfig(config: AppConfig): Promise<void> {
     host: toString(config.server?.host, defaultConfig.server.host),
     port: toNumber(config.server?.port, defaultConfig.server.port),
     allowed_roots: normalizeRoots(config.allowedRoots, defaultConfig.allowedRoots),
+    resource_roots: {
+      skills: expandHomePath(toString(config.resourceRoots?.skills, defaultConfig.resourceRoots.skills)),
+      design_templates: expandHomePath(toString(config.resourceRoots?.designTemplates, defaultConfig.resourceRoots.designTemplates))
+    },
     default_approval: config.defaults.approval,
     default_sandbox: config.defaults.sandbox,
     max_iters: config.defaults.maxIters,

@@ -7,12 +7,13 @@ import { mkdir, readFile, stat, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { findWorkspaceRoot } from "./pipeline/utils.js";
-import { runPipeline } from "./pipeline/runner.js";
-import type { AppDefaults, PipelineOptions, RunMode } from "./pipeline/types.js";
+import { findWorkspaceRoot } from "@cli/pipeline/utils.js";
+import { runPipeline } from "@cli/pipeline/runner.js";
+import type { AppDefaults, PipelineOptions, RunMode } from "@cli/pipeline/types.js";
 
 interface CliOptions extends PipelineOptions {
   projectRoot: string;
+  addDir?: string[];
 }
 
 interface StartOptions {
@@ -111,7 +112,10 @@ async function assertDirectory(path: string): Promise<void> {
 async function runCommand(mode: RunMode, options: CliOptions): Promise<number> {
   await assertDirectory(options.projectRoot);
   const defaults = await loadDefaults();
-  return runPipeline(mode, options.projectRoot, defaults, options);
+  return runPipeline(mode, options.projectRoot, defaults, {
+    ...options,
+    additionalDirectories: options.addDir ?? options.additionalDirectories
+  });
 }
 
 function packageRoot(): string {
@@ -194,6 +198,7 @@ function bindSharedOptions(command: Command): Command {
     .option("--exec-reasoning <level>", "Reasoning effort for implementation phases")
     .option("--validate-reasoning <level>", "Reasoning effort for validation")
     .option("--closeout-reasoning <level>", "Reasoning effort for closeout")
+    .option("--add-dir <path>", "Additional directory Codex can read during pipeline runs", (value, previous: string[] = []) => [...previous, value], [])
     .option("--response-language <language>", "Language Codex should use for user-facing run documents and final answers");
 }
 

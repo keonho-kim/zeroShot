@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { composeBuildProductContent } from "./build-request";
+import { composeBuildProductContent } from "@/entities/project/build-request";
 
 describe("build request composition", () => {
   test("keeps uploaded PRODUCT.md and appends selected build focus", () => {
@@ -13,6 +13,9 @@ describe("build request composition", () => {
     expect(content).toContain("# PRODUCT");
     expect(content).toContain("Build a planner.");
     expect(content).toContain("polished arcade-scale UI");
+    expect(content).toContain("## Build Implementation Guidance");
+    expect(content).toContain("frontend/src");
+    expect(content).toContain("backend/src");
   });
 
   test("uses PRODUCT.html as canonical source and appends additional request", () => {
@@ -25,5 +28,6 @@ describe("build request composition", () => {
 
     expect(content).toContain("Use PRODUCT.html in the project root as the canonical source");
     expect(content).toContain("Make the primary action easier to reach.");
+    expect(content).toContain("Correctness");
   });
 });

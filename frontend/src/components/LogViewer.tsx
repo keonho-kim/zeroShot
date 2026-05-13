@@ -1,8 +1,8 @@
 import { useEffect } from "react";
-import type { JobSnapshot } from "../lib/api";
-import { useAppStore } from "../app/store";
-import { Card } from "./ui/card";
-import { BuildFlashcards } from "./BuildFlashcards";
+import type { JobSnapshot } from "@/types/api";
+import { useAppStore } from "@/stores/app-store";
+import { Card } from "@/components/ui/card";
+import { BuildFlashcards } from "@/components/BuildFlashcards";
 
 interface Props {
   job: JobSnapshot | null;

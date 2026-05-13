@@ -1,6 +1,6 @@
-import { House, Settings } from "lucide-react";
+import { House, SlidersHorizontal } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import { Button } from "./ui/button";
+import { Button } from "@/components/ui/button";
 
 interface Props {
   title: string;
@@ -17,18 +17,19 @@ export function PageHeader({ title, projectRoot, rightAction }: Props) {
   const navigate = useNavigate();
 
   return (
-    <div className="page-header mb-8 flex items-start justify-between gap-4">
-      <div className="flex min-w-0 items-start gap-4">
+    <div className="page-header mb-8">
+      <div className="page-header-inner">
         <Button
           variant="ghost"
           onClick={() => navigate("/home")}
-          className="icon-button"
+          className="nav-tile"
           aria-label="Home"
           title="Home"
         >
           <House aria-hidden="true" />
+          <span>HOME</span>
         </Button>
-        <div className="min-w-0">
+        <div className="page-title-block">
           <h1 className="page-title">{title}</h1>
           {projectRoot ? (
             <p className="project-chip mt-2" title={projectRoot}>
@@ -36,14 +37,17 @@ export function PageHeader({ title, projectRoot, rightAction }: Props) {
             </p>
           ) : null}
         </div>
+        {rightAction === "settings" ? (
+          <Button variant="outline" asChild className="nav-tile" aria-label="Config" title="Config">
+            <Link to="/settings">
+              <SlidersHorizontal aria-hidden="true" />
+              <span>CONFIG</span>
+            </Link>
+          </Button>
+        ) : (
+          <span className="nav-tile-spacer" aria-hidden="true" />
+        )}
       </div>
-      {rightAction === "settings" ? (
-        <Button variant="outline" asChild className="icon-button" aria-label="Settings" title="Settings">
-          <Link to="/settings">
-            <Settings aria-hidden="true" />
-          </Link>
-        </Button>
-      ) : null}
     </div>
   );
 }

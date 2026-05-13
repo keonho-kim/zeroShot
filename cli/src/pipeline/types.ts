@@ -12,6 +12,7 @@ export interface PipelineOptions {
   validateReasoning?: string;
   closeoutReasoning?: string;
   responseLanguage?: string;
+  additionalDirectories?: string[];
 }
 
 export interface AppDefaults {
@@ -41,7 +42,10 @@ export interface PipelineContext {
   previousRunDir: string;
   phaseSeq: number;
   pipelineNote: string;
-  options: Required<Omit<PipelineOptions, "model">> & { model?: string };
+  options: Required<Omit<PipelineOptions, "model" | "additionalDirectories">> & {
+    model?: string;
+    additionalDirectories: string[];
+  };
 }
 
 export interface PhaseResult {

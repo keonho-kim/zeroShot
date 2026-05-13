@@ -1,9 +1,9 @@
 import { EventEmitter } from "node:events";
 import { spawn } from "node:child_process";
 import { createInterface } from "node:readline";
-import { loadAppConfig } from "../config/app-config.js";
-import { buildPipelineCommandSpec } from "../core/cli-command.js";
-import type { JobEvent, JobSnapshot, PipelineOptions, RunMode } from "../types.js";
+import { loadAppConfig } from "@backend/config/app-config.js";
+import { buildPipelineCommandSpec } from "@backend/core/cli-command.js";
+import type { JobEvent, JobSnapshot, PipelineOptions, RunMode } from "@backend/types.js";
 
 const PHASE_NAMES = new Set(["prepare", "normalize", "iter", "replan", "validate", "sync-product", "closeout", "build", "codex"]);
 
@@ -42,7 +42,14 @@ class JobManager {
     }
 
     const appConfig = await loadAppConfig();
-    const spec = buildPipelineCommandSpec(mode, projectRoot, appConfig.defaults, options);
+    const spec = buildPipelineCommandSpec(mode, projectRoot, appConfig.defaults, {
+      ...options,
+      additionalDirectories: [
+        ...(options.additionalDirectories ?? []),
+        appConfig.resourceRoots.skills,
+        appConfig.resourceRoots.designTemplates
+      ]
+    });
     const jobId = crypto.randomUUID();
 
     this.currentJobId = jobId;

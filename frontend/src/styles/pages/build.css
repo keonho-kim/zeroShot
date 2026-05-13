@@ -1,0 +1,330 @@
+.build-workspace {
+  display: grid;
+  gap: 1rem;
+}
+
+.project-tree-scroll {
+  cursor: grab;
+  overscroll-behavior: contain;
+  user-select: none;
+}
+
+.project-tree-scroll.dragging {
+  cursor: grabbing;
+}
+
+.agent-panel {
+  border: 2px solid var(--border);
+  border-radius: 2px;
+  box-shadow: var(--shadow-card);
+}
+
+.agent-panel-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+}
+
+.agent-panel-icon {
+  display: grid;
+  height: 3rem;
+  width: 3rem;
+  place-items: center;
+  border: 2px solid var(--border);
+  border-radius: 2px;
+  background: var(--success-surface);
+  color: var(--success-foreground);
+}
+
+.agent-panel-icon svg {
+  height: 1.35rem;
+  width: 1.35rem;
+}
+
+.agent-panel-kicker {
+  color: var(--primary);
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 0.75rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.agent-status-grid {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+
+.agent-status-grid div {
+  min-width: 0;
+  border: 2px solid var(--border);
+  border-radius: 2px;
+  background: var(--background);
+  padding: 0.875rem;
+}
+
+.agent-status-grid span,
+.agent-status-grid strong {
+  display: block;
+  min-width: 0;
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+}
+
+.agent-status-grid span {
+  color: var(--text-subtle);
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.agent-status-grid strong {
+  color: var(--foreground);
+  font-size: 0.95rem;
+  font-weight: 850;
+  margin-top: 0.375rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.build-setup-card {
+  display: flex;
+  width: min(100%, 960px);
+  flex-direction: column;
+  gap: 1.5rem;
+  margin: clamp(1.5rem, 5vh, 4rem) auto 0;
+  border: 2px solid var(--border);
+  border-radius: 2px;
+  box-shadow: var(--shadow-card);
+  padding: clamp(1.25rem, 3vw, 2rem);
+}
+
+.build-setup-card h2,
+.build-run-heading h2 {
+  margin: 0;
+  color: var(--foreground);
+  font-family: var(--font-display);
+  font-size: clamp(2.5rem, 5vw, 4.75rem);
+  font-weight: 400;
+  line-height: 0.95;
+}
+
+.build-setup-card p,
+.build-run-heading p {
+  margin: 0.375rem 0 0;
+  color: var(--muted-foreground);
+  line-height: 1.6;
+}
+
+.build-choice-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.build-choice-card {
+  display: flex;
+  min-height: 11rem;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.875rem;
+  border: 2px solid var(--border);
+  border-radius: 2px;
+  background: var(--background);
+  color: var(--foreground);
+  padding: 1.25rem;
+  text-align: left;
+  transition:
+    border-color 150ms ease,
+    background-color 150ms ease,
+    transform 150ms ease;
+}
+
+.build-choice-card:hover:not(:disabled),
+.build-choice-card.selected {
+  border-color: var(--border);
+  background: var(--foreground);
+  color: var(--background);
+}
+
+.build-choice-card:hover:not(:disabled) svg,
+.build-choice-card.selected svg,
+.build-choice-card:hover:not(:disabled) small,
+.build-choice-card.selected small,
+.build-choice-card:hover:not(:disabled) span,
+.build-choice-card.selected span {
+  color: var(--background);
+}
+
+.build-choice-card:hover:not(:disabled) {
+  transform: translate(-2px, -2px);
+}
+
+.build-choice-card:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.build-choice-card svg {
+  height: 1.5rem;
+  width: 1.5rem;
+  color: var(--primary);
+}
+
+.choice-dot {
+  display: block;
+  height: 1.5rem;
+  width: 1.5rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+}
+
+.build-choice-card span {
+  color: var(--foreground);
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 1.25rem;
+  font-weight: 900;
+  line-height: 1.1;
+}
+
+.build-choice-card small {
+  color: var(--muted-foreground);
+  font-size: 0.875rem;
+  line-height: 1.55;
+}
+
+.build-upload-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  border: 2px solid var(--border);
+  border-radius: 2px;
+  background: var(--surface);
+  padding: 1rem;
+}
+
+.build-upload-panel textarea {
+  min-height: 180px;
+}
+
+.build-setup-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+.build-run-screen {
+  display: grid;
+  gap: 1rem;
+}
+.build-run-heading {
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  box-shadow: var(--shadow-card);
+}
+.flashcard-stage {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+}
+
+.flashcard-progress {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  color: var(--muted-foreground);
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.flashcard-progress div {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.375rem;
+}
+
+.flashcard-progress button {
+  height: 0.5rem;
+  width: 1.25rem;
+  border-radius: 999px;
+  background: var(--surface-active);
+}
+
+.flashcard-progress button.active {
+  background: var(--primary);
+}
+
+.work-flashcard {
+  display: flex;
+  min-height: 420px;
+  flex-direction: column;
+  gap: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 1.5rem;
+  background: var(--panel);
+  box-shadow: var(--shadow-card);
+}
+
+.work-card-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+}
+
+.work-card-icon {
+  display: grid;
+  height: 2.5rem;
+  width: 2.5rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--surface);
+}
+
+.work-card-kicker {
+  margin: 0 0 0.125rem;
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.work-flashcard h2 {
+  margin: 0;
+  font-size: clamp(1.5rem, 5vw, 2.75rem);
+  line-height: 1.08;
+}
+
+.work-card-summary {
+  margin: 0;
+  color: var(--muted-foreground);
+  line-height: 1.6;
+}
+
+.work-card-log {
+  flex: 1;
+  overflow: auto;
+  border-radius: 1rem;
+  background: var(--code-bg);
+  padding: 1rem;
+}
+
+.work-card-log p {
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: var(--code-fg);
+  font-family: "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+  font-size: 0.75rem;
+  line-height: 1.65;
+}
+
+.work-card-log p + p {
+  margin-top: 0.375rem;
+}
+
+.work-card-log p[data-type="stderr"],
+.work-card-log p[data-type="job_failed"] {
+  color: var(--danger-foreground);
+}
