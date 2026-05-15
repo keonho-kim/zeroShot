@@ -105,6 +105,36 @@ Refactor coherently.
 Test what matters.
 Make failures explicit.
 
+## Development and Release Workflow
+
+When the user asks for development work, use a feature branch named `feat/<feature_name>`.
+
+Required development flow:
+
+1. Create the feature branch from the latest `main`.
+2. Implement the requested change with the minimum necessary production-grade scope.
+3. Run the required local verification.
+4. Commit the intended files only.
+5. Push the feature branch.
+6. Open a pull request.
+7. Merge the pull request into `main`.
+8. Confirm the remote feature branch was deleted.
+
+When the user also asks to deploy or release after development, run the full release flow after the pull request is merged.
+
+Default release policy:
+
+- Use the dev release channel unless the user explicitly requests a stable release.
+- Use version tags in the form `vN.N.N-dev.N`, where every `N` is a number.
+- Bump package versions before release because npm package versions are immutable.
+- Keep the GitHub release title equal to the version tag only, such as `v0.0.0-dev.5`; do not prefix it with the product name.
+- Push the version tag from the latest `main`.
+- Wait for the release workflow to complete.
+- Confirm GitHub Release asset publication, npm publication, npm `latest` dist-tag, and latest GitHub installer routing.
+- Verify installation in temporary locations with npm and Bun, then run `zeroshot --help`.
+- If the release includes uninstall behavior, verify uninstall from temporary npm, Bun, and latest-installer installs.
+- Report exactly what was changed, what was tested, what was published, and any remaining uncertainty.
+
 ## Engineering Priorities
 
 Prioritize in this order:
