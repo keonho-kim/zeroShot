@@ -69,13 +69,19 @@ npm install -g @keonhokim/zeroshot@0.0.0-dev.3
 bun install -g @keonhokim/zeroshot@0.0.0-dev.3
 ```
 
-The GitHub release installer is also available:
+The latest GitHub release installer is also available. It follows the newest ZeroShot release, regardless of whether the tag is dev or stable:
+
+```bash
+curl -fsSL https://github.com/keonho-kim/zeroShot/releases/latest/download/install.sh | sh
+```
+
+Use a pinned GitHub release when you need a specific version:
 
 ```bash
 curl -fsSL https://github.com/keonho-kim/zeroShot/releases/download/v.dev.3/install.sh | sh
 ```
 
-Or install the GitHub release package directly with Bun:
+Or install a pinned GitHub release package directly with Bun:
 
 ```bash
 bun install -g https://github.com/keonho-kim/zeroShot/releases/download/v.dev.3/zeroShot-dev.3.tgz
