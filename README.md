@@ -11,7 +11,7 @@
   </p>
 </div>
 
-## What is ZeroShot?
+## Product
 
 ZeroShot is a desktop-friendly web console and CLI for working with Codex on your own projects.
 
@@ -38,7 +38,9 @@ ZeroShot keeps the source of truth in your project directory, uses your existing
 - **CLI included** for scripted or terminal-first workflows.
 - **Release installer** for macOS, Linux, WSL, proot, and Termux-style environments.
 
-## Requirements
+## Installation
+
+### Requirements
 
 - Bun 1.3 or newer
 - Codex credentials available through `~/.codex/auth.json`
@@ -46,7 +48,7 @@ ZeroShot keeps the source of truth in your project directory, uses your existing
 
 Termux users should install Bun before running the installer.
 
-## Install
+### Install
 
 Install the latest dev release from npm:
 
@@ -89,7 +91,9 @@ bun install -g https://github.com/keonho-kim/zeroShot/releases/download/v0.0.0-d
 
 After installation, the `zeroshot` command is available on your PATH.
 
-## Quick Start
+## CLI Commands
+
+### `zeroshot start`
 
 Start the web console:
 
@@ -110,7 +114,20 @@ Then:
 3. Continue to **DESIGN** when you want an editable artifact.
 4. Use **BUILD** when the blueprint is ready to implement.
 
-## CLI Usage
+Bind the web console to a LAN or Tailscale-accessible interface:
+
+```bash
+zeroshot start --host 0.0.0.0 --port 32575
+```
+
+Options:
+
+| Option | Purpose |
+| --- | --- |
+| `--host <host>` | Host interface to bind. Use `0.0.0.0` for LAN or Tailscale access. |
+| `--port <port>` | Port to listen on. The default is `32575` unless overridden by config. |
+
+### `zeroshot build`
 
 Run a build directly from the terminal:
 
@@ -118,11 +135,31 @@ Run a build directly from the terminal:
 zeroshot build --project-root /absolute/path/to/project
 ```
 
+BUILD starts a new product implementation run for the selected project. It uses the project `PRODUCT.html` blueprint and writes run history under `.work.history/`.
+
+Common options:
+
+| Option | Purpose |
+| --- | --- |
+| `--project-root <path>` | Required absolute path to the target project. |
+| `--model <model>` | Override the Codex model for the run. |
+| `--approval <policy>` | Override the Codex approval policy. |
+| `--sandbox <mode>` | Override the Codex sandbox mode. |
+| `--max-iters <count>` | Maximum implementation iterations. |
+| `--add-dir <path>` | Additional directory Codex can read during the run. Can be repeated. |
+| `--response-language <language>` | Language for user-facing run documents and final answers. |
+
+### `zeroshot update`
+
 Run an update flow:
 
 ```bash
 zeroshot update --project-root /absolute/path/to/project
 ```
+
+UPDATE compares `PRODUCT.html`, `UPDATE.md`, and the previous run history, then implements the requested changes. It accepts the same shared options as `build`.
+
+### `zeroshot uninstall`
 
 Remove ZeroShot global installs and local ZeroShot app data:
 
@@ -130,13 +167,15 @@ Remove ZeroShot global installs and local ZeroShot app data:
 zeroshot uninstall
 ```
 
-Bind the web console to a LAN or Tailscale-accessible interface:
+Preview the uninstall targets without deleting anything:
 
 ```bash
-zeroshot start --host 0.0.0.0 --port 32575
+zeroshot uninstall --dry-run
 ```
 
-## Configuration
+Use `zeroshot uninstall` before `npm uninstall -g @keonhokim/zeroshot` or `bun uninstall -g @keonhokim/zeroshot` when you want a complete cleanup. Package-manager uninstall commands remove the package, but they do not remove app data such as `~/.zeroshot/config.toml`.
+
+### Configuration
 
 ZeroShot creates its app configuration at:
 
