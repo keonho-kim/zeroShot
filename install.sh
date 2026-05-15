@@ -2,20 +2,53 @@
 set -eu
 
 REPOSITORY="${ZEROSHOT_REPOSITORY:-keonho-kim/zeroShot}"
-VERSION="${ZEROSHOT_VERSION:-dev.1}"
-case "$VERSION" in
-  dev.*)
-    TAG="${ZEROSHOT_TAG:-v.${VERSION}}"
-    ;;
-  *)
-    TAG="${ZEROSHOT_TAG:-v${VERSION}}"
-    ;;
-esac
+VERSION="${ZEROSHOT_VERSION:-latest}"
 
 fail() {
   echo "$1" >&2
   exit 1
 }
+
+resolve_latest_tag() {
+  if ! command -v curl >/dev/null 2>&1; then
+    fail "curl is required to resolve the latest ZeroShot release."
+  fi
+
+  curl -fsSL "https://api.github.com/repos/${REPOSITORY}/releases/latest" \
+    | sed -n 's/.*"tag_name":[[:space:]]*"\([^"]*\)".*/\1/p' \
+    | head -n 1
+}
+
+version_from_tag() {
+  tag="$1"
+
+  case "$tag" in
+    v.dev.*)
+      echo "${tag#v.}"
+      ;;
+    v*)
+      echo "${tag#v}"
+      ;;
+    *)
+      fail "Unsupported ZeroShot release tag: $tag"
+      ;;
+  esac
+}
+
+if [ "$VERSION" = "latest" ]; then
+  TAG="${ZEROSHOT_TAG:-$(resolve_latest_tag)}"
+  [ -n "$TAG" ] || fail "Could not resolve the latest ZeroShot release."
+  VERSION="$(version_from_tag "$TAG")"
+else
+  case "$VERSION" in
+    dev.*)
+      TAG="${ZEROSHOT_TAG:-v.${VERSION}}"
+      ;;
+    *)
+      TAG="${ZEROSHOT_TAG:-v${VERSION}}"
+      ;;
+  esac
+fi
 
 detect_arch() {
   case "$(uname -m)" in
