@@ -5,8 +5,8 @@
     <a href="https://github.com/keonho-kim/zeroShot/actions/workflows/release.yml">
       <img alt="Release" src="https://github.com/keonho-kim/zeroShot/actions/workflows/release.yml/badge.svg">
     </a>
-    <a href="https://github.com/keonho-kim/zeroShot/releases/tag/v0.0.0-dev.4">
-      <img alt="Latest release" src="https://img.shields.io/badge/release-v0.0.0--dev.4-black">
+    <a href="https://github.com/keonho-kim/zeroShot/releases/tag/v0.0.0-dev.5">
+      <img alt="Latest release" src="https://img.shields.io/badge/release-v0.0.0--dev.5-black">
     </a>
   </p>
 </div>
@@ -65,8 +65,8 @@ ZeroShot runs on Bun, so Bun must be available even when the package is installe
 Install a specific version:
 
 ```bash
-npm install -g @keonhokim/zeroshot@0.0.0-dev.4
-bun install -g @keonhokim/zeroshot@0.0.0-dev.4
+npm install -g @keonhokim/zeroshot@0.0.0-dev.5
+bun install -g @keonhokim/zeroshot@0.0.0-dev.5
 ```
 
 The latest GitHub release installer is also available. It follows the newest ZeroShot release, regardless of whether the tag is dev or stable:
@@ -78,13 +78,13 @@ curl -fsSL https://github.com/keonho-kim/zeroShot/releases/latest/download/insta
 Use a pinned GitHub release when you need a specific version:
 
 ```bash
-curl -fsSL https://github.com/keonho-kim/zeroShot/releases/download/v0.0.0-dev.4/install.sh | sh
+curl -fsSL https://github.com/keonho-kim/zeroShot/releases/download/v0.0.0-dev.5/install.sh | sh
 ```
 
 Or install a pinned GitHub release package directly with Bun:
 
 ```bash
-bun install -g https://github.com/keonho-kim/zeroShot/releases/download/v0.0.0-dev.4/zeroShot-0.0.0-dev.4.tgz
+bun install -g https://github.com/keonho-kim/zeroShot/releases/download/v0.0.0-dev.5/zeroShot-0.0.0-dev.5.tgz
 ```
 
 After installation, the `zeroshot` command is available on your PATH.
@@ -219,13 +219,13 @@ Release builds are created by GitHub Actions when a release tag is pushed.
 For dev releases:
 
 ```bash
-git tag v0.0.0-dev.4
-git push origin v0.0.0-dev.4
+git tag v0.0.0-dev.5
+git push origin v0.0.0-dev.5
 ```
 
 The release workflow uploads:
 
-- `zeroShot-0.0.0-dev.4.tgz`
+- `zeroShot-0.0.0-dev.5.tgz`
 - `install.sh`
 
 It also publishes the CLI package to npm as `@keonhokim/zeroshot`.

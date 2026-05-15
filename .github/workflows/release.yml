@@ -111,7 +111,7 @@ jobs:
           else
             VERSION="${GITHUB_REF_NAME#v}"
           fi
-          TITLE="ZeroShot ${GITHUB_REF_NAME}"
+          TITLE="${GITHUB_REF_NAME}"
           NOTES="$(printf 'Install with:\n\nnpm install -g @keonhokim/zeroshot\nbun install -g @keonhokim/zeroshot\n\nLatest GitHub installer:\n\ncurl -fsSL https://github.com/%s/releases/latest/download/install.sh | sh\n\nPinned GitHub installer:\n\ncurl -fsSL https://github.com/%s/releases/download/%s/install.sh | sh' "$GITHUB_REPOSITORY" "$GITHUB_REPOSITORY" "$GITHUB_REF_NAME")"
 
           if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
