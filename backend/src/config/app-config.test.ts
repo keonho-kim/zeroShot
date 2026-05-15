@@ -62,7 +62,7 @@ allowed_roots = ["~/zeroshot-projects"]
       },
       server: {
         host: "127.0.0.1",
-        port: 3000
+        port: 17320
       },
       defaults: {
         approval: "never",
@@ -86,7 +86,7 @@ allowed_roots = ["~/zeroshot-projects"]
 
     const config = await loadAppConfig();
 
-    expect(config.server).toEqual({ host: "127.0.0.1", port: 3000 });
+    expect(config.server).toEqual({ host: "127.0.0.1", port: 17320 });
     expect(await readFile(filePath, "utf8")).toContain("host = \"127.0.0.1\"");
   });
 });
