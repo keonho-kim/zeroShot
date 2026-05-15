@@ -120,7 +120,10 @@ Required development flow:
 7. Merge the pull request into `main`.
 8. Confirm the remote feature branch was deleted.
 
-When the user also asks to deploy or release after development, run the full release flow after the pull request is merged.
+After merging any development pull request into `main`, always check whether the merged change must be reflected in the installable package and GitHub latest release before sending the final report.
+
+- If the change affects CLI behavior, packaged runtime behavior, installation, release artifacts, npm-published code, or user-facing behavior that installed users should receive, run the full release flow after the pull request is merged.
+- If no release is needed, explicitly report why npm and GitHub releases were intentionally left unchanged.
 
 Default release policy:
 
