@@ -134,7 +134,7 @@ bun install
 GitHub release가 생성된 뒤에는 다음 명령으로 CLI를 설치할 수 있습니다.
 
 ```bash
-curl -fsSL https://github.com/keonho-kim/zeroShot/releases/download/v.dev.1/install.sh | sh
+curl -fsSL https://github.com/keonho-kim/zeroShot/releases/download/v.dev.3/install.sh | sh
 ```
 
 installer는 Termux, Linux, WSL, proot, macOS에서 arm64와 x64를 확인합니다.
@@ -143,7 +143,7 @@ Termux에서는 Bun이 미리 설치되어 있어야 하며, 다른 환경에서
 또는 release tarball을 Bun으로 직접 전역 설치할 수 있습니다.
 
 ```bash
-bun install -g https://github.com/keonho-kim/zeroShot/releases/download/v.dev.1/zeroShot-dev.1.tgz
+bun install -g https://github.com/keonho-kim/zeroShot/releases/download/v.dev.3/zeroShot-dev.3.tgz
 ```
 
 설치 후에는 `zeroshot` 명령을 사용합니다.
@@ -195,13 +195,13 @@ bun run build
 같은 태그의 release가 이미 있으면 asset과 release notes를 갱신합니다.
 
 ```bash
-git tag v.dev.1
-git push origin v.dev.1
+git tag v.dev.3
+git push origin v.dev.3
 ```
 
 릴리스 워크플로는 다음 asset을 업로드합니다.
 
-- `zeroShot-dev.1.tgz`
+- `zeroShot-dev.3.tgz`
 - `install.sh`
 
 ### 개발 서버

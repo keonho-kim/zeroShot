@@ -1,6 +1,6 @@
 {
   "name": "@zeroshot/cli",
-  "version": "0.0.0-dev.2",
+  "version": "0.0.0-dev.3",
   "description": "ZeroShot production CLI wrapper",
   "type": "module",
   "bin": {

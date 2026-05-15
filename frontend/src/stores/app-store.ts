@@ -22,7 +22,6 @@ interface AppState {
   projectPickerHistoryIndex: number;
   treeExpandedPaths: string[];
   treeChildrenByPath: Record<string, DirectoryEntry[]>;
-  treeLoadingPaths: string[];
   pendingCreateDirParentPath: string;
   pendingCreateDirName: string;
   setAuthStatus: (value: AuthStatus | null) => void;
@@ -38,7 +37,6 @@ interface AppState {
   setProjectPickerHistoryIndex: (value: number) => void;
   setTreeExpandedPaths: (value: string[]) => void;
   setTreeChildrenByPath: (value: Record<string, DirectoryEntry[]>) => void;
-  setTreeLoadingPaths: (value: string[]) => void;
   setPendingCreateDirParentPath: (value: string) => void;
   setPendingCreateDirName: (value: string) => void;
   clearLogs: () => void;
@@ -84,7 +82,6 @@ export const useAppStore = create<AppState>((set) => ({
   projectPickerHistoryIndex: -1,
   treeExpandedPaths: [],
   treeChildrenByPath: {},
-  treeLoadingPaths: [],
   pendingCreateDirParentPath: "",
   pendingCreateDirName: "",
   setAuthStatus: (value) => set({ authStatus: value }),
@@ -103,7 +100,6 @@ export const useAppStore = create<AppState>((set) => ({
   setProjectPickerHistoryIndex: (value) => set({ projectPickerHistoryIndex: value }),
   setTreeExpandedPaths: (value) => set({ treeExpandedPaths: value }),
   setTreeChildrenByPath: (value) => set({ treeChildrenByPath: value }),
-  setTreeLoadingPaths: (value) => set({ treeLoadingPaths: value }),
   setPendingCreateDirParentPath: (value) => set({ pendingCreateDirParentPath: value }),
   setPendingCreateDirName: (value) => set({ pendingCreateDirName: value }),
   clearLogs: () => set({ logs: [] }),
