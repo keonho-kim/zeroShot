@@ -39,7 +39,7 @@ const defaultAppOptions: AppDefaults = {
 
 const defaultServerOptions = {
   host: "127.0.0.1",
-  port: 17320
+  port: 32575
 };
 
 function getWorkspaceRoot(): string {

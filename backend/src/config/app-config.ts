@@ -15,7 +15,7 @@ const defaultConfig: AppConfig = {
   },
   server: {
     host: "127.0.0.1",
-    port: 17320
+    port: 32575
   },
   defaults: {
     approval: "never",

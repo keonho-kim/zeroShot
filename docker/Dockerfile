@@ -17,10 +17,10 @@ FROM oven/bun:1.3.11 AS runtime
 
 WORKDIR /app
 ENV NODE_ENV=production
-ENV PORT=17320
+ENV PORT=32575
 
 COPY --from=build /app /app
 
-EXPOSE 17320
+EXPOSE 32575
 
 CMD ["bun", "run", "serve"]

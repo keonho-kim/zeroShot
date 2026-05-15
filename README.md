@@ -100,7 +100,7 @@ zeroshot start
 Open the printed local URL, usually:
 
 ```text
-http://127.0.0.1:17320
+http://127.0.0.1:32575
 ```
 
 Then:
@@ -133,7 +133,7 @@ zeroshot uninstall
 Bind the web console to a LAN or Tailscale-accessible interface:
 
 ```bash
-zeroshot start --host 0.0.0.0 --port 17320
+zeroshot start --host 0.0.0.0 --port 32575
 ```
 
 ## Configuration
@@ -148,7 +148,7 @@ Default configuration:
 
 ```toml
 host = "127.0.0.1"
-port = 17320
+port = 32575
 allowed_roots = []
 default_approval = "never"
 default_sandbox = "workspace-write"
@@ -164,7 +164,7 @@ To allow access from another device on your private network:
 
 ```toml
 host = "0.0.0.0"
-port = 17320
+port = 32575
 ```
 
 Codex provider and profile settings remain in:
@@ -242,13 +242,13 @@ Run it with a mounted home directory so Codex credentials and project files pers
 
 ```bash
 docker run --rm \
-  -p 17320:17320 \
+  -p 32575:32575 \
   -v "$HOME/.codex:/root/.codex" \
   -v "$HOME/dev:/root/workspace" \
   zeroshot
 ```
 
-Open `http://127.0.0.1:17320` and choose a project under `/root/workspace`.
+Open `http://127.0.0.1:32575` and choose a project under `/root/workspace`.
 
 ## Status
 
