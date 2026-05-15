@@ -46,7 +46,7 @@ select {
 
 ::selection {
   background: var(--surface-active);
-  color: var(--foreground);
+  color: var(--background);
 }
 
 input::placeholder,
