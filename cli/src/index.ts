@@ -9,6 +9,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { findWorkspaceRoot } from "@cli/pipeline/utils.js";
 import { runPipeline } from "@cli/pipeline/runner.js";
+import { runUninstall } from "@cli/uninstall.js";
 import type { AppDefaults, PipelineOptions, RunMode } from "@cli/pipeline/types.js";
 
 interface CliOptions extends PipelineOptions {
@@ -19,6 +20,10 @@ interface CliOptions extends PipelineOptions {
 interface StartOptions {
   host?: string;
   port?: number;
+}
+
+interface UninstallCliOptions {
+  dryRun?: boolean;
 }
 
 const defaultAppOptions: AppDefaults = {
@@ -124,6 +129,10 @@ function packageRoot(): string {
   return currentDir.endsWith(`${join("cli", "src")}`) ? getWorkspaceRoot() : resolve(currentDir, "..");
 }
 
+function isSourceCliEntry(): boolean {
+  return dirname(fileURLToPath(import.meta.url)).endsWith(`${join("cli", "src")}`);
+}
+
 function startArtifacts(): { backendEntry: string; frontendDist: string; cliEntry: string } {
   const root = packageRoot();
   const packagedBackend = join(root, "app", "backend", "dist", "server.js");
@@ -224,6 +233,18 @@ program
   .option("--port <port>", "Port to listen on", Number)
   .action(async (options: StartOptions) => {
     await startServer(options);
+  });
+
+program
+  .command("uninstall")
+  .description("Remove ZeroShot global installs and local ZeroShot app data")
+  .option("--dry-run", "Print uninstall targets without deleting files")
+  .action(async (options: UninstallCliOptions) => {
+    await runUninstall({
+      currentPackageRoot: packageRoot(),
+      includeCurrentPackageRoot: !isSourceCliEntry(),
+      dryRun: options.dryRun
+    });
   });
 
 program.parseAsync(process.argv).catch((error: Error) => {
