@@ -52,6 +52,27 @@ jobs:
           cp -R backend/dist cli/app/backend/dist
           cp -R frontend/dist cli/app/frontend/dist
 
+      - name: Publish npm package
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          if [ -z "${NODE_AUTH_TOKEN:-}" ]; then
+            echo "NPM_TOKEN repository secret is required to publish @keonhokim/zeroshot." >&2
+            exit 1
+          fi
+
+          printf "//registry.npmjs.org/:_authToken=%s\n" "$NODE_AUTH_TOKEN" > "$HOME/.npmrc"
+
+          PACKAGE_NAME="$(bun --print 'require("./cli/package.json").name')"
+          PACKAGE_VERSION="$(bun --print 'require("./cli/package.json").version')"
+
+          if npm view "${PACKAGE_NAME}@${PACKAGE_VERSION}" version >/dev/null 2>&1; then
+            npm dist-tag add "${PACKAGE_NAME}@${PACKAGE_VERSION}" latest
+          else
+            cd cli
+            npm publish --access public --tag latest
+          fi
+
       - name: Pack release artifact
         run: |
           if [[ "$GITHUB_REF_NAME" == v.dev.* ]]; then
@@ -65,7 +86,7 @@ jobs:
           cd cli
           bun pm pack --destination ../release
           cd ..
-          mv "release/zeroshot-cli-${PACKAGE_VERSION}.tgz" "release/zeroShot-${RELEASE_VERSION}.tgz"
+          mv release/*.tgz "release/zeroShot-${RELEASE_VERSION}.tgz"
 
       - name: Copy installer
         run: |
@@ -91,7 +112,7 @@ jobs:
             VERSION="${GITHUB_REF_NAME#v}"
           fi
           TITLE="ZeroShot ${GITHUB_REF_NAME}"
-          NOTES="Install with: curl -fsSL https://github.com/${GITHUB_REPOSITORY}/releases/download/${GITHUB_REF_NAME}/install.sh | sh"
+          NOTES="$(printf 'Install with:\n\nnpm install -g @keonhokim/zeroshot\nbun install -g @keonhokim/zeroshot\n\nGitHub installer:\n\ncurl -fsSL https://github.com/%s/releases/download/%s/install.sh | sh' "$GITHUB_REPOSITORY" "$GITHUB_REF_NAME")"
 
           if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
             gh release upload "$GITHUB_REF_NAME" \

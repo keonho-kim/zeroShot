@@ -33,10 +33,10 @@
       },
     },
     "cli": {
-      "name": "@zeroshot/cli",
+      "name": "@keonhokim/zeroshot",
       "version": "0.0.0-dev.3",
       "bin": {
-        "zeroshot": "./dist/index.js",
+        "zeroshot": "dist/index.js",
       },
       "dependencies": {
         "@iarna/toml": "^2.2.5",
@@ -344,7 +344,7 @@
 
     "@zeroshot/backend": ["@zeroshot/backend@workspace:backend"],
 
-    "@zeroshot/cli": ["@zeroshot/cli@workspace:cli"],
+    "@keonhokim/zeroshot": ["@keonhokim/zeroshot@workspace:cli"],
 
     "@zeroshot/frontend": ["@zeroshot/frontend@workspace:frontend"],
 

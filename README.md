@@ -48,13 +48,34 @@ Termux users should install Bun before running the installer.
 
 ## Install
 
-Install the latest dev release:
+Install the latest dev release from npm:
+
+```bash
+npm install -g @keonhokim/zeroshot
+```
+
+Or install it with Bun:
+
+```bash
+bun install -g @keonhokim/zeroshot
+```
+
+ZeroShot runs on Bun, so Bun must be available even when the package is installed with npm.
+
+Install a specific version:
+
+```bash
+npm install -g @keonhokim/zeroshot@0.0.0-dev.3
+bun install -g @keonhokim/zeroshot@0.0.0-dev.3
+```
+
+The GitHub release installer is also available:
 
 ```bash
 curl -fsSL https://github.com/keonho-kim/zeroShot/releases/download/v.dev.3/install.sh | sh
 ```
 
-Or install the release package directly with Bun:
+Or install the GitHub release package directly with Bun:
 
 ```bash
 bun install -g https://github.com/keonho-kim/zeroShot/releases/download/v.dev.3/zeroShot-dev.3.tgz
@@ -194,6 +215,8 @@ The release workflow uploads:
 
 - `zeroShot-dev.3.tgz`
 - `install.sh`
+
+It also publishes the CLI package to npm as `@keonhokim/zeroshot`.
 
 ## Docker
 
