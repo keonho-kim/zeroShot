@@ -42,10 +42,32 @@ export interface PipelineContext {
   previousRunDir: string;
   phaseSeq: number;
   pipelineNote: string;
+  createdAt: string;
+  compactState: PipelineState;
   options: Required<Omit<PipelineOptions, "model" | "additionalDirectories">> & {
     model?: string;
     additionalDirectories: string[];
   };
+}
+
+export interface WorkLogEntry {
+  title: string;
+  summary: string;
+  filesChanged: string[];
+  commandsRun: string[];
+  validationResult: string;
+  result: string;
+}
+
+export interface PipelineState {
+  goalSummary: string;
+  workQueue: string[];
+  completedTasks: WorkLogEntry[];
+  changedFiles: string[];
+  validation: string[];
+  openIssues: string[];
+  nextSteps: string[];
+  latestSummary: string;
 }
 
 export interface PhaseResult {
@@ -58,4 +80,10 @@ export interface PhaseResult {
   selectedTask: string;
   summary: string;
   resultJson: string;
+  workLogEntries: WorkLogEntry[];
+  resultSummary: string;
+  changedFiles: string[];
+  validation: string[];
+  nextSteps: string[];
+  openIssues: string[];
 }

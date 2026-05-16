@@ -3,7 +3,7 @@ dist
 .DS_Store
 *.log
 coverage
-backend/dist
+src/backend/dist
 cli/dist
-frontend/dist
+src/ui/dist
 *.tsbuildinfo

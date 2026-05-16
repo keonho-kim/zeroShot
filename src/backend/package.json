@@ -1,0 +1,37 @@
+{
+  "name": "@zeroshot/backend",
+  "version": "0.0.0-dev.6",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "dev": "bun --watch src/server.ts",
+    "build": "rm -rf dist tsconfig.tsbuildinfo && tsc -p tsconfig.json && tsc-alias -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@iarna/toml": "^2.2.5",
+    "@openai/codex-sdk": "^0.129.0",
+    "@sentry/node": "^10.53.1",
+    "axios": "^1.12.2",
+    "chokidar": "^4.0.3",
+    "cors": "^2.8.5",
+    "execa": "^9.6.1",
+    "express": "^4.22.1",
+    "http-proxy-middleware": "^3.0.5",
+    "isomorphic-git": "^1.38.0",
+    "nanoid": "^5.1.6",
+    "node-pty": "^1.1.0",
+    "shiki": "^4.0.2",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^4.17.25"
+  }
+}

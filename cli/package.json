@@ -14,8 +14,8 @@
     "app"
   ],
   "scripts": {
-    "dev": "bun run src/index.ts",
-    "build": "rm -rf dist tsconfig.tsbuildinfo && tsc -p tsconfig.json && tsc-alias -p tsconfig.json",
+    "dev": "cd ../src/cli && go run .",
+    "build": "rm -rf dist tsconfig.tsbuildinfo && tsc -p tsconfig.json && tsc-alias -p tsconfig.json && sh ../src/cli/scripts/build.sh",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "engines": {

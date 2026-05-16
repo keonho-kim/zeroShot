@@ -5,7 +5,7 @@ import { createPrompt } from "@cli/pipeline/phase/implement/prompt.js";
 export async function iterOnce(ctx: PipelineContext, iter: number): Promise<PhaseResult> {
   console.log("[iter] 구현 iteration을 시작합니다.");
   console.log(`[iter] iteration 번호: ${iter}`);
-  console.log("[iter] 목표: PLAN.md의 Live Queue에서 작업 1개만 처리합니다.");
+  console.log("[iter] 목표: compact queue에서 작업 1개만 처리합니다.");
   const prompt = createPrompt(ctx);
   const result = await runCodexPhase(ctx, `implement-${iter}`, ctx.options.execReasoning, prompt.goal, prompt.extra);
   console.log("[iter] iteration이 끝났습니다.");

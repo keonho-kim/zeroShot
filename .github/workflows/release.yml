@@ -22,6 +22,11 @@ jobs:
         with:
           bun-version: 1.3.11
 
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: src/cli/go.mod
+
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
@@ -49,8 +54,8 @@ jobs:
         run: |
           rm -rf cli/app
           mkdir -p cli/app/backend cli/app/frontend
-          cp -R backend/dist cli/app/backend/dist
-          cp -R frontend/dist cli/app/frontend/dist
+          cp -R src/backend/dist cli/app/backend/dist
+          cp -R src/ui/dist cli/app/frontend/dist
 
       - name: Publish npm package
         env:

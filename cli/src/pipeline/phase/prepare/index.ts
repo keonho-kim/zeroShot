@@ -9,6 +9,7 @@ import {
   setupRunPaths,
   writeRunMeta
 } from "@cli/pipeline/utils.js";
+import { createPipelineRun } from "@cli/pipeline/storage.js";
 
 async function ensureEnvAndTools(ctx: PipelineContext): Promise<void> {
   console.log("[env] 환경 변수와 필수 도구를 점검합니다.");
@@ -22,7 +23,7 @@ async function ensureEnvAndTools(ctx: PipelineContext): Promise<void> {
 
   console.log("[env] Codex 실행은 @openai/codex-sdk의 TypeScript API를 사용합니다.");
   if (!(await fileExists(ctx.productFile))) {
-    throw new Error(`PRODUCT.md를 찾지 못했습니다: ${ctx.productFile}`);
+    throw new Error(`PRODUCT.html을 찾지 못했습니다: ${ctx.productFile}`);
   }
   if (ctx.mode === "update" && !(await fileExists(ctx.updateFile))) {
     throw new Error(`update 모드에서는 UPDATE.md가 필요합니다: ${ctx.updateFile}`);
@@ -51,13 +52,12 @@ async function prepareRun(ctx: PipelineContext): Promise<void> {
   await initializeRunStructure(ctx);
   await writeRunMeta(ctx);
   await writeFile(ctx.activeRunFile, `${ctx.runDir}\n`, "utf8");
+  await createPipelineRun(ctx);
   ctx.phaseSeq = 0;
 
   console.log("[run] run 준비가 완료되었습니다.");
   console.log(`[run] RUN_DIR       : ${ctx.runDir}`);
-  console.log(`[run] RUN_LOG_DIR   : ${ctx.runLogDir}`);
-  console.log(`[run] RUN_INPUT_DIR : ${ctx.runInputDir}`);
-  console.log(`[run] OUTPUTS_DIR   : ${ctx.outputsDir}`);
+  console.log("[run] workspace에는 사용자용 HTML 보고서만 생성합니다.");
 }
 
 export async function preparePhase(ctx: PipelineContext): Promise<void> {

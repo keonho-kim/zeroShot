@@ -13,22 +13,15 @@ function printFinalSummary(ctx: PipelineContext, pipelineFailed: boolean, failur
   console.log("[build] 전체 파이프라인이 종료되었습니다.");
   console.log(`[build] Run mode      : ${ctx.mode}`);
   console.log(`[build] Run directory : ${ctx.runDir}`);
-  console.log(`[build] Logs directory: ${ctx.runLogDir}`);
-  console.log(`[build] Manifest file : ${ctx.runLogDir}/000-manifest.tsv`);
-  console.log(`[build] PRODUCT.md    : ${ctx.productFile}`);
+  console.log(`[build] PRODUCT.html  : ${ctx.productFile}`);
   if (ctx.mode === "update") {
     console.log(`[build] UPDATE.md     : ${ctx.updateFile || "<none>"}`);
   }
   if (ctx.previousRunDir) {
     console.log(`[build] Previous run  : ${ctx.previousRunDir}`);
   }
-  console.log(`[build] REQUIREMENTS : ${ctx.runDir}/REQUIREMENTS.md`);
-  console.log(`[build] PLAN.md      : ${ctx.runDir}/PLAN.md`);
-  console.log(`[build] SPEC.md      : ${ctx.runDir}/SPEC.md`);
-  console.log(`[build] TEST_PLAN.md : ${ctx.runDir}/TEST_PLAN.md`);
-  console.log(`[build] DONE.md      : ${ctx.runDir}/DONE.md`);
-  console.log(`[build] CHANGES.md   : ${ctx.runDir}/CHANGES.md`);
-  console.log(`[build] FINAL_REPORT : ${ctx.runDir}/FINAL_REPORT.md`);
+  console.log(`[build] Work log      : ${ctx.runDir}/work-log.html`);
+  console.log(`[build] Result report : ${ctx.runDir}/result-report.html`);
 
   if (pipelineFailed) {
     console.log("[build] 최종 결과    : FAIL");
@@ -153,7 +146,7 @@ export async function runPipeline(mode: RunMode, projectRoot: string, defaults: 
       console.log("[build] 최대 iteration 횟수에 도달했습니다.");
       pipelineFailed = true;
       failureReason = "max_iters_reached_before_queue_empty";
-      ctx.pipelineNote = "최대 iteration 횟수에 도달했습니다. 남은 작업을 PLAN.md와 FINAL_REPORT.md에 정직하게 기록하세요.";
+      ctx.pipelineNote = "최대 iteration 횟수에 도달했습니다. 남은 작업과 리스크를 compact state와 최종 HTML 보고서에 정직하게 기록하세요.";
     }
 
     console.log("[build] 4단계: 조건부 validate를 검토합니다.");
@@ -173,32 +166,32 @@ export async function runPipeline(mode: RunMode, projectRoot: string, defaults: 
     }
 
     if (ctx.mode === "update") {
-      console.log("[build] 5단계: update 모드이므로 PRODUCT.md 동기화 가능 여부를 검토합니다.");
+      console.log("[build] 5단계: update 모드이므로 PRODUCT.html 동기화 가능 여부를 검토합니다.");
       if (queueEmpty) {
         if (ranValidate && validateGate !== "PASS") {
-          console.log("[build] validate가 실패했으므로 PRODUCT.md 동기화는 수행하지 않습니다.");
+          console.log("[build] validate가 실패했으므로 PRODUCT.html 동기화는 수행하지 않습니다.");
         } else {
-          console.log("[build] queue가 비어 있고 validate 조건도 충족했으므로 PRODUCT.md 동기화를 시도합니다.");
+          console.log("[build] queue가 비어 있고 validate 조건도 충족했으므로 PRODUCT.html 동기화를 시도합니다.");
           lastResult = await syncProductPhase(ctx);
 
           if (lastResult.gate === "PASS") {
-            console.log("[build] PRODUCT.md 동기화가 PASS로 끝났습니다.");
+            console.log("[build] PRODUCT.html 동기화가 PASS로 끝났습니다.");
             shouldArchiveUpdate = true;
           } else {
-            console.log("[build] PRODUCT.md 동기화가 FAIL을 반환했습니다.");
+            console.log("[build] PRODUCT.html 동기화가 FAIL을 반환했습니다.");
             pipelineFailed = true;
             failureReason ||= "sync_product_failed";
           }
         }
       } else {
-        console.log("[build] queue가 비어 있지 않으므로 PRODUCT.md 동기화를 수행하지 않습니다.");
+        console.log("[build] queue가 비어 있지 않으므로 PRODUCT.html 동기화를 수행하지 않습니다.");
       }
     }
 
     console.log("[build] 6단계: closeout을 수행합니다.");
     ctx.pipelineNote = pipelineFailed
-      ? `이 run은 하나 이상의 FAIL 게이트를 겪었습니다. FINAL_REPORT.md에 실제 실패 지점과 남은 작업을 정직하게 기록하세요. failure_reason=${failureReason || "unknown"}`
-      : "이 run은 주요 게이트를 PASS로 통과했습니다. FINAL_REPORT.md에 완료 범위와 남은 리스크를 정직하게 기록하세요.";
+      ? `이 run은 하나 이상의 FAIL 게이트를 겪었습니다. HTML 보고서에 실제 실패 지점과 남은 작업을 정직하게 기록하세요. failure_reason=${failureReason || "unknown"}`
+      : "이 run은 주요 게이트를 PASS로 통과했습니다. HTML 보고서에 완료 범위와 남은 리스크를 정직하게 기록하세요.";
 
     lastResult = await closeoutPhase(ctx, pipelineFailed, failureReason);
     if (lastResult.gate !== "PASS") {
@@ -208,7 +201,7 @@ export async function runPipeline(mode: RunMode, projectRoot: string, defaults: 
     }
 
     if (ctx.mode === "update" && shouldArchiveUpdate && lastResult.gate === "PASS") {
-      console.log("[build] closeout까지 PASS로 끝났으므로 UPDATE.md를 input/ 아래로 이동합니다.");
+      console.log("[build] closeout까지 PASS로 끝났습니다. UPDATE.md는 workspace root에 유지합니다.");
       await archiveUpdateInput(ctx);
     }
 

@@ -1,9 +1,10 @@
-import { access, mkdir, readdir, rename, stat, writeFile } from "node:fs/promises";
+import { access, mkdir, readdir, stat, writeFile } from "node:fs/promises";
 import { constants, existsSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawn } from "node:child_process";
 import type { AppDefaults, PipelineContext, PipelineOptions, RunMode } from "@cli/pipeline/types.js";
+import { createEmptyPipelineState } from "@cli/pipeline/storage.js";
 
 export function nowHuman(date = new Date()): string {
   const pad = (value: number) => String(value).padStart(2, "0");
@@ -73,14 +74,15 @@ export function mergeOptions(defaults: AppDefaults, options: PipelineOptions): P
 export function createInitialContext(mode: RunMode, projectRoot: string, defaults: AppDefaults, options: PipelineOptions): PipelineContext {
   const root = resolve(projectRoot);
   const toolRoot = findWorkspaceRoot();
+  const createdAt = nowHuman();
   return {
     mode,
     projectRoot: root,
     toolRoot,
-    productFile: join(root, "PRODUCT.md"),
+    productFile: join(root, "PRODUCT.html"),
     updateFile: join(root, "UPDATE.md"),
-    workRoot: join(root, ".work.history"),
-    activeRunFile: join(root, ".work.history", ".active_run"),
+    workRoot: join(root, "runs"),
+    activeRunFile: join(root, "runs", ".active_run"),
     runDir: "",
     runName: "",
     runLogDir: "",
@@ -89,6 +91,8 @@ export function createInitialContext(mode: RunMode, projectRoot: string, default
     previousRunDir: "",
     phaseSeq: 0,
     pipelineNote: "",
+    createdAt,
+    compactState: createEmptyPipelineState(),
     options: mergeOptions(defaults, options)
   };
 }
@@ -113,20 +117,20 @@ export async function nextRunDir(workRoot: string): Promise<string> {
 export async function setupRunPaths(ctx: PipelineContext, runDir: string): Promise<void> {
   ctx.runDir = runDir;
   ctx.runName = runDir.split(/[\\/]/).at(-1) ?? "";
-  ctx.runLogDir = join(runDir, "logs");
-  ctx.runInputDir = join(runDir, "input");
-  ctx.outputsDir = join(runDir, "outputs");
-  await mkdir(ctx.runLogDir, { recursive: true });
-  await mkdir(ctx.runInputDir, { recursive: true });
-  await mkdir(ctx.outputsDir, { recursive: true });
+  ctx.runLogDir = runDir;
+  ctx.runInputDir = runDir;
+  ctx.outputsDir = runDir;
+  await mkdir(ctx.runDir, { recursive: true });
 }
 
 export async function initializeRunStructure(ctx: PipelineContext): Promise<void> {
-  await writeFile(
-    join(ctx.runLogDir, "000-manifest.tsv"),
-    "seq\tphase\tgate\tprocess_exit\tselected_task\tprogress_made\tqueue_empty\tcode_changed\tproduct_sync_safe\tresult_json_dir\n",
-    "utf8"
-  );
+  if (process.env.ZEROSHOT_DEBUG_HISTORY_FILES === "1") {
+    await writeFile(
+      join(ctx.runDir, "manifest.tsv"),
+      "seq\tphase\tgate\tprocess_exit\tselected_task\tprogress_made\tqueue_empty\tcode_changed\tproduct_sync_safe\n",
+      "utf8"
+    );
+  }
 }
 
 export async function writeRunMeta(ctx: PipelineContext): Promise<void> {
@@ -136,7 +140,7 @@ export async function writeRunMeta(ctx: PipelineContext): Promise<void> {
     `repo_root=${ctx.projectRoot}`,
     `product_file=${ctx.productFile}`,
     `update_file=${ctx.updateFile}`,
-    `created_at=${nowHuman()}`,
+    `created_at=${ctx.createdAt}`,
     `run_mode=${ctx.mode}`,
     `previous_run_dir=${ctx.previousRunDir}`,
     `approval=${ctx.options.approval}`,
@@ -149,7 +153,9 @@ export async function writeRunMeta(ctx: PipelineContext): Promise<void> {
     `closeout_reasoning=${ctx.options.closeoutReasoning}`,
     ""
   ];
-  await writeFile(join(ctx.runDir, "run.meta"), lines.join("\n"), "utf8");
+  if (process.env.ZEROSHOT_DEBUG_HISTORY_FILES === "1") {
+    await writeFile(join(ctx.runDir, "run.meta"), lines.join("\n"), "utf8");
+  }
 }
 
 export async function archiveUpdateInput(ctx: PipelineContext): Promise<void> {
@@ -161,7 +167,5 @@ export async function archiveUpdateInput(ctx: PipelineContext): Promise<void> {
     console.log(`[run] UPDATE.md가 이미 이동되었거나 존재하지 않습니다: ${ctx.updateFile}`);
     return;
   }
-  console.log("[run] UPDATE.md를 현재 run의 input/ 디렉터리로 이동합니다.");
-  await rename(ctx.updateFile, join(ctx.runInputDir, "UPDATE.md"));
-  console.log(`[run] 이동 완료: ${join(ctx.runInputDir, "UPDATE.md")}`);
+  console.log("[run] UPDATE.md는 workspace root에 유지합니다. runs/에는 사용자용 HTML 산출물만 기록합니다.");
 }

@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 import { spawn } from "node:child_process";
 
-const child = spawn("bun", ["./backend/dist/server.js"], {
+const child = spawn("bun", ["./src/backend/dist/server.js"], {
   stdio: "inherit",
   env: process.env
 });

@@ -1,40 +1,44 @@
 import { Codex, type ApprovalMode, type ModelReasoningEffort, type SandboxMode, type ThreadEvent } from "@openai/codex-sdk";
-import { appendFile, mkdir, open, readFile, writeFile } from "node:fs/promises";
-import { join } from "node:path";
 import type { Gate, PhaseResult, PipelineContext } from "@cli/pipeline/types.js";
-import { slug } from "@cli/pipeline/utils.js";
 import { buildPrompt } from "@cli/pipeline/phase/common/prompt.js";
 import { finalOutputSchema } from "@cli/pipeline/schema.js";
+import {
+  addPipelineUsage,
+  mergePhaseResultIntoState,
+  recordPhaseResult as recordStoredPhaseResult,
+  recordPipelineEvent,
+  readPipelineState
+} from "@cli/pipeline/storage.js";
 
-async function nextPhaseLogDir(ctx: PipelineContext, phase: string): Promise<string> {
+function nextPhase(ctx: PipelineContext): void {
   ctx.phaseSeq += 1;
-  const seq = String(ctx.phaseSeq).padStart(3, "0");
-  const dirPath = join(ctx.runLogDir, `${seq}-${ctx.mode}-${slug(phase)}`);
-  await mkdir(dirPath, { recursive: true });
-  return dirPath;
-}
-
-async function appendManifestRow(ctx: PipelineContext, phase: string, result: PhaseResult, phaseDir: string): Promise<void> {
-  const row = [
-    String(ctx.phaseSeq).padStart(3, "0"),
-    phase,
-    result.gate,
-    String(result.processExit),
-    result.selectedTask,
-    String(result.progressMade),
-    String(result.queueEmpty),
-    String(result.codeChanged),
-    String(result.productSyncSafe),
-    phaseDir
-  ].join("\t");
-  await appendFile(join(ctx.runLogDir, "000-manifest.tsv"), `${row}\n`, "utf8");
 }
 
 function readBoolean(value: unknown): boolean {
   return value === true;
 }
 
-async function readPhaseResult(finalJson: string, processExit: number): Promise<PhaseResult> {
+function readStringArray(value: unknown): string[] {
+  return Array.isArray(value) ? value.filter((entry): entry is string => typeof entry === "string") : [];
+}
+
+function readWorkLogEntries(value: unknown): PhaseResult["workLogEntries"] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  return value
+    .filter((entry): entry is Record<string, unknown> => typeof entry === "object" && entry !== null)
+    .map((entry) => ({
+      title: typeof entry.title === "string" ? entry.title : "Work item",
+      summary: typeof entry.summary === "string" ? entry.summary : "",
+      filesChanged: readStringArray(entry.files_changed),
+      commandsRun: readStringArray(entry.commands_run),
+      validationResult: typeof entry.validation_result === "string" ? entry.validation_result : "",
+      result: typeof entry.result === "string" ? entry.result : ""
+    }));
+}
+
+function readPhaseResult(raw: string, processExit: number, resultRef: string): PhaseResult {
   const fallback: PhaseResult = {
     gate: "FAIL",
     processExit,
@@ -44,10 +48,15 @@ async function readPhaseResult(finalJson: string, processExit: number): Promise<
     productSyncSafe: false,
     selectedTask: "",
     summary: "",
-    resultJson: finalJson
+    resultJson: resultRef,
+    workLogEntries: [],
+    resultSummary: "",
+    changedFiles: [],
+    validation: [],
+    nextSteps: [],
+    openIssues: []
   };
 
-  const raw = await readFile(finalJson, "utf8").catch(() => "");
   if (!raw) {
     console.log("[codex] result.json 파일이 생성되지 않았습니다.");
     return fallback;
@@ -64,7 +73,13 @@ async function readPhaseResult(finalJson: string, processExit: number): Promise<
     productSyncSafe: readBoolean(parsed.product_sync_safe),
     selectedTask: typeof parsed.selected_task === "string" ? parsed.selected_task : "",
     summary: typeof parsed.summary === "string" ? parsed.summary : "",
-    resultJson: finalJson
+    resultJson: resultRef,
+    workLogEntries: readWorkLogEntries(parsed.work_log_entries),
+    resultSummary: typeof parsed.result_summary === "string" ? parsed.result_summary : "",
+    changedFiles: readStringArray(parsed.changed_files),
+    validation: readStringArray(parsed.validation),
+    nextSteps: readStringArray(parsed.next_steps),
+    openIssues: readStringArray(parsed.open_issues)
   };
 }
 
@@ -126,32 +141,6 @@ function describeCodexEvent(event: ThreadEvent): string {
   return `${prefix}: ${item.type}`;
 }
 
-export async function recordPhaseResult(
-  ctx: PipelineContext,
-  phase: string,
-  result: PhaseResult,
-  files: Record<string, string> = {}
-): Promise<void> {
-  const phaseDir = await nextPhaseLogDir(ctx, phase);
-  await Promise.all(Object.entries(files).map(([name, content]) => writeFile(join(phaseDir, name), content, "utf8")));
-  await writeFile(join(phaseDir, "result.json"), `${JSON.stringify({
-    phase,
-    gate: result.gate,
-    progress_made: result.progressMade,
-    queue_empty: result.queueEmpty,
-    code_changed: result.codeChanged,
-    product_sync_safe: result.productSyncSafe,
-    selected_task: result.selectedTask,
-    summary: result.summary,
-    created_files: [],
-    updated_files: [],
-    commands_run: [],
-    tests_run: [],
-    next_action: ""
-  }, null, 2)}\n`, "utf8");
-  await appendManifestRow(ctx, phase, result, phaseDir);
-}
-
 export async function runCodexPhase(
   ctx: PipelineContext,
   phase: string,
@@ -159,21 +148,18 @@ export async function runCodexPhase(
   goalText: string,
   extraContext: string
 ): Promise<PhaseResult> {
-  const phaseDir = await nextPhaseLogDir(ctx, phase);
-  const promptFile = join(phaseDir, "prompt.md");
-  const jsonlFile = join(phaseDir, "events.jsonl");
-  const stderrFile = join(phaseDir, "stderr.log");
-  const finalJson = join(phaseDir, "result.json");
+  nextPhase(ctx);
+  const resultRef = `db://${ctx.runName}/${String(ctx.phaseSeq).padStart(3, "0")}-${phase}`;
+  ctx.compactState = await readPipelineState(ctx);
   const prompt = buildPrompt(ctx, phase, reasoning, goalText, extraContext);
-  await writeFile(promptFile, prompt, "utf8");
 
   console.log("[codex] ------------------------------------------------------------");
   console.log("[codex] Codex phase 실행을 시작합니다.");
   console.log(`[codex] phase      : ${phase}`);
   console.log(`[codex] reasoning  : ${reasoning}`);
-  console.log(`[codex] phase dir  : ${phaseDir}`);
+  console.log(`[codex] run        : ${ctx.runName}`);
   console.log("[codex] ------------------------------------------------------------");
-  console.log(`[contract] Codex prompt 파일을 생성합니다. phase=${phase} out=${promptFile}`);
+  console.log("[contract] Codex prompt는 DB와 SDK outputSchema로만 관리합니다.");
 
   if (ctx.options.model) {
     console.log(`[codex] 모델 override를 적용합니다: ${ctx.options.model}`);
@@ -182,8 +168,8 @@ export async function runCodexPhase(
   console.log("[codex] Codex TypeScript SDK로 phase를 실행합니다.");
   console.log("[codex] skipGitRepoCheck 는 항상 켜져 있습니다.");
 
-  const stdoutFile = await open(jsonlFile, "w");
   let processExit = 1;
+  let finalResponse = "";
   try {
     const codex = new Codex();
     const thread = codex.startThread({
@@ -196,14 +182,16 @@ export async function runCodexPhase(
       ...(ctx.options.model ? { model: ctx.options.model } : {})
     });
     const { events } = await thread.runStreamed(prompt, { outputSchema: finalOutputSchema });
-    let finalResponse = "";
 
     for await (const event of events) {
-      await stdoutFile.write(`${JSON.stringify(event)}\n`);
+      await recordPipelineEvent(ctx, phase, event);
       console.log(`[codex] ${describeCodexEvent(event)}`);
 
       if (event.type === "item.completed" && event.item.type === "agent_message") {
         finalResponse = event.item.text;
+      }
+      if (event.type === "turn.completed") {
+        await addPipelineUsage(ctx, event.usage.input_tokens, event.usage.output_tokens);
       }
       if (event.type === "turn.failed") {
         throw new Error(event.error.message);
@@ -217,40 +205,36 @@ export async function runCodexPhase(
       throw new Error("Codex SDK did not return a final agent message.");
     }
 
-    await writeFile(finalJson, `${finalResponse.trim()}\n`, "utf8");
     processExit = 0;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    await writeFile(stderrFile, `${message}\n`, "utf8");
     console.error(`[codex] SDK phase failed: ${message}`);
-  } finally {
-    await stdoutFile.close();
+    finalResponse = `${JSON.stringify({
+      phase,
+      gate: "FAIL",
+      progress_made: false,
+      queue_empty: false,
+      code_changed: false,
+      product_sync_safe: false,
+      selected_task: "",
+      summary: `Codex SDK phase failed: ${message}`,
+      created_files: [],
+      updated_files: [],
+      commands_run: [],
+      tests_run: [],
+      next_action: "Inspect the pipeline event log.",
+      work_log_entries: [],
+      result_summary: `Codex SDK phase failed: ${message}`,
+      changed_files: [],
+      validation: [],
+      next_steps: ["Inspect the pipeline event log."],
+      open_issues: [message]
+    }, null, 2)}\n`;
   }
 
-  if (processExit !== 0) {
-    await writeFile(
-      finalJson,
-      `${JSON.stringify({
-        phase,
-        gate: "FAIL",
-        progress_made: false,
-        queue_empty: false,
-        code_changed: false,
-        product_sync_safe: false,
-        selected_task: "",
-        summary: `Codex SDK phase failed. See ${stderrFile}.`,
-        created_files: [],
-        updated_files: [],
-        commands_run: [],
-        tests_run: [],
-        next_action: "Inspect the phase stderr log."
-      }, null, 2)}\n`,
-      "utf8"
-    );
-  }
-
-  const result = await readPhaseResult(finalJson, processExit);
-  await appendManifestRow(ctx, phase, result, phaseDir);
+  const result = readPhaseResult(finalResponse.trim(), processExit, resultRef);
+  await recordStoredPhaseResult(ctx, phase, result, finalResponse.trim());
+  await mergePhaseResultIntoState(ctx, result);
 
   console.log("[codex] phase 실행이 끝났습니다.");
   console.log(`[codex] process exit       : ${result.processExit}`);
@@ -261,10 +245,9 @@ export async function runCodexPhase(
   console.log(`[codex] product_sync_safe  : ${result.productSyncSafe}`);
   console.log(`[codex] selected_task      : ${result.selectedTask || "<none>"}`);
 
-  const rawResult = await readFile(finalJson, "utf8").catch(() => "");
-  if (rawResult) {
+  if (finalResponse.trim()) {
     console.log("[codex] result.json 내용을 그대로 출력합니다.");
-    console.log(rawResult);
+    console.log(finalResponse.trim());
   }
 
   return result;

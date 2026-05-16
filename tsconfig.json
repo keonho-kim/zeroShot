@@ -1,8 +1,8 @@
 {
   "files": [],
   "references": [
-    { "path": "./backend" },
+    { "path": "./src/backend" },
     { "path": "./cli" },
-    { "path": "./frontend" }
+    { "path": "./src/ui" }
   ]
 }

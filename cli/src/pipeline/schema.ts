@@ -32,7 +32,46 @@ export const finalOutputSchema = {
       type: "array",
       items: { type: "string" }
     },
-    next_action: { type: "string" }
+    next_action: { type: "string" },
+    work_log_entries: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          title: { type: "string" },
+          summary: { type: "string" },
+          files_changed: {
+            type: "array",
+            items: { type: "string" }
+          },
+          commands_run: {
+            type: "array",
+            items: { type: "string" }
+          },
+          validation_result: { type: "string" },
+          result: { type: "string" }
+        },
+        required: ["title", "summary", "files_changed", "commands_run", "validation_result", "result"],
+        additionalProperties: false
+      }
+    },
+    result_summary: { type: "string" },
+    changed_files: {
+      type: "array",
+      items: { type: "string" }
+    },
+    validation: {
+      type: "array",
+      items: { type: "string" }
+    },
+    next_steps: {
+      type: "array",
+      items: { type: "string" }
+    },
+    open_issues: {
+      type: "array",
+      items: { type: "string" }
+    }
   },
   required: [
     "phase",
@@ -47,12 +86,20 @@ export const finalOutputSchema = {
     "updated_files",
     "commands_run",
     "tests_run",
-    "next_action"
+    "next_action",
+    "work_log_entries",
+    "result_summary",
+    "changed_files",
+    "validation",
+    "next_steps",
+    "open_issues"
   ],
   additionalProperties: false
 };
 
 export async function writeSchema(ctx: PipelineContext): Promise<void> {
-  console.log("[schema] Codex 최종 응답을 검증할 JSON Schema를 작성합니다.");
-  await writeFile(join(ctx.runDir, "final-output.schema.json"), `${JSON.stringify(finalOutputSchema, null, 2)}\n`, "utf8");
+  console.log("[schema] Codex 최종 응답 스키마는 SDK outputSchema로만 사용합니다.");
+  if (process.env.ZEROSHOT_DEBUG_HISTORY_FILES === "1") {
+    await writeFile(join(ctx.runDir, "final-output.schema.json"), `${JSON.stringify(finalOutputSchema, null, 2)}\n`, "utf8");
+  }
 }
