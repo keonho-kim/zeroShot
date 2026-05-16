@@ -84,22 +84,28 @@ export function ArchitectProgressPage() {
   const roundOneEndIndex = decisionSet ? firstRoundEndIndex(decisions) : -1;
   const roundOneDecision = decisions[roundOneEndIndex];
   const roundOneSelection = roundOneDecision ? answers[roundOneDecision.id] : "";
+  const productPreviewHtml = useMemo(() => {
+    if (!decisionSet || !canCreateBlueprint) {
+      return "";
+    }
+    return buildBlueprintHtml({
+      locale,
+      decisionSet,
+      answers,
+      projectRoot,
+      userBrief: submittedBrief,
+      resources: {
+        skillName: activeSkill?.name,
+        designTemplateName: activeDesignTemplate?.name
+      }
+    });
+  }, [activeDesignTemplate?.name, activeSkill?.name, answers, canCreateBlueprint, decisionSet, locale, projectRoot, submittedBrief]);
   const saveBlueprintMutation = useMutation({
     mutationFn: async (next: "design" | "build") => {
-      if (!decisionSet) {
+      if (!productPreviewHtml) {
         throw new Error("Architect decisions are required before a product blueprint can be created.");
       }
-      const html = buildBlueprintHtml({
-        locale,
-        decisionSet,
-        answers,
-        projectRoot,
-        userBrief: submittedBrief,
-        resources: {
-          skillName: activeSkill?.name,
-          designTemplateName: activeDesignTemplate?.name
-        }
-      });
+      const html = productPreviewHtml;
       await saveProductHtml({ projectRoot, content: html });
       return { html, next };
     },
@@ -430,9 +436,14 @@ export function ArchitectProgressPage() {
 
           {isComplete ? (
             <Card className="decision-card complete">
-              <div className="decision-kicker">{locale === "ko" ? "Product preview ready" : "Product preview ready"}</div>
-              <h2>{locale === "ko" ? "제품 미리보기가 준비됐어요." : "Your product preview is ready."}</h2>
-              <p>{locale === "ko" ? "다음 단계로 디자인 검토를 계속하거나, 바로 BUILD를 시작할 수 있습니다." : "Continue into design review or start BUILD from this direction."}</p>
+              <div className="decision-kicker">{locale === "ko" ? "Design preview ready" : "Design preview ready"}</div>
+              <h2>{locale === "ko" ? "디자인 미리보기" : "Design preview"}</h2>
+              <p>{locale === "ko" ? "방금 선택한 설계 결과를 실제 화면으로 확인한 뒤 DESIGN 또는 BUILD로 이어갈 수 있습니다." : "Review the generated screen, then continue into DESIGN or BUILD."}</p>
+              {productPreviewHtml ? (
+                <div className="product-html-preview architect-design-preview">
+                  <iframe title="Design preview" srcDoc={productPreviewHtml} />
+                </div>
+              ) : null}
               {bootstrapMutation.isPending ? (
                 <p>{locale === "ko" ? "Round 1 선택을 기반으로 프로젝트 부트스트랩을 실행 중입니다." : "Running project bootstrap from Round 1 choices."}</p>
               ) : null}

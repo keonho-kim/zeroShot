@@ -82,6 +82,7 @@ export function BuildPage() {
     : Boolean(productContent.trim());
   const disabled = !projectRoot || mutation.isPending || !buildSourceReady;
   const buildJob = currentJob?.mode === "build" ? currentJob : null;
+  const showBuildRun = buildStage === "run" || Boolean(buildJob);
 
   if (!projectRoot) {
     return <Navigate to="/home" replace />;
@@ -90,7 +91,7 @@ export function BuildPage() {
   return (
     <div className="builder-shell">
       <PageHeader title="BUILD" projectRoot={projectRoot} />
-      {buildStage === "run" ? (
+      {showBuildRun ? (
         <div className="build-run-screen">
           <Card className="agent-panel build-run-heading bg-[var(--panel)]">
             <div className="agent-panel-heading">
@@ -99,8 +100,8 @@ export function BuildPage() {
               </div>
               <div className="min-w-0">
                 <p className="agent-panel-kicker">CODEX AGENT</p>
-                <h2>Build is running</h2>
-                <p>요청 확인이 끝났습니다. 이제 작업 카드를 보며 진행 상황을 확인하세요.</p>
+                <h2>{buildJob?.status === "completed" ? "Build completed" : buildJob?.status === "failed" ? "Build failed" : "Build is running"}</h2>
+                <p>요청 확인이 끝났습니다. 작업 카드와 완료 산출물을 여기에서 확인하세요.</p>
               </div>
             </div>
           </Card>

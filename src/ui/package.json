@@ -10,6 +10,8 @@
   },
   "dependencies": {
     "@floating-ui/react": "^0.27.19",
+    "@fontsource/noto-sans": "^5.2.10",
+    "@fontsource/noto-sans-kr": "^5.2.9",
     "@lexical/code": "^0.44.0",
     "@lexical/history": "^0.44.0",
     "@lexical/link": "^0.44.0",

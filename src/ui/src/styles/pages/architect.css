@@ -446,3 +446,12 @@
   border: 0;
   background: var(--background);
 }
+
+.architect-design-preview {
+  margin-top: 1.5rem;
+  min-height: 560px;
+}
+
+.architect-design-preview iframe {
+  min-height: 560px;
+}

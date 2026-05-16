@@ -70,6 +70,15 @@ function buildCards(job: JobSnapshot | null, logs: LogLine[]): WorkCard[] {
       lines: []
     }];
   }
+  if (job && logs.length === 0) {
+    return [{
+      id: "job-waiting",
+      title: job.status === "running" ? `Start ${modeLabel(job).toLowerCase()} session` : `${modeLabel(job)} session`,
+      status: job.status === "failed" ? "failed" : job.status === "completed" ? "completed" : "running",
+      summary: "Waiting for job logs to arrive.",
+      lines: []
+    }];
+  }
 
   const grouped = new Map<string, LogLine[]>();
   for (const line of logs) {

@@ -4,18 +4,10 @@ import { fetchRunDetail, fetchRuns } from "@/lib/api";
 import type { JobSnapshot } from "@/types/api";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { DocumentPreview, titleFromFilename } from "@/components/DocumentPreview";
 
 interface Props {
   job: JobSnapshot | null;
-}
-
-function titleFromFilename(filename: string): string {
-  return filename
-    .replace(/\.html$/i, "")
-    .split(/[-_]/)
-    .filter(Boolean)
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(" ");
 }
 
 export function RunArtifactsPreview({ job }: Props) {
@@ -75,11 +67,10 @@ export function RunArtifactsPreview({ job }: Props) {
               </Button>
             ))}
           </div>
-          <iframe
+          <DocumentPreview
             className="min-h-[640px] w-full rounded-md border border-[var(--border)] bg-white"
-            sandbox="allow-scripts"
-            title={titleFromFilename(activeFile)}
-            srcDoc={documents[activeFile] ?? ""}
+            filename={activeFile}
+            content={documents[activeFile] ?? ""}
           />
         </>
       ) : !detailQuery.isLoading && !runsQuery.isLoading ? (

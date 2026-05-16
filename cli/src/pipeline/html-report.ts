@@ -25,20 +25,71 @@ function page(title: string, body: string): string {
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>${escapeHtml(title)}</title>
   <style>
-    :root { color-scheme: light dark; --line: #d6d8df; --muted: #667085; --panel: #f7f8fb; }
-    body { margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; line-height: 1.5; }
-    main { max-width: 960px; margin: 0 auto; padding: 32px 20px 48px; }
-    header { border-bottom: 1px solid var(--line); margin-bottom: 24px; padding-bottom: 16px; }
-    h1 { font-size: 28px; margin: 0 0 8px; }
-    h2 { font-size: 18px; margin: 28px 0 10px; }
-    .meta { color: var(--muted); display: flex; flex-wrap: wrap; gap: 10px 18px; font-size: 13px; }
-    .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; }
-    details { border: 1px solid var(--line); border-radius: 8px; margin: 10px 0; padding: 12px 14px; }
-    summary { cursor: pointer; font-weight: 700; }
-    code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; }
+    :root {
+      color-scheme: light;
+      --bg: #fbfaf5;
+      --fg: #151515;
+      --muted: #5f6673;
+      --line: #d9dde7;
+      --panel: #ffffff;
+      --panel-soft: #f3f6fb;
+      --accent: #0ea5e9;
+      --code: #10151f;
+    }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--fg);
+      font-family: "Noto Sans KR", "Noto Sans", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.65;
+      text-rendering: optimizeLegibility;
+    }
+    main { max-width: 1040px; margin: 0 auto; padding: 40px 28px 56px; }
+    header { border-bottom: 1px solid var(--line); margin-bottom: 28px; padding-bottom: 20px; }
+    h1 { font-size: clamp(30px, 5vw, 52px); line-height: 1.08; margin: 0 0 10px; }
+    h2 { font-size: 18px; line-height: 1.3; margin: 30px 0 12px; }
+    p { margin: 0 0 12px; }
+    ul { margin: 10px 0 0; padding-left: 20px; }
+    li + li { margin-top: 6px; }
+    .meta { color: var(--muted); display: flex; flex-wrap: wrap; gap: 8px; font-size: 12px; }
+    .meta > span,
+    .status {
+      align-items: center;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      display: inline-flex;
+      font-weight: 700;
+      gap: 6px;
+      min-height: 28px;
+      padding: 3px 10px;
+    }
+    .panel,
+    details {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      box-shadow: 0 18px 44px rgb(20 26 36 / 8%);
+    }
+    .panel { padding: 18px 20px; }
+    details { margin: 14px 0; padding: 16px 18px; }
+    summary { cursor: pointer; font-weight: 800; }
+    code {
+      background: var(--panel-soft);
+      border-radius: 6px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.92em;
+      padding: 1px 5px;
+    }
+    pre {
+      background: var(--code);
+      border-radius: 12px;
+      color: #f6f8fa;
+      overflow: auto;
+      padding: 16px;
+    }
+    pre code { background: transparent; color: inherit; padding: 0; }
     .muted { color: var(--muted); }
-    .status { display: inline-block; border: 1px solid var(--line); border-radius: 999px; padding: 2px 10px; font-size: 12px; font-weight: 700; }
-    @media (prefers-color-scheme: dark) { :root { --line: #2c3340; --muted: #a4adbb; --panel: #151922; } body { background: #0f1218; color: #eef2f7; } }
   </style>
 </head>
 <body>

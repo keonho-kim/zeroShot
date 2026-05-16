@@ -6,6 +6,7 @@ import { fetchRunDetail, fetchRuns } from "@/lib/api";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/PageHeader";
+import { DocumentPreview, titleFromFilename } from "@/components/DocumentPreview";
 
 export function LogsPage() {
   const projectRoot = useAppStore((state) => state.projectRoot);
@@ -22,6 +23,9 @@ export function LogsPage() {
     queryFn: () => fetchRunDetail(projectRoot, selectedRun),
     enabled: Boolean(projectRoot && selectedRun)
   });
+  const documents = detailQuery.data?.documents ?? {};
+  const documentNames = Object.keys(documents).filter((doc) => documents[doc]);
+  const activeDoc = selectedDoc && documents[selectedDoc] ? selectedDoc : documentNames[0] ?? "";
 
   if (!projectRoot) {
     return <Navigate to="/home" replace />;
@@ -44,18 +48,17 @@ export function LogsPage() {
         </Card>
         <Card className="flex flex-col gap-4 bg-[var(--panel)]">
           <div className="flex flex-wrap gap-2">
-            {Object.keys(detailQuery.data?.documents ?? {}).filter((doc) => detailQuery.data?.documents[doc]).map((doc) => (
-              <Button key={doc} variant={selectedDoc === doc ? "default" : "outline"} onClick={() => setSelectedDoc(doc)}>
-                {doc}
+            {documentNames.map((doc) => (
+              <Button key={doc} variant={activeDoc === doc ? "default" : "outline"} onClick={() => setSelectedDoc(doc)}>
+                {titleFromFilename(doc)}
               </Button>
             ))}
           </div>
-          {detailQuery.data?.documents[selectedDoc] ? (
-            <iframe
+          {activeDoc ? (
+            <DocumentPreview
               className="min-h-[640px] w-full rounded-md border border-[var(--border)] bg-white"
-              sandbox=""
-              title={selectedDoc}
-              srcDoc={detailQuery.data.documents[selectedDoc]}
+              filename={activeDoc}
+              content={documents[activeDoc]}
             />
           ) : (
             <pre className="min-h-[320px] rounded-md border border-[var(--border)] bg-[var(--muted)] p-4 text-sm text-[var(--muted-foreground)]">
