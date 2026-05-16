@@ -1,0 +1,90 @@
+import type { PipelineContext } from "@cli/pipeline/types.js";
+
+export function updateInputFileBlock(ctx: PipelineContext): string {
+  if (ctx.mode !== "update") {
+    return "";
+  }
+  return `Update input file to read:
+- ${ctx.updateFile}`;
+}
+
+export function additionalDirectoryBlock(ctx: PipelineContext): string {
+  if (!ctx.options.additionalDirectories.length) {
+    return "";
+  }
+  return `Additional read roots available to this run:
+${ctx.options.additionalDirectories.map((directory) => `- ${directory}`).join("\n")}`;
+}
+
+export function compactStateBlock(ctx: PipelineContext): string {
+  return `Current compact pipeline state:
+${JSON.stringify(ctx.compactState, null, 2)}`;
+}
+
+export function workspaceContractBlock(): string {
+  return `Workspace output contract:
+- Do not create .work.history.
+- Do not create or update PLAN.md, DONE.md, REQUIREMENTS.md, SPEC.md, TEST_PLAN.md, CHANGES.md, or FINAL_REPORT.md.
+- The runner will create only user-facing HTML reports under runs/<run-name>/.
+- Store implementation progress only in the final JSON response fields.`;
+}
+
+export function workingMemoryContractBlock(): string {
+  return `Working memory contract:
+- PRODUCT.html is the source truth for intended product direction.
+- UPDATE.md is the change request in update mode.
+- Use the compact pipeline state above instead of markdown run documents.
+- Keep summaries short and concrete.
+- Do not generate HTML. The runner renders fixed templates.`;
+}
+
+export function backendArchitectureBlock(): string {
+  return `Backend architecture guidance:
+- Preserve the scaffolded backend folders: api, core, services, integrations, models, config, and common.
+- Organize maintainable backend code by domain when domain behavior grows.
+- Keep HTTP/controllers in api thin; move product decisions, invariants, and use cases into domain-focused core/services modules.
+- Keep integrations behind explicit modules for databases, external APIs, queues, storage, auth providers, agent protocols, and other infrastructure.
+- Keep common small and generic. Do not place domain behavior in common.
+- Prefer plain functions and explicit data structures unless identity, lifecycle, or encapsulated mutable state makes a class the clearer model.`;
+}
+
+export function updateRefactoringGuidanceBlock(): string {
+  return `Update-mode refactoring guidance:
+- Before changing behavior, inspect whether touched backend files have too many responsibilities, duplicated logic, or utilities trapped inside feature files.
+- Apply YAGNI, DRY, single responsibility, and clear module boundary rules while staying scoped to the requested update.
+- Split large files when it makes the update easier to verify or maintain.
+- Extract utilities only when there is real repeated behavior or a clear reusable boundary.
+- Move shared domain-neutral helpers into common; move domain behavior into the relevant domain/core/service module.
+- Promote functions or data objects to classes only when lifecycle, identity, or encapsulated mutable state is genuinely needed now.
+- Prefer a coherent domain-level refactor over layering another special case onto an already overloaded backend file.
+- Record any deferred backend refactoring risk in open_issues instead of silently ignoring it.`;
+}
+
+export function finalJsonContractBlock(): string {
+  return `Final JSON requirements:
+- work_log_entries should contain only user-useful work items.
+- changed_files should list repo-relative paths that changed.
+- validation should list commands/checks and outcomes.
+- next_steps should list useful remaining actions.
+- open_issues should list real blockers or risks only.
+- queue_empty should be true only when no implementation work remains.
+- code_changed should be true only when repository files under active development changed.
+- product_sync_safe should be true only when PRODUCT.html is safe and coherent after update sync.
+- Write user-facing summaries in the response language configured for this run.`;
+}
+
+export function commonContractBlock(ctx: PipelineContext): string {
+  return [
+    "You are running inside Codex CLI in scripted non-interactive mode.",
+    "This is a filesystem action task, not an answer-only task.",
+    "",
+    workspaceContractBlock(),
+    "",
+    workingMemoryContractBlock(),
+    "",
+    backendArchitectureBlock(),
+    ctx.mode === "update" ? `\n${updateRefactoringGuidanceBlock()}` : "",
+    "",
+    finalJsonContractBlock()
+  ].filter(Boolean).join("\n");
+}

@@ -1,0 +1,34 @@
+export const bootstrapCliContractPrompt = `Bootstrap CLI contract:
+- ZeroShot runs bootstrap automatically after the development overview round has enough information.
+- The executable command is: zeroshot bootstrap.
+- Required arguments:
+  - --project-root <absolute project directory>
+  - --type <backend|frontend|fullstack|library|script>
+- Optional arguments:
+  - --language <language> for backend, frontend, library, or script projects
+  - --server-language <language> for fullstack server projects
+  - --ui-language <language> for fullstack UI projects
+  - --name <package_name>
+  - --module <module_or_namespace>
+  - --python <minor_version>
+  - --profile <standard|llm>
+  - --skip-init
+  - --force
+- Supported backend/library/script languages: typescript, javascript, python, go, rust, java, ruby, zig.
+- Supported frontend UI languages: typescript, javascript.
+- Supported project types:
+  - backend: creates one backend project.
+  - frontend: creates one UI project.
+  - fullstack: creates src/server and src/ui.
+  - library: creates a package/library project.
+  - script: creates a small executable/script project.
+- Python defaults to uv first, native python fallback, and includes ruff, ty, pytest, pytest-asyncio.
+- JavaScript and TypeScript default to Bun first, npm fallback.
+- Java defaults to Gradle first, Maven fallback.
+- Rust expects Cargo and should include tokio when async/server behavior is relevant.
+- Go expects go mod.
+- Ruby expects Gem/Ruby.
+- Zig expects zig init.
+- If the product is an LLM or agent system, choose --profile llm; otherwise choose --profile standard.
+- Every development-stack option must map to a valid bootstrap command combination. Put that mapping in productRequirement using concrete language and project type words, for example: "Bootstrap: --type fullstack --server-language python --ui-language typescript --profile llm".
+- Do not propose unsupported languages, unsupported UI languages, or command arguments outside this contract.`;

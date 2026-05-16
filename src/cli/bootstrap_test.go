@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -30,6 +31,21 @@ func TestBootstrapCreatesFullstackScaffoldWithoutInit(t *testing.T) {
 	assertPathExists(t, filepath.Join(root, "AGENTS.md"))
 	assertPathExists(t, filepath.Join(root, ".agents", "PROJECT_CONTEXT.md"))
 	assertPathExists(t, filepath.Join(root, "PRODUCT.html"))
+
+	agents, err := os.ReadFile(filepath.Join(root, "AGENTS.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(agents), "Backend Architecture") {
+		t.Fatal("expected AGENTS.md to include backend architecture guidance")
+	}
+	context, err := os.ReadFile(filepath.Join(root, ".agents", "PROJECT_CONTEXT.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(context), "domain-level ownership") {
+		t.Fatal("expected PROJECT_CONTEXT.md to include domain-level backend guidance")
+	}
 }
 
 func TestBootstrapCreatesPythonPackageScaffoldWithoutInit(t *testing.T) {

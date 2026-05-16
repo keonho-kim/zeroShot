@@ -640,6 +640,16 @@ func buildGeneratedAgentsMarkdown(plan []bootstrapTarget, flags *bootstrapFlagSe
 - ` + "`config`" + `: runtime configuration.
 - ` + "`common`" + `: small shared utilities only.
 
+## Backend Architecture
+
+- Preserve the scaffolded backend folders while organizing growing behavior by product domain.
+- Keep route/controller files thin; they should validate transport input and delegate to domain-oriented services or core use cases.
+- Put domain invariants, state transitions, and product rules in focused modules under ` + "`core`" + ` or a domain-specific service boundary.
+- Keep database, external API, queue, storage, auth, and agent protocol details under ` + "`integrations`" + `.
+- Use ` + "`common`" + ` only for small domain-neutral utilities. Do not turn it into a dumping ground for product behavior.
+- Split files when one file owns unrelated domains, transport handling, validation, orchestration, and infrastructure at the same time.
+- Prefer functions and explicit data structures. Use classes only when lifecycle, identity, or encapsulated mutable state is needed now.
+
 ## Frontend Layout
 
 - ` + "`pages`" + `: route-level screens.
@@ -700,6 +710,15 @@ The exact questions may vary. Architect can ask as many questions as needed when
 - Frontend review candidates: Tiptap for rich editing and Ant Design for enterprise-heavy component surfaces.
 
 Always install package-manager-resolved latest versions unless the user or framework requires a specific version.
+
+## Backend Architecture Guidance
+
+- Backend projects should keep the scaffolded layout while maintaining domain-level ownership.
+- Routes and controllers should stay thin and delegate to domain-oriented services or core use cases.
+- Domain rules, validation, state transitions, and application decisions should live outside transport handlers.
+- Integrations should isolate databases, external APIs, queues, storage, auth providers, and agent protocols.
+- Common utilities must remain small, generic, and domain-neutral.
+- During updates, inspect touched backend areas for oversized files, duplicated utilities, weak domain boundaries, and architecture drift.
 `
 }
 
