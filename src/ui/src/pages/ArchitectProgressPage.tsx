@@ -82,6 +82,8 @@ export function ArchitectProgressPage() {
   const currentSelection = currentDecision ? answers[currentDecision.id] : "";
   const canCreateBlueprint = decisionSet !== null && allDecisionsAnswered(decisions, answers);
   const roundOneEndIndex = decisionSet ? firstRoundEndIndex(decisions) : -1;
+  const roundOneDecision = decisions[roundOneEndIndex];
+  const roundOneSelection = roundOneDecision ? answers[roundOneDecision.id] : "";
   const saveBlueprintMutation = useMutation({
     mutationFn: async (next: "design" | "build") => {
       if (!decisionSet) {
@@ -154,8 +156,7 @@ export function ArchitectProgressPage() {
     if (!decisionSet) {
       return;
     }
-    if (stepIndex === roundOneEndIndex && !bootstrapMutation.isSuccess) {
-      bootstrapMutation.mutate();
+    if (stepIndex === roundOneEndIndex && roundOneSelection && !bootstrapMutation.isSuccess) {
       return;
     }
     if (stepIndex + 1 >= decisions.length) {
@@ -197,7 +198,7 @@ export function ArchitectProgressPage() {
           userBrief.trim(),
           "",
           omakaseMode
-            ? "Omakase mode is enabled. Generate the same round questions, but make the first option the recommended choice because the user asked Codex to choose all answers."
+            ? "Omakase mode is enabled. Simulate the full architect conversation: generate the questions, choose the recommended answer for each question yourself, and make every first option the answer you would actually pick for this product."
             : "Guided mode is enabled. The user will answer each round question manually."
         ].join("\n"),
         locale,
@@ -228,10 +229,12 @@ export function ArchitectProgressPage() {
   ]);
 
   useEffect(() => {
-    if (!omakaseMode || !decisionSet || roundOneEndIndex < 0 || bootstrapMutation.isPending || bootstrapMutation.isSuccess || bootstrapMutation.isError) {
+    if (!decisionSet || roundOneEndIndex < 0 || !roundOneSelection || bootstrapMutation.isPending || bootstrapMutation.isSuccess || bootstrapMutation.isError) {
       return;
     }
-    setContinuePromptOpen(false);
+    if (omakaseMode) {
+      setContinuePromptOpen(false);
+    }
     bootstrapMutation.mutate();
   }, [
     bootstrapMutation,
@@ -241,6 +244,7 @@ export function ArchitectProgressPage() {
     decisionSet,
     omakaseMode,
     roundOneEndIndex,
+    roundOneSelection,
     setContinuePromptOpen
   ]);
 
@@ -414,12 +418,10 @@ export function ArchitectProgressPage() {
                   <ArrowLeft className="size-4" />
                   {locale === "ko" ? "이전" : "Back"}
                 </Button>
-                <Button disabled={!currentSelection || bootstrapMutation.isPending || saveBlueprintMutation.isPending || !canCreateBlueprint && stepIndex + 1 >= decisions.length} onClick={goNext}>
-                  {stepIndex === roundOneEndIndex && !bootstrapMutation.isSuccess
-                    ? (locale === "ko" ? "부트스트랩 실행" : "Run bootstrap")
-                    : stepIndex + 1 >= decisions.length
-                      ? (locale === "ko" ? "제품 화면 만들기" : "Create product preview")
-                      : (locale === "ko" ? "다음" : "Next")}
+                <Button disabled={!currentSelection || bootstrapMutation.isPending || stepIndex === roundOneEndIndex && !bootstrapMutation.isSuccess || saveBlueprintMutation.isPending || !canCreateBlueprint && stepIndex + 1 >= decisions.length} onClick={goNext}>
+                  {stepIndex + 1 >= decisions.length
+                    ? (locale === "ko" ? "제품 화면 만들기" : "Create product preview")
+                    : (locale === "ko" ? "다음" : "Next")}
                   <ArrowRight className="size-4" />
                 </Button>
               </div>

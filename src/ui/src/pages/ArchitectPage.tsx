@@ -62,7 +62,7 @@ export function ArchitectPage() {
                 onClick={() => setOmakaseMode(true)}
               >
                 <span>{locale === "ko" ? "오마카세 모드" : "Omakase mode"}</span>
-                <small>{locale === "ko" ? "Codex 추천 첫 선택지를 전부 자동으로 사용합니다." : "Use Codex's recommended first option for every question."}</small>
+                <small>{locale === "ko" ? "Codex가 질문을 만들고 각 답변까지 자율주행처럼 선택합니다." : "Codex generates the questions and simulates every answer autonomously."}</small>
               </button>
             </div>
             <Textarea

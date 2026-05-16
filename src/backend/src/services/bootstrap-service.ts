@@ -17,8 +17,13 @@ export function inferBootstrapRequest(params: {
     .join(" ")
     .toLowerCase();
 
-  const uiLanguage = "typescript";
-  const projectType = selectedText.includes("frontend-only") || selectedText.includes("frontend only")
+  const requestedProjectType = selectedText.match(/--type\s+(backend|frontend|fullstack|library|script)\b/)?.[1] as BootstrapRequest["projectType"] | undefined;
+  const requestedLanguage = selectedText.match(/--language\s+([a-z0-9-]+)/)?.[1];
+  const requestedServerLanguage = selectedText.match(/--server-language\s+([a-z0-9-]+)/)?.[1];
+  const requestedUiLanguage = selectedText.match(/--ui-language\s+([a-z0-9-]+)/)?.[1];
+  const requestedProfile = selectedText.match(/--profile\s+(standard|llm)\b/)?.[1] as BootstrapRequest["profile"] | undefined;
+  const uiLanguage = requestedUiLanguage ?? "typescript";
+  const projectType = requestedProjectType ?? (selectedText.includes("frontend-only") || selectedText.includes("frontend only")
     ? "frontend"
     : selectedText.includes("library")
       ? "library"
@@ -26,8 +31,8 @@ export function inferBootstrapRequest(params: {
         ? "script"
         : selectedText.includes("backend-only") || selectedText.includes("backend only")
           ? "backend"
-          : "fullstack";
-  const serverLanguage = inferServerLanguage(selectedText);
+          : "fullstack");
+  const serverLanguage = requestedServerLanguage ?? requestedLanguage ?? inferServerLanguage(selectedText);
 
   return {
     projectRoot: params.projectRoot,
@@ -36,9 +41,9 @@ export function inferBootstrapRequest(params: {
     serverLanguage,
     uiLanguage,
     name: basename(params.projectRoot),
-    profile: selectedText.includes("llm") || selectedText.includes("agent") || selectedText.includes("langgraph") || selectedText.includes("mcp") || selectedText.includes("a2a")
+    profile: requestedProfile ?? (selectedText.includes("llm") || selectedText.includes("agent") || selectedText.includes("langgraph") || selectedText.includes("mcp") || selectedText.includes("a2a")
       ? "llm"
-      : "standard"
+      : "standard")
   };
 }
 
