@@ -143,19 +143,19 @@ export function createDefaultArtifactHtml(projectTitle: string): string {
 :root{color-scheme:light;--ink:#1d1d1f;--muted:#6e6e73;--line:#d8d8df;--bg:#f5f5f7;--panel:#fff;--accent:#d9480f}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Arial,sans-serif}
-main{min-height:100vh;padding:36px 22px}
-.shell{max-width:920px;margin:0 auto;display:grid;gap:18px}
-.hero,.panel{border:1px solid var(--line);border-radius:20px;background:var(--panel);box-shadow:0 18px 48px rgba(31,35,42,.07)}
-.hero{padding:42px}
-.eyebrow{margin:0 0 10px;color:var(--accent);font-size:12px;font-weight:800;text-transform:uppercase}
-h1{margin:0;font-size:54px;line-height:.95;letter-spacing:0}
-.sub{margin:16px 0 0;max-width:60ch;color:var(--muted);font-size:17px;line-height:1.6}
-.panel{padding:22px}
-.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
-.tile{padding:16px;border-radius:14px;background:#f2f2f7}
-.tile strong{display:block;font-size:15px}
-.tile span{display:block;margin-top:8px;color:var(--muted);font-size:13px;line-height:1.45}
-@media(max-width:720px){h1{font-size:38px}.hero{padding:28px}.grid{grid-template-columns:1fr}}
+main{min-height:100vh;padding:29px 18px}
+.shell{max-width:820px;margin:0 auto;display:grid;gap:14px}
+.hero,.panel{border:1px solid var(--line);border-radius:16px;background:var(--panel);box-shadow:0 14px 38px rgba(31,35,42,.07)}
+.hero{padding:34px}
+.eyebrow{margin:0 0 8px;color:var(--accent);font-size:10px;font-weight:800;text-transform:uppercase}
+h1{margin:0;font-size:43px;line-height:.95;letter-spacing:0}
+.sub{margin:13px 0 0;max-width:60ch;color:var(--muted);font-size:14px;line-height:1.55}
+.panel{padding:18px}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px}
+.tile{padding:13px;border-radius:11px;background:#f2f2f7}
+.tile strong{display:block;font-size:13px}
+.tile span{display:block;margin-top:6px;color:var(--muted);font-size:11px;line-height:1.4}
+@media(max-width:720px){h1{font-size:30px}.hero{padding:22px}.grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>

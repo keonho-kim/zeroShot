@@ -40,7 +40,7 @@ function ActionCard({
       disabled={disabled}
       onClick={onClick}
       className={cn(
-        "action-card min-h-[236px] text-left",
+        "action-card min-h-[188px] text-left",
         accent === "cyan" ? "action-card-cyan" : accent === "amber" ? "action-card-amber" : "action-card-mint"
       )}
     >
@@ -121,7 +121,7 @@ export function HomePage() {
   };
 
   return (
-    <div className="home-shell mx-auto flex max-w-[1320px] flex-col gap-8 md:gap-10">
+    <div className="home-shell mx-auto flex max-w-[1180px] flex-col gap-6 md:gap-8">
       <PageHeader title="ZERO SHOT" rightAction="settings" />
       <section className="home-console" aria-label="Selected project">
         <div className="home-console-topline">

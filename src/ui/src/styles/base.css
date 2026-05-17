@@ -1,6 +1,7 @@
 html {
   color-scheme: light;
   background: var(--background);
+  font-size: calc(100% * var(--ui-scale));
 }
 
 * {
@@ -61,7 +62,7 @@ input[type="file"] {
 
 input[type="file"]::file-selector-button {
   margin-right: 0.75rem;
-  border: 3px solid var(--border);
+  border: var(--border-strong) solid var(--border);
   border-radius: 1px;
   background: var(--surface);
   color: var(--foreground);

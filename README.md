@@ -334,26 +334,6 @@ The release workflow uploads:
 
 It also publishes the CLI package to npm as `@keonhokim/zeroshot`.
 
-## Docker
-
-Build the image:
-
-```bash
-docker build --no-cache -f docker/Dockerfile -t zeroshot .
-```
-
-Run it with a mounted home directory so Codex credentials and project files persist:
-
-```bash
-docker run --rm \
-  -p 32575:32575 \
-  -v "$HOME/.codex:/root/.codex" \
-  -v "$HOME/dev:/root/workspace" \
-  zeroshot
-```
-
-Open `http://127.0.0.1:32575` and choose a project under `/root/workspace`.
-
 ## Status
 
 ZeroShot is under active development. Prefer tagged releases for installation, and keep project work in version control before running BUILD or UPDATE.

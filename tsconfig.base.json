@@ -12,6 +12,7 @@
     "resolveJsonModule": true,
     "declaration": true,
     "types": ["node", "bun-types"],
-    "baseUrl": "."
+    "baseUrl": ".",
+    "ignoreDeprecations": "6.0"
   }
 }

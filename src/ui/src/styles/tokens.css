@@ -46,10 +46,13 @@
   --arcade-yellow: #ffe14a;
   --arcade-pink: #ff4fa3;
   --arcade-green: #24d17e;
+  --ui-scale: 0.8;
+  --border-strong: 2px;
+  --border-medium: 2px;
   --font-display: ui-monospace, "IBM Plex Mono", "JetBrains Mono", "SFMono-Regular", Menlo, monospace;
   --font-body: "Noto Sans KR", "Noto Sans", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --shadow-button: 4px 4px 0 var(--border);
-  --shadow-card: 8px 8px 0 var(--border);
-  --shadow-popover: 12px 12px 0 var(--border);
-  --shadow-focus: 0 0 0 3px var(--background), 0 0 0 7px var(--accent);
+  --shadow-button: 3px 3px 0 var(--border);
+  --shadow-card: 6px 6px 0 var(--border);
+  --shadow-popover: 9px 9px 0 var(--border);
+  --shadow-focus: 0 0 0 2px var(--background), 0 0 0 5px var(--accent);
 }

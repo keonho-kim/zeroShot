@@ -107,7 +107,7 @@ describe("architect core", () => {
       }
     });
 
-    expect(html).toContain("width:min(100%,430px)");
+    expect(html).toContain("width:min(100%,390px)");
     expect(html).toContain("The first screen must prioritize daily production targets");
     expect(html).toContain("application/json");
     expect(html).toContain("/tmp/project");

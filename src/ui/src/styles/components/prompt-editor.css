@@ -1,7 +1,7 @@
 .floating-action-menu {
   z-index: 60;
   display: grid;
-  min-width: 180px;
+  min-width: 144px;
   gap: 4px;
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -35,7 +35,7 @@
 
 .prompt-editor {
   display: flex;
-  min-height: 180px;
+  min-height: 144px;
   flex-direction: column;
   overflow: hidden;
   border: 1px solid var(--border);
@@ -53,11 +53,11 @@
 
 .prompt-editor-body {
   position: relative;
-  min-height: 150px;
+  min-height: 120px;
 }
 
 .prompt-editor-input {
-  min-height: 150px;
+  min-height: 120px;
   outline: none;
   padding: 12px;
   white-space: pre-wrap;
@@ -75,7 +75,7 @@
 }
 
 .highlighted-code-block {
-  max-height: 620px;
+  max-height: 496px;
   overflow: auto;
   border-radius: 8px;
   background: var(--code-bg);

@@ -293,6 +293,7 @@ export async function buildArchitectProductHtml(params: {
     "Do not create files or run commands. Do not return Markdown.",
     "The HTML must be a product planning document, not implementation code. It should be useful later for DESIGN, BUILD, and UPDATE.",
     "Use self-contained CSS and lightweight JavaScript only when it improves interactive review.",
+    "Use compact 80% density in the generated planning document: smaller controls, tighter section spacing, shorter cards, and restrained heading scale while keeping the document readable.",
     "Include product concept, target users, key workflows, core screens, data model, integrations, build constraints, and acceptance criteria.",
     "Write user-facing content in the requested locale.",
     "",

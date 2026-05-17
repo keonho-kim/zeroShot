@@ -50,6 +50,13 @@ jobs:
       - name: Build release artifacts
         run: bun run build
 
+      - name: Verify CLI binaries
+        run: |
+          test -x cli/dist/bin/zeroshot-darwin-arm64
+          test -x cli/dist/bin/zeroshot-darwin-x64
+          test -x cli/dist/bin/zeroshot-linux-arm64
+          test -x cli/dist/bin/zeroshot-linux-x64
+
       - name: Stage app artifacts in CLI package
         run: |
           rm -rf cli/app

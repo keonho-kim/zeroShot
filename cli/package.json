@@ -23,15 +23,15 @@
   },
   "dependencies": {
     "@iarna/toml": "^2.2.5",
-    "@openai/codex-sdk": "^0.129.0",
-    "axios": "^1.12.2",
-    "chokidar": "^4.0.3",
-    "commander": "^14.0.1",
-    "cors": "^2.8.5",
+    "@openai/codex-sdk": "^0.130.0",
+    "axios": "^1.16.1",
+    "chokidar": "^5.0.0",
+    "commander": "^14.0.3",
+    "cors": "^2.8.6",
     "execa": "^9.6.1",
-    "express": "^4.22.1",
-    "nanoid": "^5.1.6",
+    "express": "^5.2.1",
+    "nanoid": "^5.1.11",
     "node-pty": "^1.1.0",
-    "zod": "^3.25.76"
+    "zod": "^4.4.3"
   }
 }

@@ -1,6 +1,6 @@
 @media (min-width: 760px) {
   .build-workspace {
-    grid-template-columns: minmax(320px, 0.9fr) minmax(360px, 1.1fr);
+    grid-template-columns: minmax(256px, 0.9fr) minmax(288px, 1.1fr);
   }
 
   .design-runtime-grid {
@@ -12,24 +12,24 @@
   }
 
   .design-artifact-layout {
-    grid-template-columns: minmax(0, 1.35fr) minmax(240px, 0.65fr);
+    grid-template-columns: minmax(0, 1.35fr) minmax(192px, 0.65fr);
   }
 
   .design-artifact-layout.enterprise {
-    grid-template-columns: minmax(190px, 0.42fr) minmax(540px, 1.8fr) minmax(230px, 0.48fr);
+    grid-template-columns: minmax(152px, 0.42fr) minmax(480px, 1.8fr) minmax(184px, 0.48fr);
   }
 }
 
 @media (min-width: 1024px) {
   .architect-chat:has(.product-html-preview):not(.architect-chat-board) {
     align-items: stretch;
-    grid-template-columns: minmax(420px, 0.95fr) minmax(440px, 1.05fr);
+    grid-template-columns: minmax(336px, 0.95fr) minmax(352px, 1.05fr);
   }
 
   .design-editor-grid,
   .design-result-grid {
     align-items: start;
-    grid-template-columns: minmax(420px, 0.95fr) minmax(440px, 1.05fr);
+    grid-template-columns: minmax(336px, 0.95fr) minmax(352px, 1.05fr);
   }
 }
 
@@ -74,6 +74,6 @@
 
   .product-html-preview,
   .product-html-preview iframe {
-    min-height: 460px;
+    min-height: 368px;
   }
 }

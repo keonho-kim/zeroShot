@@ -19,6 +19,7 @@ export const designRuntimeRulesPrompt = `Rules:
 - Treat listed skills as read-only capabilities and reference material; use them only when they fit the requested UI.
 - When browsing/search capability is available, study comparable apps, dashboards, or product experiences before choosing layout, interaction flow, density, and visual hierarchy. Digest the patterns; do not copy branding or copyrighted UI.
 - Prefer a mature product-grade interface over a simplistic placeholder: include realistic states, navigation, content hierarchy, empty/error/loading states, and refined responsive behavior.
+- Use compact 80% density for generated UI artifacts: smaller controls, tighter spacing, shorter cards, restrained heading scale, and denser panels while keeping text readable and touch targets practical.
 - Include wireframe or presentation editing details when the mode requests them, but do not pretend external files were created.
 - When recommending HTML artifact edits, require stable data-od-id attributes on major editable elements, data-od-edit="text|link|image|container" where clear, and human-readable data-od-label values.
 - Preserve data-od-id attributes during any proposed source changes so the DESIGN editor can patch selected elements deterministically.`;

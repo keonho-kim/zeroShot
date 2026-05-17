@@ -31,19 +31,19 @@ function SettingsSelect({
       <label className="mb-2 block text-sm font-medium">{label}</label>
       <button
         type="button"
-        className="flex w-full items-center justify-between rounded-[1px] border-[3px] border-[var(--border)] bg-[var(--input)] px-3 py-2 font-mono text-sm font-bold text-[var(--foreground)] outline-none transition focus-visible:shadow-[var(--shadow-focus)]"
+        className="flex w-full items-center justify-between rounded-[1px] border-2 border-[var(--border)] bg-[var(--input)] px-2.5 py-1.5 font-mono text-xs font-bold text-[var(--foreground)] outline-none transition focus-visible:shadow-[var(--shadow-focus)]"
         onClick={() => setOpen((value) => !value)}
       >
         <span className="truncate">{value || "Not set"}</span>
         <span aria-hidden="true">⌄</span>
       </button>
       {open ? (
-        <div className="absolute left-0 top-[calc(100%+0.25rem)] z-20 grid w-full border-[3px] border-[var(--border)] bg-[var(--panel)] shadow-[var(--shadow-card)]">
+        <div className="absolute left-0 top-[calc(100%+0.25rem)] z-20 grid w-full border-2 border-[var(--border)] bg-[var(--panel)] shadow-[var(--shadow-card)]">
           {options.map((option) => (
             <button
               type="button"
               className={cn(
-                "px-3 py-2 text-left font-mono text-sm font-bold hover:bg-[var(--surface-hover)]",
+                "px-2.5 py-1.5 text-left font-mono text-xs font-bold hover:bg-[var(--surface-hover)]",
                 option === value && "bg-[var(--surface)]"
               )}
               key={option}
@@ -207,7 +207,7 @@ export function SettingsPage() {
           <h2 className="text-xl font-bold">Codex Settings</h2>
           {codexSettings ? (
             <>
-              <section className="grid gap-3 border-[3px] border-[var(--border)] bg-[var(--panel)] p-4">
+              <section className="grid gap-3 border-2 border-[var(--border)] bg-[var(--panel)] p-3">
                 <h3 className="text-base font-bold">Global Codex Settings</h3>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
@@ -224,7 +224,7 @@ export function SettingsPage() {
                   <SettingsSelect label="Experimental Goals" value={codexSettings.defaults.goalsEnabled ? "enabled" : "disabled"} options={["enabled", "disabled"]} onChange={(value) => updateCodexDefaults({ goalsEnabled: value === "enabled" })} />
                 </div>
               </section>
-              <section className="grid gap-3 border-[3px] border-[var(--border)] bg-[var(--surface)] p-4">
+              <section className="grid gap-3 border-2 border-[var(--border)] bg-[var(--surface)] p-3">
                 <h3 className="text-base font-bold">Project Codex Settings</h3>
                 <div className="grid gap-2 text-sm">
                   <p><strong>Selected Project:</strong> {projectRoot || "No project selected"}</p>

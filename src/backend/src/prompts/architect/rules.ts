@@ -20,6 +20,7 @@ export const architectDecisionRulesPrompt = `Rules:
 - Option 6 must be "알아서 해주세요" in Korean or "Let Codex choose" in English, and it must mean "use the recommended first option".
 - Options must be concrete product directions, not vague preferences.
 - The option productRequirement must be written as an implementation-ready requirement for ARCHITECT/PRODUCT.html and later Build/Update work.
+- Product requirements should prefer compact 80% UI density for future screens: smaller controls, tighter spacing, shorter cards, and restrained heading scale unless the product explicitly requires large display treatment.
 - The summary must sound like product copy for the user. Do not mention Codex, JSON, prompts, schemas, or ARCHITECT/PRODUCT.html in title, summary, decision titles, prompts, labels, or details.
 - Do not include "unsure", "autopilot", or fallback options.
 - If active Skill or Design Template context is provided, use it as practical product and design guidance. Do not mention internal file paths to the user unless the path is the requirement itself.`;

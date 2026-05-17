@@ -53,7 +53,7 @@
 .agent-status-grid {
   display: grid;
   gap: 0.75rem;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
 }
 
 .agent-status-grid div {
@@ -89,7 +89,7 @@
 
 .build-setup-card {
   display: flex;
-  width: min(100%, 960px);
+  width: min(100%, 860px);
   flex-direction: column;
   gap: 1.5rem;
   margin: clamp(1.5rem, 5vh, 4rem) auto 0;
@@ -119,12 +119,12 @@
 .build-choice-grid {
   display: grid;
   gap: 1rem;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(176px, 1fr));
 }
 
 .build-choice-card {
   display: flex;
-  min-height: 11rem;
+  min-height: 9rem;
   flex-direction: column;
   align-items: flex-start;
   gap: 0.875rem;
@@ -204,7 +204,7 @@
 }
 
 .build-upload-panel textarea {
-  min-height: 180px;
+  min-height: 144px;
 }
 
 .build-setup-actions {
@@ -259,7 +259,7 @@
 
 .work-flashcard {
   display: flex;
-  min-height: 420px;
+  min-height: 336px;
   flex-direction: column;
   gap: 1rem;
   border: 1px solid var(--border);

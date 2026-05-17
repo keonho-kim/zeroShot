@@ -68,7 +68,7 @@ export function RunArtifactsPreview({ job }: Props) {
             ))}
           </div>
           <DocumentPreview
-            className="min-h-[640px] w-full rounded-md border border-[var(--border)] bg-white"
+            className="min-h-[512px] w-full rounded-md border border-[var(--border)] bg-white"
             filename={activeFile}
             content={documents[activeFile] ?? ""}
           />

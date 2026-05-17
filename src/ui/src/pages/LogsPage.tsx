@@ -56,12 +56,12 @@ export function LogsPage() {
           </div>
           {activeDoc ? (
             <DocumentPreview
-              className="min-h-[640px] w-full rounded-md border border-[var(--border)] bg-white"
+              className="min-h-[512px] w-full rounded-md border border-[var(--border)] bg-white"
               filename={activeDoc}
               content={documents[activeDoc]}
             />
           ) : (
-            <pre className="min-h-[320px] rounded-md border border-[var(--border)] bg-[var(--muted)] p-4 text-sm text-[var(--muted-foreground)]">
+            <pre className="min-h-[256px] rounded-md border border-[var(--border)] bg-[var(--muted)] p-3 text-xs text-[var(--muted-foreground)]">
               run을 선택하세요.
             </pre>
           )}

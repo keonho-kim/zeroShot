@@ -118,17 +118,17 @@ export function buildBlueprintHtml(params: {
 :root{color-scheme:light;--blue:#0071e3;--ink:#1d1d1f;--muted:#6e6e73;--line:#e5e5ea;--bg:#f5f5f7;--panel:#fff}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Arial,sans-serif}
-.phone{width:min(100%,430px);min-height:100vh;margin:0 auto;padding:22px 16px 34px;background:#f5f5f7}
-.hero{padding:26px 22px;border-radius:24px;background:#fff;border:1px solid var(--line);box-shadow:0 16px 42px rgba(31,35,42,.06)}
-.eyebrow{margin:0 0 10px;color:var(--blue);font-size:12px;font-weight:800;text-transform:uppercase}
-h1{margin:0;font-size:34px;line-height:1.02;letter-spacing:0}
-.sub{margin:14px 0 0;color:var(--muted);font-size:14px;line-height:1.55}
-.card{margin-top:14px;padding:18px;border-radius:20px;background:var(--panel);border:1px solid var(--line);box-shadow:0 12px 32px rgba(31,35,42,.055)}
-h2{margin:0 0 12px;font-size:18px;line-height:1.2}
-.decision{padding:14px;border-radius:14px;background:#f2f2f7}
-.decision strong{display:block;font-size:15px}
-.decision p{margin:6px 0 0;color:var(--muted);font-size:13px;line-height:1.5}
-.footer{margin-top:18px;padding:18px;text-align:center;color:var(--muted);font-size:13px}
+.phone{width:min(100%,390px);min-height:100vh;margin:0 auto;padding:18px 13px 27px;background:#f5f5f7}
+.hero{padding:21px 18px;border-radius:19px;background:#fff;border:1px solid var(--line);box-shadow:0 13px 34px rgba(31,35,42,.06)}
+.eyebrow{margin:0 0 8px;color:var(--blue);font-size:10px;font-weight:800;text-transform:uppercase}
+h1{margin:0;font-size:27px;line-height:1.02;letter-spacing:0}
+.sub{margin:11px 0 0;color:var(--muted);font-size:12px;line-height:1.5}
+.card{margin-top:11px;padding:14px;border-radius:16px;background:var(--panel);border:1px solid var(--line);box-shadow:0 10px 26px rgba(31,35,42,.055)}
+h2{margin:0 0 10px;font-size:15px;line-height:1.2}
+.decision{padding:11px;border-radius:11px;background:#f2f2f7}
+.decision strong{display:block;font-size:13px}
+.decision p{margin:5px 0 0;color:var(--muted);font-size:11px;line-height:1.45}
+.footer{margin-top:14px;padding:14px;text-align:center;color:var(--muted);font-size:11px}
 </style>
 <script type="application/json" id="architect-decisions">
 ${escapeScriptJson(architectJson)}
