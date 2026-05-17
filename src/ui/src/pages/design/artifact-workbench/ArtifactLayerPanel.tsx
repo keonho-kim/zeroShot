@@ -10,15 +10,19 @@ export function ArtifactLayerPanel(props: {
   setLayerSearch: Dispatch<SetStateAction<string>>;
   filteredTargets: ArtifactEditTarget[];
   selectedTarget: ArtifactEditTarget | null;
+  selectedTargetIds: string[];
   setSelectedTarget: Dispatch<SetStateAction<ArtifactEditTarget | null>>;
   setArtifactMode: Dispatch<SetStateAction<ArtifactEditorMode>>;
+  onToggleTargetSelection: (target: ArtifactEditTarget) => void;
   onHighlightTarget: (target: ArtifactEditTarget) => void;
 }) {
+  const selectedIds = new Set(props.selectedTargetIds);
+
   return (
     <aside className="design-layer-panel" aria-label="Artifact layers">
       <div className="design-artifact-chip-list">
         {props.trackedArtifacts.slice(0, 4).map((artifact) => (
-          <span key={artifact.path}>{artifact.path === "DESIGN/index.html" ? "DESIGN ENTRY" : artifact.title}</span>
+          <span key={artifact.path}>{artifact.path === "DESIGN/index.html" ? "INTERACTIVE CANVAS" : artifact.title}</span>
         ))}
       </div>
       <label className="design-layer-search">
@@ -28,22 +32,27 @@ export function ArtifactLayerPanel(props: {
       <div className="design-layer-count">{props.filteredTargets.length} editable targets</div>
       <div className="design-layer-list" data-testid="artifact-layer-list" role="listbox" aria-label="Editable targets">
         {props.filteredTargets.length ? props.filteredTargets.map((target) => (
-          <button
-            type="button"
+          <label
             key={target.id}
             role="option"
-            aria-selected={props.selectedTarget?.id === target.id}
-            className={cn("design-layer-button", props.selectedTarget?.id === target.id && "selected")}
+            aria-selected={selectedIds.has(target.id)}
+            className={cn("design-layer-button", selectedIds.has(target.id) && "selected")}
             onMouseEnter={() => props.onHighlightTarget(target)}
-            onClick={() => {
-              props.setSelectedTarget(target);
-              props.setArtifactMode("manual-edit");
-              props.onHighlightTarget(target);
-            }}
           >
+            <input
+              type="checkbox"
+              checked={selectedIds.has(target.id)}
+              onChange={() => {
+                props.onToggleTargetSelection(target);
+                props.setSelectedTarget(target);
+                props.setArtifactMode("manual-edit");
+                props.onHighlightTarget(target);
+              }}
+              aria-label={`Select ${target.label}`}
+            />
             <span>{target.label}</span>
             <small>{target.tagName} · {target.kind} · {target.text || target.id}</small>
-          </button>
+          </label>
         )) : (
           <div className="design-layer-empty">
             <strong>편집 가능한 요소가 없습니다</strong>

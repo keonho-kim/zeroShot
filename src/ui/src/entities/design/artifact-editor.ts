@@ -49,7 +49,7 @@ export interface ArtifactEditTarget {
 export type ArtifactBridgeMessage =
   | { __zeroshotArtifact: true; type: "od-preview-ready" }
   | { __zeroshotArtifact: true; type: "od-edit-targets"; targets: ArtifactEditTarget[] }
-  | { __zeroshotArtifact: true; type: "od-edit-select"; target: ArtifactEditTarget }
+  | { __zeroshotArtifact: true; type: "od-edit-select"; target: ArtifactEditTarget; additive?: boolean }
   | { __zeroshotArtifact: true; type: "od-edit-hover"; target: ArtifactEditTarget | null }
   | { __zeroshotArtifact: true; type: "od-edit-drag"; target: ArtifactEditTarget; deltaX: number; deltaY: number }
   | { __zeroshotArtifact: true; type: "od-edit-key-input"; target: ArtifactEditTarget; key: string };
@@ -624,7 +624,6 @@ function artifactBridgeScript(initialMode: ArtifactEditorMode): string {
     .filter((element) => !isHostNode(element) && isMappable(element) && visible(element))
     .map((element) => targetFor(element, false));
   const postTargets = () => {
-    if (!editMode) return;
     post({ type: "od-edit-targets", targets: allTargets() });
   };
   const closestTarget = (node) => {
@@ -643,13 +642,21 @@ function artifactBridgeScript(initialMode: ArtifactEditorMode): string {
     document.querySelectorAll("[data-od-selected='true']").forEach((node) => node.removeAttribute("data-od-selected"));
     if (element) element.setAttribute("data-od-selected", "true");
   };
-  const select = (element) => {
+  const markSelectedIds = (ids) => {
+    const selected = new Set(Array.isArray(ids) ? ids : []);
+    document.querySelectorAll("[data-od-selected='true']").forEach((node) => node.removeAttribute("data-od-selected"));
+    selected.forEach((id) => {
+      const target = document.querySelector("[data-od-id='" + id + "'],[data-od-runtime-id='" + id + "'],[" + sourcePathAttr + "='" + id + "']");
+      if (target) target.setAttribute("data-od-selected", "true");
+    });
+  };
+  const select = (element, event) => {
     const target = targetFor(element, true);
     selectedId = target.id;
-    markSelected(element);
+    if (!event || (!event.ctrlKey && !event.metaKey)) markSelected(element);
     if (!element.hasAttribute("tabindex")) element.setAttribute("tabindex", "-1");
     element.focus({ preventScroll: true });
-    post({ type: "od-edit-select", target });
+    post({ type: "od-edit-select", target, additive: Boolean(event && (event.ctrlKey || event.metaKey)) });
   };
   const removeDragGhost = () => {
     if (dragGhost && dragGhost.parentElement) dragGhost.parentElement.removeChild(dragGhost);
@@ -681,15 +688,25 @@ function artifactBridgeScript(initialMode: ArtifactEditorMode): string {
       const target = document.querySelector("[data-od-id='" + payload.id + "'],[data-od-runtime-id='" + payload.id + "'],[" + sourcePathAttr + "='" + payload.id + "']");
       if (target) target.setAttribute("data-od-hover", "true");
     }
+    if (payload.type === "od-highlight-targets") markSelectedIds(payload.ids);
   });
 
   document.addEventListener("click", (event) => {
-    if (!editMode) return;
+    if (!editMode && !event.ctrlKey && !event.metaKey) return;
     const element = closestTarget(event.target);
     if (!element) return;
     event.preventDefault();
     event.stopPropagation();
-    select(element);
+    select(element, event);
+  }, true);
+
+  document.addEventListener("contextmenu", (event) => {
+    if (!event.ctrlKey && !event.metaKey) return;
+    const element = closestTarget(event.target);
+    if (!element) return;
+    event.preventDefault();
+    event.stopPropagation();
+    select(element, event);
   }, true);
 
   document.addEventListener("mousemove", (event) => {
@@ -707,10 +724,11 @@ function artifactBridgeScript(initialMode: ArtifactEditorMode): string {
   }, true);
 
   document.addEventListener("mousedown", (event) => {
-    if (!editMode) return;
+    if (!editMode && !event.ctrlKey && !event.metaKey) return;
     const element = closestTarget(event.target);
     if (!element) return;
-    select(element);
+    if (!event.ctrlKey && !event.metaKey) select(element, event);
+    if (!editMode) return;
     dragStart = { x: event.clientX, y: event.clientY, target: targetFor(element, true) };
     createDragGhost(element);
   }, true);

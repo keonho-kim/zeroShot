@@ -13,6 +13,14 @@ export type ArtifactViewport = "desktop" | "tablet" | "mobile";
 
 export type CommitArtifactPatch = (patch: ArtifactSourcePatch, target?: ArtifactEditTarget | null) => void;
 
+export interface ArtifactCommentCapture {
+  cleanImage: string;
+  annotatedImage: string;
+  note: string;
+  targetIds: string[];
+  createdAt: number;
+}
+
 export interface ArtifactWorkbenchProps {
   hasProductHtml: boolean;
   artifactEtag?: string;
@@ -33,6 +41,10 @@ export interface ArtifactWorkbenchProps {
   filteredTargets: ArtifactEditTarget[];
   selectedTarget: ArtifactEditTarget | null;
   setSelectedTarget: Dispatch<SetStateAction<ArtifactEditTarget | null>>;
+  selectedTargets: ArtifactEditTarget[];
+  selectedTargetIds: string[];
+  onToggleTargetSelection: (target: ArtifactEditTarget) => void;
+  onClearTargetSelection: () => void;
   attributeDraft: string;
   setAttributeDraft: Dispatch<SetStateAction<string>>;
   outerHtmlDraft: string;
@@ -41,6 +53,7 @@ export interface ArtifactWorkbenchProps {
   setSourceDraft: Dispatch<SetStateAction<string>>;
   aiInstruction: string;
   setAiInstruction: Dispatch<SetStateAction<string>>;
+  commentCapture: ArtifactCommentCapture | null;
   artifactError: string;
   timelineItems: DesignTimelineItem[];
   sourceHistory: ArtifactHistoryEntry[];
@@ -48,6 +61,8 @@ export interface ArtifactWorkbenchProps {
   isSaving: boolean;
   onReload: () => void;
   onHighlightTarget: (target: ArtifactEditTarget) => void;
+  onOpenCommentTool: () => void;
+  onRemoveCommentCapture: () => void;
   onCommitPatch: CommitArtifactPatch;
   onApplyAttributeDraft: () => void;
   onApplySelectedTargetAiInstruction: () => void;

@@ -49,7 +49,7 @@ describe("design service", () => {
     expect(markdown).toContain("Runtime mode: Wireframe");
     expect(markdown).toContain("## Layout");
     expect(markdown).toContain("**Create frames**");
-    expect(markdown).toContain("`DESIGN/index.html`");
+    expect(markdown).toContain("`INTERACTIVE CANVAS`");
     expect(markdown).toContain("## Generated Files");
   });
 

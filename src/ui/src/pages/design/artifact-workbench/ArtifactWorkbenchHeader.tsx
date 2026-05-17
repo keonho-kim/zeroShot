@@ -14,7 +14,7 @@ export function ArtifactWorkbenchHeader(props: {
     <div className="design-artifact-header">
       <div>
         <p className="agent-panel-kicker">DESIGN WORKBENCH</p>
-        <h3>DESIGN/index.html</h3>
+        <h3>INTERACTIVE CANVAS</h3>
         {props.hasProductHtml ? (
           <span className="design-file-meta">{props.artifactEtag ?? "unsaved"} · {props.artifactUpdatedAt ?? "pending"}</span>
         ) : null}

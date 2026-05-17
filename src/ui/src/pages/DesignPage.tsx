@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
@@ -33,6 +33,8 @@ import {
   type ArtifactSourcePatch
 } from "@/entities/design/artifact-editor";
 import { ArtifactWorkbench } from "@/pages/design/artifact-workbench/ArtifactWorkbench";
+import { ArtifactCommentModal } from "@/pages/design/artifact-workbench/ArtifactCommentModal";
+import type { ArtifactCommentCapture } from "@/pages/design/artifact-workbench/types";
 import { DesignResult } from "@/pages/design/DesignResult";
 import { DesignRuntimeSetup } from "@/pages/design/DesignRuntimeSetup";
 import { type DesignTimelineItem, upsertTimelineItem } from "@/pages/design/design-page-model";
@@ -85,10 +87,13 @@ export function DesignPage() {
   const [artifactSource, setArtifactSource] = useState("");
   const [artifactTargets, setArtifactTargets] = useState<ArtifactEditTarget[]>([]);
   const [selectedTarget, setSelectedTarget] = useState<ArtifactEditTarget | null>(null);
+  const [selectedTargetIds, setSelectedTargetIds] = useState<string[]>([]);
   const [artifactError, setArtifactError] = useState("");
   const [artifactEtag, setArtifactEtag] = useState("");
   const [sourceHistory, setSourceHistory] = useState<ArtifactHistoryEntry[]>([]);
   const [redoHistory, setRedoHistory] = useState<ArtifactHistoryEntry[]>([]);
+  const [commentToolOpen, setCommentToolOpen] = useState(false);
+  const [commentCapture, setCommentCapture] = useState<ArtifactCommentCapture | null>(null);
 
   const resourcesQuery = useQuery({
     queryKey: ["resources"],
@@ -136,6 +141,7 @@ export function DesignPage() {
     setArtifactEtag(designArtifactQuery.data?.etag ?? "");
     setArtifactTargets([]);
     setSelectedTarget(null);
+    setSelectedTargetIds([]);
     setSourceHistory([]);
     setRedoHistory([]);
     setArtifactError("");
@@ -279,6 +285,10 @@ export function DesignPage() {
       target.kind
     ].some((value) => value.toLowerCase().includes(query)));
   }, [artifactTargets, layerSearch]);
+  const selectedTargets = useMemo(() => {
+    const ids = new Set(selectedTargetIds);
+    return artifactTargets.filter((target) => ids.has(target.id));
+  }, [artifactTargets, selectedTargetIds]);
   const trackedArtifacts = useMemo(() => {
     const resultArtifacts = designResult?.artifacts ?? [];
     if (resultArtifacts.some((artifact) => artifact.path === "DESIGN/index.html")) {
@@ -375,6 +385,7 @@ export function DesignPage() {
     setArtifactSource(entry.beforeSource);
     setSourceDraft(entry.beforeSource);
     setSelectedTarget(null);
+    setSelectedTargetIds([]);
   };
 
   const redoArtifactChange = () => {
@@ -387,6 +398,7 @@ export function DesignPage() {
     setArtifactSource(entry.afterSource);
     setSourceDraft(entry.afterSource);
     setSelectedTarget(null);
+    setSelectedTargetIds([]);
   };
 
   const highlightTarget = (target: ArtifactEditTarget) => {
@@ -396,6 +408,34 @@ export function DesignPage() {
       id: target.id
     }, "*");
   };
+
+  const toggleTargetSelection = useCallback((target: ArtifactEditTarget) => {
+    setSelectedTarget(target);
+    setSelectedTargetIds((ids) => ids.includes(target.id)
+      ? ids.filter((id) => id !== target.id)
+      : [...ids, target.id]);
+  }, []);
+
+  const clearTargetSelection = useCallback(() => {
+    setSelectedTarget(null);
+    setSelectedTargetIds([]);
+  }, []);
+
+  useEffect(() => {
+    artifactFrameRef.current?.contentWindow?.postMessage({
+      __zeroshotArtifact: true,
+      type: "od-highlight-targets",
+      ids: selectedTargetIds
+    }, "*");
+  }, [selectedTargetIds]);
+
+  useEffect(() => {
+    if (!artifactTargets.length || !selectedTargetIds.length) {
+      return;
+    }
+    const availableIds = new Set(artifactTargets.map((target) => target.id));
+    setSelectedTargetIds((ids) => ids.filter((id) => availableIds.has(id)));
+  }, [artifactTargets, selectedTargetIds.length]);
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent<unknown>) => {
@@ -408,6 +448,14 @@ export function DesignPage() {
       }
       if (message.type === "od-edit-select") {
         setSelectedTarget(message.target);
+        setSelectedTargetIds((ids) => {
+          if (message.additive) {
+            return ids.includes(message.target.id)
+              ? ids.filter((id) => id !== message.target.id)
+              : [...ids, message.target.id];
+          }
+          return [message.target.id];
+        });
         setArtifactMode((currentMode) => currentMode === "preview" ? "manual-edit" : currentMode);
       }
       if (message.type === "od-edit-hover" && message.target) {
@@ -498,18 +546,49 @@ export function DesignPage() {
 
   const applySelectedTargetAiInstruction = () => {
     if (!aiInstruction.trim()) {
+      if (!commentCapture) {
+        return;
+      }
+    }
+    const targetContext = selectedTargets.length
+      ? [
+        "Selected layers:",
+        ...selectedTargets.map((target) => [
+          `- @${target.label} (${target.id}, ${target.tagName}, ${target.kind})`,
+          target.text ? `  Visible text: ${target.text}` : ""
+        ].filter(Boolean).join("\n"))
+      ].join("\n")
+      : selectedTarget
+        ? [
+          `Selected target: ${selectedTarget.label} (${selectedTarget.id}, ${selectedTarget.tagName})`,
+          "",
+          "Current outerHTML:",
+          selectedTarget.outerHtml || "(not available)"
+        ].join("\n")
+        : "";
+    const commentContext = commentCapture
+      ? [
+        "Canvas comment capture:",
+        `- selected target ids: ${commentCapture.targetIds.join(", ") || "(none)"}`,
+        commentCapture.note ? `- comment text: ${commentCapture.note}` : "",
+        "- Clean interactive canvas screenshot is attached below as a data URL.",
+        commentCapture.cleanImage,
+        "- Annotated screenshot shown to the user is attached below as a data URL.",
+        commentCapture.annotatedImage
+      ].filter(Boolean).join("\n")
+      : "";
+    if (!aiInstruction.trim() && !commentContext) {
       return;
     }
-    const nextGoal = selectedTarget
+    const nextGoal = targetContext || commentContext
       ? [
-        `Selected target: ${selectedTarget.label} (${selectedTarget.id}, ${selectedTarget.tagName})`,
-        "",
-        "Current outerHTML:",
-        selectedTarget.outerHtml || "(not available)",
-        "",
+        targetContext,
+        commentContext,
+        "Active resource instruction:",
+        "Load and apply the active skill, design template, and design system context already configured for this project before making the change.",
         "Requested design change:",
         aiInstruction.trim()
-      ].join("\n")
+      ].filter(Boolean).join("\n\n")
       : aiInstruction.trim();
     setGoal(nextGoal);
     setMode("codex");
@@ -603,6 +682,10 @@ export function DesignPage() {
             filteredTargets={filteredTargets}
             selectedTarget={selectedTarget}
             setSelectedTarget={setSelectedTarget}
+            selectedTargets={selectedTargets}
+            selectedTargetIds={selectedTargetIds}
+            onToggleTargetSelection={toggleTargetSelection}
+            onClearTargetSelection={clearTargetSelection}
             attributeDraft={attributeDraft}
             setAttributeDraft={setAttributeDraft}
             outerHtmlDraft={outerHtmlDraft}
@@ -611,6 +694,7 @@ export function DesignPage() {
             setSourceDraft={setSourceDraft}
             aiInstruction={aiInstruction}
             setAiInstruction={setAiInstruction}
+            commentCapture={commentCapture}
             artifactError={artifactError}
             timelineItems={timelineItems}
             sourceHistory={sourceHistory}
@@ -621,6 +705,8 @@ export function DesignPage() {
               artifactFrameRef.current?.contentWindow?.postMessage({ __zeroshotArtifact: true, type: "od-refresh-targets" }, "*");
             }}
             onHighlightTarget={highlightTarget}
+            onOpenCommentTool={() => setCommentToolOpen(true)}
+            onRemoveCommentCapture={() => setCommentCapture(null)}
             onCommitPatch={commitArtifactPatch}
             onApplyAttributeDraft={applyAttributeDraft}
             onApplySelectedTargetAiInstruction={applySelectedTargetAiInstruction}
@@ -632,6 +718,13 @@ export function DesignPage() {
 
         {makeoverStep === "preview" && designResult ? <DesignResult design={designResult} artifactHtml={artifactSource} /> : null}
       </div>
+      <ArtifactCommentModal
+        open={commentToolOpen}
+        frameRef={artifactFrameRef}
+        selectedTargets={selectedTargets}
+        onClose={() => setCommentToolOpen(false)}
+        onCapture={setCommentCapture}
+      />
     </div>
   );
 }

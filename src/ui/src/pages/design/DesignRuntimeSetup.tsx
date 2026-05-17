@@ -168,7 +168,7 @@ export function DesignRuntimeSetup(props: {
           <div className="min-w-0">
             <p className="agent-panel-kicker">{projectName(props.projectRoot)}</p>
             <h2>Makeover</h2>
-            <p>ARCHITECT 결과를 DESIGN/index.html 상호작용형 UI 산출물로 전환합니다.</p>
+            <p>ARCHITECT 결과를 INTERACTIVE CANVAS 상호작용형 UI 산출물로 전환합니다.</p>
           </div>
         </div>
         <div className="agent-status-grid">

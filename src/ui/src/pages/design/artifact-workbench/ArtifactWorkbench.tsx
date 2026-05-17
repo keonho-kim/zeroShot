@@ -1,6 +1,5 @@
 import { Card } from "@/components/ui/card";
 import { ArtifactCodexPanel } from "@/pages/design/artifact-workbench/ArtifactCodexPanel";
-import { ArtifactInspector } from "@/pages/design/artifact-workbench/ArtifactInspector";
 import { ArtifactLayerPanel } from "@/pages/design/artifact-workbench/ArtifactLayerPanel";
 import { ArtifactRequiredState } from "@/pages/design/artifact-workbench/ArtifactRequiredState";
 import { ArtifactStage } from "@/pages/design/artifact-workbench/ArtifactStage";
@@ -34,8 +33,12 @@ export function ArtifactWorkbench(props: ArtifactWorkbenchProps) {
             <ArtifactCodexPanel
               aiInstruction={props.aiInstruction}
               setAiInstruction={props.setAiInstruction}
+              selectedTargets={props.selectedTargets}
+              commentCapture={props.commentCapture}
               timelineItems={props.timelineItems}
               onApplySelectedTargetAiInstruction={props.onApplySelectedTargetAiInstruction}
+              onClearTargetSelection={props.onClearTargetSelection}
+              onRemoveCommentCapture={props.onRemoveCommentCapture}
             />
 
             <ArtifactStage
@@ -46,6 +49,7 @@ export function ArtifactWorkbench(props: ArtifactWorkbenchProps) {
               artifactSrcDoc={props.artifactSrcDoc}
               sourceDraft={props.sourceDraft}
               setSourceDraft={props.setSourceDraft}
+              onOpenCommentTool={props.onOpenCommentTool}
             />
 
             <div className="design-right-panel">
@@ -55,22 +59,11 @@ export function ArtifactWorkbench(props: ArtifactWorkbenchProps) {
                 setLayerSearch={props.setLayerSearch}
                 filteredTargets={props.filteredTargets}
                 selectedTarget={props.selectedTarget}
+                selectedTargetIds={props.selectedTargetIds}
                 setSelectedTarget={props.setSelectedTarget}
                 setArtifactMode={props.setArtifactMode}
+                onToggleTargetSelection={props.onToggleTargetSelection}
                 onHighlightTarget={props.onHighlightTarget}
-              />
-              <ArtifactInspector
-                selectedTarget={props.selectedTarget}
-                artifactTab={props.artifactTab}
-                setArtifactTab={props.setArtifactTab}
-                attributeDraft={props.attributeDraft}
-                setAttributeDraft={props.setAttributeDraft}
-                outerHtmlDraft={props.outerHtmlDraft}
-                setOuterHtmlDraft={props.setOuterHtmlDraft}
-                sourceDraft={props.sourceDraft}
-                setSourceDraft={props.setSourceDraft}
-                onCommitPatch={props.onCommitPatch}
-                onApplyAttributeDraft={props.onApplyAttributeDraft}
               />
             </div>
           </div>
