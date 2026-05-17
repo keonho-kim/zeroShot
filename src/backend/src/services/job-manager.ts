@@ -3,6 +3,7 @@ import { spawn } from "node:child_process";
 import { createInterface } from "node:readline";
 import { loadAppConfig } from "@backend/config/app-config.js";
 import { buildPipelineCommandSpec } from "@backend/core/cli-command.js";
+import { ensureResourceStoreSeeded } from "@backend/services/resource-seed-service.js";
 import type { JobEvent, JobSnapshot, PipelineOptions, RunMode } from "@backend/types.js";
 
 const PHASE_NAMES = new Set(["prepare", "normalize", "iter", "replan", "validate", "sync-product", "closeout", "build", "codex"]);
@@ -42,12 +43,14 @@ class JobManager {
     }
 
     const appConfig = await loadAppConfig();
+    await ensureResourceStoreSeeded(appConfig);
     const spec = buildPipelineCommandSpec(mode, projectRoot, appConfig.defaults, {
       ...options,
       additionalDirectories: [
         ...(options.additionalDirectories ?? []),
         appConfig.resourceRoots.skills,
-        appConfig.resourceRoots.designTemplates
+        appConfig.resourceRoots.designTemplates,
+        appConfig.resourceRoots.designSystems
       ]
     });
     const jobId = crypto.randomUUID();

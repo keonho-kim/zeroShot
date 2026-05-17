@@ -79,7 +79,7 @@ export function createInitialContext(mode: RunMode, projectRoot: string, default
     mode,
     projectRoot: root,
     toolRoot,
-    productFile: join(root, "PRODUCT.html"),
+    productFile: join(root, "ARCHITECT", "PRODUCT.html"),
     updateFile: join(root, "UPDATE.md"),
     workRoot: join(root, "runs"),
     activeRunFile: join(root, "runs", ".active_run"),

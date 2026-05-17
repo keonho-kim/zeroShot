@@ -172,6 +172,7 @@ Do not prioritize cleverness, premature extensibility, transition comfort, or th
 ## Testing Policy
 
 - You must run tests yourself when you changed behavior and the environment supports it.
+- Before running local workflow or browser tests that need a disposable project workspace, clean and recreate `~/test-space/zeroshot-ground-zero`, then use that directory as the test project root.
 - Follow a Minimal TDD policy: test observable logic and functionality, not implementation shape.
 - Prefer real behavior checks over fake reassurance.
 - Do not add or keep tests that only verify prompt wording, prompt rendering, or other internal prompt text details unless the prompt text itself is the explicit product contract.

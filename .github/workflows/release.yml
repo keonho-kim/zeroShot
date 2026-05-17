@@ -53,9 +53,10 @@ jobs:
       - name: Stage app artifacts in CLI package
         run: |
           rm -rf cli/app
-          mkdir -p cli/app/backend cli/app/frontend
+          mkdir -p cli/app/backend cli/app/frontend cli/app/assets/design
           cp -R src/backend/dist cli/app/backend/dist
           cp -R src/ui/dist cli/app/frontend/dist
+          cp -R system-asseets/design/source-files cli/app/assets/design/source-files
 
       - name: Publish npm package
         env:

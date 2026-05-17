@@ -140,6 +140,7 @@ export function ArchitectProgressPage() {
 
   const activeSkillId = projectSettingsQuery.data?.activeSkillId ?? "";
   const activeDesignTemplateId = projectSettingsQuery.data?.activeDesignTemplateId ?? "";
+  const activeDesignSystemId = projectSettingsQuery.data?.activeDesignSystemId ?? "";
   const decisions = decisionSet?.decisions ?? [];
   const currentDecision = decisions[stepIndex];
   const isComplete = decisionSet !== null && stepIndex >= decisions.length;
@@ -166,7 +167,8 @@ export function ArchitectProgressPage() {
         answers,
         locale,
         activeSkillId: activeSkillId || undefined,
-        activeDesignTemplateId: activeDesignTemplateId || undefined
+        activeDesignTemplateId: activeDesignTemplateId || undefined,
+        activeDesignSystemId: activeDesignSystemId || undefined
       });
     },
     onSuccess: (file) => {
@@ -289,7 +291,8 @@ export function ArchitectProgressPage() {
         ].join("\n"),
         locale,
         activeSkillId: activeSkillId || undefined,
-        activeDesignTemplateId: activeDesignTemplateId || undefined
+        activeDesignTemplateId: activeDesignTemplateId || undefined,
+        activeDesignSystemId: activeDesignSystemId || undefined
       },
       addProgress
     ).then((nextDecisionSet) => {
@@ -299,6 +302,7 @@ export function ArchitectProgressPage() {
     });
   }, [
     activeDesignTemplateId,
+    activeDesignSystemId,
     activeSkillId,
     addProgress,
     completeRequest,

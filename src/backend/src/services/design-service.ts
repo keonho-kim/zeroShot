@@ -258,6 +258,7 @@ export async function buildDesignRuntime(params: {
   locale: string;
   activeSkillId?: string;
   activeDesignTemplateId?: string;
+  activeDesignSystemId?: string;
   model?: string;
   onProgress?: (event: DesignProgressEvent) => void;
 }): Promise<DesignRuntimeResponse> {
@@ -266,7 +267,9 @@ export async function buildDesignRuntime(params: {
   const architectContext = await readArchitectContext(params.projectRoot).catch(() => "");
   const resourceContext = await buildResourcePromptContext({
     activeSkillId: params.activeSkillId,
-    activeDesignTemplateId: params.activeDesignTemplateId
+    activeDesignTemplateId: params.activeDesignTemplateId,
+    activeDesignSystemId: params.activeDesignSystemId,
+    includeCatalogSummary: true
   });
 
   const codex = new Codex();
@@ -276,7 +279,7 @@ export async function buildDesignRuntime(params: {
     approvalPolicy: "never" satisfies ApprovalMode,
     sandboxMode: "read-only" satisfies SandboxMode,
     modelReasoningEffort: asReasoningEffort(appConfig.defaults.planReasoning),
-    additionalDirectories: [appConfig.resourceRoots.skills, appConfig.resourceRoots.designTemplates],
+    additionalDirectories: [appConfig.resourceRoots.skills, appConfig.resourceRoots.designTemplates, appConfig.resourceRoots.designSystems],
     ...(params.model ? { model: params.model } : {})
   });
 

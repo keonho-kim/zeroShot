@@ -58,7 +58,8 @@ allowed_roots = ["~/zeroshot-projects"]
       allowedRoots: [join(configDir, "workspace")],
       resourceRoots: {
         skills: join(configDir, "skills"),
-        designTemplates: join(configDir, "design-templates")
+        designTemplates: join(configDir, "design-templates"),
+        designSystems: join(configDir, "design-systems")
       },
       server: {
         host: "127.0.0.1",
@@ -88,5 +89,7 @@ allowed_roots = ["~/zeroshot-projects"]
 
     expect(config.server).toEqual({ host: "127.0.0.1", port: 32575 });
     expect(await readFile(filePath, "utf8")).toContain("host = \"127.0.0.1\"");
+    expect(config.resourceRoots.designSystems).toBe(join(homedir(), ".zeroshot", "design-systems"));
+    expect(await readFile(filePath, "utf8")).toContain("design_systems");
   });
 });

@@ -11,7 +11,8 @@ const defaultConfig: AppConfig = {
   allowedRoots: [],
   resourceRoots: {
     skills: join(homedir(), ".zeroshot", "skills"),
-    designTemplates: join(homedir(), ".zeroshot", "design-templates")
+    designTemplates: join(homedir(), ".zeroshot", "design-templates"),
+    designSystems: join(homedir(), ".zeroshot", "design-systems")
   },
   server: {
     host: "127.0.0.1",
@@ -52,7 +53,8 @@ function readResourceRoots(parsed: Record<string, unknown>): AppConfig["resource
 
   return {
     skills: expandHomePath(toString(resourceRoots.skills, defaultConfig.resourceRoots.skills)),
-    designTemplates: expandHomePath(toString(resourceRoots.design_templates, defaultConfig.resourceRoots.designTemplates))
+    designTemplates: expandHomePath(toString(resourceRoots.design_templates, defaultConfig.resourceRoots.designTemplates)),
+    designSystems: expandHomePath(toString(resourceRoots.design_systems, defaultConfig.resourceRoots.designSystems))
   };
 }
 
@@ -71,15 +73,16 @@ async function ensureConfigFile(): Promise<string> {
     return existing;
   }
 
-    const payload = stringify({
-      host: defaultConfig.server.host,
-      port: defaultConfig.server.port,
-      allowed_roots: defaultConfig.allowedRoots,
-      resource_roots: {
-        skills: defaultConfig.resourceRoots.skills,
-        design_templates: defaultConfig.resourceRoots.designTemplates
-      },
-      default_approval: defaultConfig.defaults.approval,
+  const payload = stringify({
+    host: defaultConfig.server.host,
+    port: defaultConfig.server.port,
+    allowed_roots: defaultConfig.allowedRoots,
+    resource_roots: {
+      skills: defaultConfig.resourceRoots.skills,
+      design_templates: defaultConfig.resourceRoots.designTemplates,
+      design_systems: defaultConfig.resourceRoots.designSystems
+    },
+    default_approval: defaultConfig.defaults.approval,
     default_sandbox: defaultConfig.defaults.sandbox,
     max_iters: defaultConfig.defaults.maxIters,
     stall_limit: defaultConfig.defaults.stallLimit,
@@ -124,7 +127,8 @@ export async function saveAppConfig(config: AppConfig): Promise<void> {
     allowed_roots: normalizeRoots(config.allowedRoots, defaultConfig.allowedRoots),
     resource_roots: {
       skills: expandHomePath(toString(config.resourceRoots?.skills, defaultConfig.resourceRoots.skills)),
-      design_templates: expandHomePath(toString(config.resourceRoots?.designTemplates, defaultConfig.resourceRoots.designTemplates))
+      design_templates: expandHomePath(toString(config.resourceRoots?.designTemplates, defaultConfig.resourceRoots.designTemplates)),
+      design_systems: expandHomePath(toString(config.resourceRoots?.designSystems, defaultConfig.resourceRoots.designSystems))
     },
     default_approval: config.defaults.approval,
     default_sandbox: config.defaults.sandbox,

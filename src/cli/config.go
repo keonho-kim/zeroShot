@@ -19,6 +19,11 @@ plan_reasoning = "high"
 exec_reasoning = "medium"
 validate_reasoning = "medium"
 closeout_reasoning = "medium"
+
+[resource_roots]
+skills = "~/.zeroshot/skills"
+design_templates = "~/.zeroshot/design-templates"
+design_systems = "~/.zeroshot/design-systems"
 `
 
 type appConfig struct {

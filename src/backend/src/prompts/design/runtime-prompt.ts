@@ -15,6 +15,8 @@ export const designRuntimeRulesPrompt = `Rules:
 - Do not create root PRODUCT.html, root DESIGN.md, or root DESIGN.runtime.json.
 - Treat the user's design request as directional input, not a literal wireframe to copy.
 - Use ARCHITECT/PRODUCT.html as the primary product contract and produce a polished, modern UI/UX direction that improves on the user's rough wording.
+- If an active design system or design template is provided, follow it as the primary visual and structural guidance.
+- Treat listed skills as read-only capabilities and reference material; use them only when they fit the requested UI.
 - When browsing/search capability is available, study comparable apps, dashboards, or product experiences before choosing layout, interaction flow, density, and visual hierarchy. Digest the patterns; do not copy branding or copyrighted UI.
 - Prefer a mature product-grade interface over a simplistic placeholder: include realistic states, navigation, content hierarchy, empty/error/loading states, and refined responsive behavior.
 - Include wireframe or presentation editing details when the mode requests them, but do not pretend external files were created.

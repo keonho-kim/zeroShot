@@ -49,15 +49,17 @@ func startServer(cmd *cobra.Command, flags *startFlagSet) error {
 		"ZEROSHOT_CLI_ENTRY="+artifacts.pipelineEntry,
 		"ZEROSHOT_APP_CLI_ENTRY="+os.Args[0],
 		"ZEROSHOT_FRONTEND_DIST="+artifacts.frontendDist,
+		"ZEROSHOT_RESOURCE_SOURCE_ROOT="+artifacts.resourceSourceRoot,
 	)
 
 	return runInteractive("bun", []string{artifacts.backendEntry}, "", env)
 }
 
 type startArtifacts struct {
-	backendEntry  string
-	frontendDist  string
-	pipelineEntry string
+	backendEntry       string
+	frontendDist       string
+	pipelineEntry      string
+	resourceSourceRoot string
 }
 
 func resolveStartArtifacts() (startArtifacts, error) {
@@ -67,11 +69,13 @@ func resolveStartArtifacts() (startArtifacts, error) {
 	var backendEntry string
 	var frontendDist string
 	var pipelineEntry string
+	var resourceSourceRoot string
 
 	if packageRoot != "" {
 		packagedBackend := filepath.Join(packageRoot, "app", "backend", "dist", "server.js")
 		packagedFrontend := filepath.Join(packageRoot, "app", "frontend", "dist")
 		packagedPipeline := filepath.Join(packageRoot, "dist", "pipeline-cli.js")
+		packagedResources := filepath.Join(packageRoot, "app", "assets", "design", "source-files")
 		if pathExists(packagedBackend) {
 			backendEntry = packagedBackend
 		}
@@ -80,6 +84,9 @@ func resolveStartArtifacts() (startArtifacts, error) {
 		}
 		if pathExists(packagedPipeline) {
 			pipelineEntry = packagedPipeline
+		}
+		if pathExists(packagedResources) {
+			resourceSourceRoot = packagedResources
 		}
 	}
 
@@ -92,6 +99,9 @@ func resolveStartArtifacts() (startArtifacts, error) {
 		}
 		if pipelineEntry == "" {
 			pipelineEntry = filepath.Join(workspaceRoot, "cli", "src", "pipeline-cli.ts")
+		}
+		if resourceSourceRoot == "" {
+			resourceSourceRoot = filepath.Join(workspaceRoot, "system-asseets", "design", "source-files")
 		}
 	}
 
@@ -106,8 +116,9 @@ func resolveStartArtifacts() (startArtifacts, error) {
 	}
 
 	return startArtifacts{
-		backendEntry:  backendEntry,
-		frontendDist:  frontendDist,
-		pipelineEntry: pipelineEntry,
+		backendEntry:       backendEntry,
+		frontendDist:       frontendDist,
+		pipelineEntry:      pipelineEntry,
+		resourceSourceRoot: resourceSourceRoot,
 	}, nil
 }

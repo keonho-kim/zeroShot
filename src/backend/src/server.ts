@@ -6,10 +6,12 @@ import { apiRouter } from "@backend/routes/api.js";
 import { getWorkspaceRoot } from "@backend/core/workspace.js";
 import { loadAppConfig } from "@backend/config/app-config.js";
 import { captureServerError, initServerObservability } from "@backend/observability/sentry.js";
+import { ensureResourceStoreSeeded } from "@backend/services/resource-seed-service.js";
 
 const app = express();
 initServerObservability();
 const config = await loadAppConfig();
+await ensureResourceStoreSeeded(config);
 const port = Number(process.env.PORT ?? config.server.port);
 const host = process.env.HOST ?? config.server.host;
 const workspaceRoot = getWorkspaceRoot();

@@ -59,6 +59,7 @@ export interface AppConfig {
   resourceRoots: {
     skills: string;
     designTemplates: string;
+    designSystems: string;
   };
   server: {
     host: string;
@@ -123,6 +124,7 @@ export interface ProjectSettings {
   projectRoot: string;
   activeSkillId?: string;
   activeDesignTemplateId?: string;
+  activeDesignSystemId?: string;
 }
 
 export interface ProductArtifactFile {

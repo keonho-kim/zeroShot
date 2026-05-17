@@ -7,7 +7,7 @@ function context(mode: "build" | "update"): PipelineContext {
     mode,
     projectRoot: "/tmp/project",
     toolRoot: "/tmp/tool",
-    productFile: "/tmp/project/PRODUCT.html",
+    productFile: "/tmp/project/ARCHITECT/PRODUCT.html",
     updateFile: "/tmp/project/UPDATE.md",
     workRoot: "/tmp/project/.zeroshot",
     activeRunFile: "/tmp/project/.zeroshot/active.json",
@@ -51,6 +51,17 @@ describe("pipeline prompt", () => {
 
     expect(prompt).toContain("Backend architecture guidance");
     expect(prompt).toContain("Organize maintainable backend code by domain");
+    expect(prompt).toContain("ARCHITECT/PRODUCT.html");
+  });
+
+  test("marks resource directories as read-only guidance", () => {
+    const ctx = context("build");
+    ctx.options.additionalDirectories = ["/tmp/skills", "/tmp/design-templates", "/tmp/design-systems"];
+
+    const prompt = buildPrompt(ctx, "implement", "medium", "Implement", "");
+
+    expect(prompt).toContain("Additional read-only ZeroShot resource roots");
+    expect(prompt).toContain("Do not modify files in these resource roots");
   });
 
   test("includes backend refactoring guidance in update mode", () => {

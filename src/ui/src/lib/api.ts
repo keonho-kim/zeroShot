@@ -96,6 +96,7 @@ export async function requestArchitectDecisions(payload: {
   locale: string;
   activeSkillId?: string;
   activeDesignTemplateId?: string;
+  activeDesignSystemId?: string;
 }) {
   return (await client.post<ArchitectDecisionResponse>("/architect/decisions", payload)).data;
 }
@@ -122,6 +123,7 @@ export async function requestArchitectDecisionsStream(
     locale: string;
     activeSkillId?: string;
     activeDesignTemplateId?: string;
+    activeDesignSystemId?: string;
   },
   onProgress: (event: ArchitectProgressEvent) => void
 ) {
@@ -189,6 +191,7 @@ export async function createArchitectProductHtml(payload: {
   locale: string;
   activeSkillId?: string;
   activeDesignTemplateId?: string;
+  activeDesignSystemId?: string;
 }) {
   return (await client.post<ProductArtifactFile>("/architect/product-html", payload)).data;
 }
@@ -201,6 +204,7 @@ export async function requestDesignRuntimeStream(
     locale: string;
     activeSkillId?: string;
     activeDesignTemplateId?: string;
+    activeDesignSystemId?: string;
   },
   onProgress: (event: DesignProgressEvent) => void
 ) {
@@ -285,7 +289,7 @@ export async function saveAppSettings(payload: AppConfig) {
 }
 
 export async function fetchResources() {
-  return (await client.get<{ skills: ResourceManifest[]; designTemplates: ResourceManifest[] }>("/resources")).data;
+  return (await client.get<{ skills: ResourceManifest[]; designTemplates: ResourceManifest[]; designSystems: ResourceManifest[] }>("/resources")).data;
 }
 
 export async function fetchCodexSettings() {

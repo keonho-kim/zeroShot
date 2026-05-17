@@ -11,5 +11,6 @@ validate_reasoning = "medium"
 closeout_reasoning = "medium"
 
 [resource_roots]
-skills = "{{ZEROSHOT_REPO_ROOT}}/.agents/skills"
+skills = "{{ZEROSHOT_REPO_ROOT}}/system-asseets/design/source-files/skills"
 design_templates = "{{ZEROSHOT_REPO_ROOT}}/system-asseets/design/source-files/design-templates"
+design_systems = "{{ZEROSHOT_REPO_ROOT}}/system-asseets/design/source-files/design-systems"

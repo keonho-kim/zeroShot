@@ -48,7 +48,9 @@ async function appendActiveResourceContext(projectRoot: string, content: string)
   const settings = await readProjectSettings(projectRoot);
   const resourceContext = await buildResourcePromptContext({
     activeSkillId: settings.activeSkillId,
-    activeDesignTemplateId: settings.activeDesignTemplateId
+    activeDesignTemplateId: settings.activeDesignTemplateId,
+    activeDesignSystemId: settings.activeDesignSystemId,
+    includeCatalogSummary: true
   });
 
   if (!resourceContext.trim()) {
@@ -248,17 +250,19 @@ router.get("/projects/settings", asyncHandler(async (req: Request, res: Response
 }));
 
 router.put("/projects/settings", asyncHandler(async (req: Request, res: Response) => {
-  const body = req.body as { projectRoot?: string; activeSkillId?: string; activeDesignTemplateId?: string };
+  const body = req.body as { projectRoot?: string; activeSkillId?: string; activeDesignTemplateId?: string; activeDesignSystemId?: string };
   const projectRoot = await getValidatedProjectRoot(String(body.projectRoot ?? ""));
   const settings = await saveProjectSettings({
     projectRoot,
     activeSkillId: typeof body.activeSkillId === "string" && body.activeSkillId ? body.activeSkillId : undefined,
-    activeDesignTemplateId: typeof body.activeDesignTemplateId === "string" && body.activeDesignTemplateId ? body.activeDesignTemplateId : undefined
+    activeDesignTemplateId: typeof body.activeDesignTemplateId === "string" && body.activeDesignTemplateId ? body.activeDesignTemplateId : undefined,
+    activeDesignSystemId: typeof body.activeDesignSystemId === "string" && body.activeDesignSystemId ? body.activeDesignSystemId : undefined
   });
   await appendAppEvent("project_settings_saved", {
     projectRoot,
     activeSkillId: settings.activeSkillId ?? null,
-    activeDesignTemplateId: settings.activeDesignTemplateId ?? null
+    activeDesignTemplateId: settings.activeDesignTemplateId ?? null,
+    activeDesignSystemId: settings.activeDesignSystemId ?? null
   });
   res.json(settings);
 }));
@@ -292,6 +296,7 @@ router.post("/architect/decisions", asyncHandler(async (req: Request, res: Respo
     model?: string;
     activeSkillId?: string;
     activeDesignTemplateId?: string;
+    activeDesignSystemId?: string;
   };
   const projectRoot = await getValidatedProjectRoot(String(body.projectRoot ?? ""));
   if (typeof body.goal !== "string" || !body.goal.trim()) {
@@ -307,10 +312,12 @@ router.post("/architect/decisions", asyncHandler(async (req: Request, res: Respo
       locale: body.locale === "ko" ? "ko" : "en",
       reasoning: appConfig.defaults.planReasoning,
       model: typeof body.model === "string" && body.model.trim() ? body.model.trim() : undefined,
-      additionalDirectories: [appConfig.resourceRoots.skills, appConfig.resourceRoots.designTemplates],
+      additionalDirectories: [appConfig.resourceRoots.skills, appConfig.resourceRoots.designTemplates, appConfig.resourceRoots.designSystems],
       resourceContext: await buildResourcePromptContext({
         activeSkillId: body.activeSkillId,
-        activeDesignTemplateId: body.activeDesignTemplateId
+        activeDesignTemplateId: body.activeDesignTemplateId,
+        activeDesignSystemId: body.activeDesignSystemId,
+        includeCatalogSummary: true
       })
     });
     await recordArchitectSession({
@@ -346,6 +353,7 @@ router.post("/architect/decisions/stream", asyncHandler(async (req: Request, res
     model?: string;
     activeSkillId?: string;
     activeDesignTemplateId?: string;
+    activeDesignSystemId?: string;
   };
   const projectRoot = await getValidatedProjectRoot(String(body.projectRoot ?? ""));
   if (typeof body.goal !== "string" || !body.goal.trim()) {
@@ -375,10 +383,12 @@ router.post("/architect/decisions/stream", asyncHandler(async (req: Request, res
       locale: body.locale === "ko" ? "ko" : "en",
       reasoning: appConfig.defaults.planReasoning,
       model: typeof body.model === "string" && body.model.trim() ? body.model.trim() : undefined,
-      additionalDirectories: [appConfig.resourceRoots.skills, appConfig.resourceRoots.designTemplates],
+      additionalDirectories: [appConfig.resourceRoots.skills, appConfig.resourceRoots.designTemplates, appConfig.resourceRoots.designSystems],
       resourceContext: await buildResourcePromptContext({
         activeSkillId: body.activeSkillId,
-        activeDesignTemplateId: body.activeDesignTemplateId
+        activeDesignTemplateId: body.activeDesignTemplateId,
+        activeDesignSystemId: body.activeDesignSystemId,
+        includeCatalogSummary: true
       }),
       onProgress: (event: ArchitectProgressEvent) => writeEvent("progress", event)
     });
@@ -437,6 +447,7 @@ router.post("/architect/product-html", asyncHandler(async (req: Request, res: Re
     model?: string;
     activeSkillId?: string;
     activeDesignTemplateId?: string;
+    activeDesignSystemId?: string;
   };
   const projectRoot = await getValidatedProjectRoot(String(body.projectRoot ?? ""));
   if (!body.decisionSet || typeof body.userBrief !== "string" || !body.userBrief.trim()) {
@@ -454,10 +465,12 @@ router.post("/architect/product-html", asyncHandler(async (req: Request, res: Re
       locale: body.locale === "ko" ? "ko" : "en",
       reasoning: appConfig.defaults.planReasoning,
       model: typeof body.model === "string" && body.model.trim() ? body.model.trim() : undefined,
-      additionalDirectories: [appConfig.resourceRoots.skills, appConfig.resourceRoots.designTemplates],
+      additionalDirectories: [appConfig.resourceRoots.skills, appConfig.resourceRoots.designTemplates, appConfig.resourceRoots.designSystems],
       resourceContext: await buildResourcePromptContext({
         activeSkillId: body.activeSkillId,
-        activeDesignTemplateId: body.activeDesignTemplateId
+        activeDesignTemplateId: body.activeDesignTemplateId,
+        activeDesignSystemId: body.activeDesignSystemId,
+        includeCatalogSummary: true
       })
     });
     const file = await writeProductHtmlSnapshot(projectRoot, html);
@@ -573,6 +586,7 @@ router.post("/design/runtime/stream", asyncHandler(async (req: Request, res: Res
     locale?: string;
     activeSkillId?: string;
     activeDesignTemplateId?: string;
+    activeDesignSystemId?: string;
     model?: string;
   };
   const projectRoot = await getValidatedProjectRoot(String(body.projectRoot ?? ""));
@@ -605,6 +619,7 @@ router.post("/design/runtime/stream", asyncHandler(async (req: Request, res: Res
       locale: body.locale === "ko" ? "ko" : "en",
       activeSkillId: body.activeSkillId,
       activeDesignTemplateId: body.activeDesignTemplateId,
+      activeDesignSystemId: body.activeDesignSystemId,
       model: typeof body.model === "string" && body.model.trim() ? body.model.trim() : undefined,
       onProgress: (event: DesignProgressEvent) => writeEvent("progress", event)
     });

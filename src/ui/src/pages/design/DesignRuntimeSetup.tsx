@@ -39,6 +39,33 @@ const templateFallbacks = [
   }
 ];
 
+const systemFallbacks = [
+  {
+    title: "차분한 모던 제품 화면",
+    detail: "여백, 명확한 위계, 제한된 색상으로 실사용 제품처럼 정돈합니다."
+  },
+  {
+    title: "조밀한 운영 도구",
+    detail: "반복 작업자가 빠르게 훑을 수 있게 정보 밀도와 상태 표시를 강화합니다."
+  },
+  {
+    title: "에디토리얼 서비스",
+    detail: "읽기 리듬, 큰 제목, 콘텐츠 카드 중심으로 브랜드 인상을 높입니다."
+  },
+  {
+    title: "프리미엄 앱 경험",
+    detail: "고급스러운 타이포그래피와 절제된 인터랙션으로 완성도를 끌어올립니다."
+  },
+  {
+    title: "친근한 소비자 앱",
+    detail: "부드러운 색감과 명확한 CTA로 처음 쓰는 사용자도 쉽게 이해하게 합니다."
+  },
+  {
+    title: "브루탈한 프로토타입",
+    detail: "강한 대비, 두꺼운 경계, 명확한 블록 구성으로 빠른 검토에 맞춥니다."
+  }
+];
+
 function firstSentence(value: string): string {
   const normalized = value.replace(/\s+/g, " ").trim();
   const sentence = normalized.match(/^.{24,180}?[.!?。]|^.{24,180}$/u)?.[0] ?? normalized;
@@ -54,27 +81,51 @@ function templateOption(resource: ResourceManifest | null, index: number) {
   };
 }
 
+function systemOption(resource: ResourceManifest | null, index: number) {
+  const fallback = systemFallbacks[index] ?? systemFallbacks.at(-1)!;
+  const description = firstSentence(resource?.description ?? resource?.body ?? "");
+  return {
+    title: fallback.title,
+    detail: description && description !== "|" && description.length >= 8 ? description : fallback.detail
+  };
+}
+
+function recommended(resources: ResourceManifest[], preferredIds: string[]) {
+  const preferred = preferredIds
+    .map((id) => resources.find((resource) => resource.id === id))
+    .filter((resource): resource is ResourceManifest => Boolean(resource));
+  const rest = resources.filter((resource) => !preferredIds.includes(resource.id));
+  return [...preferred, ...rest].slice(0, 6);
+}
+
 export function DesignRuntimeSetup(props: {
   projectRoot: string;
-  resources: { skills: ResourceManifest[]; designTemplates: ResourceManifest[] };
+  resources: { skills: ResourceManifest[]; designTemplates: ResourceManifest[]; designSystems: ResourceManifest[] };
   designResult: DesignRuntimeResponse | null;
   hasProductHtml: boolean;
   goal: string;
   setGoal: Dispatch<SetStateAction<string>>;
   activeDesignTemplateId: string;
+  activeDesignSystemId: string;
   runtimeError: string;
   timelineItems: DesignTimelineItem[];
   isRunning: boolean;
   isComplete: boolean;
   onChangeDesignTemplate: (nextDesignTemplateId: string) => void;
+  onChangeDesignSystem: (nextDesignSystemId: string) => void;
   onAutoRun: () => void;
   onRun: () => void;
 }) {
-  const recommendedTemplates = props.resources.designTemplates.slice(0, 6);
+  const recommendedTemplates = recommended(props.resources.designTemplates, ["web-prototype", "dashboard", "mobile-app", "saas-landing", "wireframe-sketch", "pricing-page"]);
+  const recommendedSystems = recommended(props.resources.designSystems, ["default", "modern", "clean", "professional", "editorial", "neobrutalism"]);
   const activeTemplateIndex = recommendedTemplates.findIndex((resource) => resource.id === props.activeDesignTemplateId);
+  const activeSystemIndex = recommendedSystems.findIndex((resource) => resource.id === props.activeDesignSystemId);
   const activeTemplateStatus = props.activeDesignTemplateId && activeTemplateIndex >= 0
     ? templateOption(recommendedTemplates[activeTemplateIndex], activeTemplateIndex + 1).title
     : templateOption(null, 0).title;
+  const activeSystemStatus = props.activeDesignSystemId && activeSystemIndex >= 0
+    ? systemOption(recommendedSystems[activeSystemIndex], activeSystemIndex).title
+    : "Codex 추천 대기";
 
   return (
     <>
@@ -103,6 +154,10 @@ export function DesignRuntimeSetup(props: {
             <strong>{props.resources.skills.length ? `${props.resources.skills.length} assets loaded` : "Default assets"}</strong>
           </div>
           <div>
+            <span>DESIGN SYSTEM</span>
+            <strong>{activeSystemStatus}</strong>
+          </div>
+          <div>
             <span>TEMPLATE</span>
             <strong>{activeTemplateStatus}</strong>
           </div>
@@ -122,8 +177,33 @@ export function DesignRuntimeSetup(props: {
 
         <div className="design-template-picker" aria-label="Codex recommended design templates">
           <div className="design-template-heading">
+            <span>DESIGN SYSTEM</span>
+            <strong>Codex 추천 디자인 기조 중 선택</strong>
+          </div>
+          <div className="design-template-grid">
+            {recommendedSystems.map((resource, index) => {
+              const option = systemOption(resource, index);
+              const selected = props.activeDesignSystemId === resource.id;
+              return (
+                <button
+                  type="button"
+                  className={cn("choice-card", "design-template-card", selected && "selected")}
+                  key={resource.id}
+                  onClick={() => props.onChangeDesignSystem(resource.id)}
+                >
+                  <span className="choice-check">{selected ? <Check className="size-4" /> : null}</span>
+                  <strong>{option.title}</strong>
+                  <span>{option.detail}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="design-template-picker" aria-label="Codex recommended design templates">
+          <div className="design-template-heading">
             <span>DESIGN TEMPLATE</span>
-            <strong>Codex 추천 템플릿 중 선택</strong>
+            <strong>Codex 추천 화면 구성 중 선택</strong>
           </div>
           <div className="design-template-grid">
             <button

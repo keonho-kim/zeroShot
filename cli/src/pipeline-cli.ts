@@ -45,6 +45,11 @@ async function ensureUserConfig(): Promise<string> {
         `exec_reasoning = "${defaultAppOptions.execReasoning}"`,
         `validate_reasoning = "${defaultAppOptions.validateReasoning}"`,
         `closeout_reasoning = "${defaultAppOptions.closeoutReasoning}"`,
+        "",
+        "[resource_roots]",
+        'skills = "~/.zeroshot/skills"',
+        'design_templates = "~/.zeroshot/design-templates"',
+        'design_systems = "~/.zeroshot/design-systems"',
         ""
       ].join("\n");
       await writeFile(configPath, content, "utf8");

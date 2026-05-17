@@ -19,6 +19,7 @@ async function getDatabase(): Promise<Database> {
       project_root text primary key,
       active_skill_id text,
       active_design_template_id text,
+      active_design_system_id text,
       created_at text not null,
       updated_at text not null
     );
@@ -43,6 +44,11 @@ async function getDatabase(): Promise<Database> {
       created_at text not null
     );
   `);
+  try {
+    database.exec("alter table project_settings add column active_design_system_id text;");
+  } catch {
+    // Existing databases already have this column.
+  }
   return database;
 }
 
@@ -52,8 +58,9 @@ export async function readProjectSettings(projectRoot: string): Promise<ProjectS
     project_root: string;
     active_skill_id: string | null;
     active_design_template_id: string | null;
+    active_design_system_id: string | null;
   }, [string]>(`
-    select project_root, active_skill_id, active_design_template_id
+    select project_root, active_skill_id, active_design_template_id, active_design_system_id
     from project_settings
     where project_root = ?
   `).get(projectRoot);
@@ -61,7 +68,8 @@ export async function readProjectSettings(projectRoot: string): Promise<ProjectS
   return {
     projectRoot,
     activeSkillId: row?.active_skill_id ?? undefined,
-    activeDesignTemplateId: row?.active_design_template_id ?? undefined
+    activeDesignTemplateId: row?.active_design_template_id ?? undefined,
+    activeDesignSystemId: row?.active_design_system_id ?? undefined
   };
 }
 
@@ -73,18 +81,21 @@ export async function saveProjectSettings(settings: ProjectSettings): Promise<Pr
       project_root,
       active_skill_id,
       active_design_template_id,
+      active_design_system_id,
       created_at,
       updated_at
     )
-    values (?, ?, ?, ?, ?)
+    values (?, ?, ?, ?, ?, ?)
     on conflict(project_root) do update set
       active_skill_id = excluded.active_skill_id,
       active_design_template_id = excluded.active_design_template_id,
+      active_design_system_id = excluded.active_design_system_id,
       updated_at = excluded.updated_at
   `).run(
     settings.projectRoot,
     settings.activeSkillId ?? null,
     settings.activeDesignTemplateId ?? null,
+    settings.activeDesignSystemId ?? null,
     now,
     now
   );

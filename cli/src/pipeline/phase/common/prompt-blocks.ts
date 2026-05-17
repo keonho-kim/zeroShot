@@ -12,8 +12,10 @@ export function additionalDirectoryBlock(ctx: PipelineContext): string {
   if (!ctx.options.additionalDirectories.length) {
     return "";
   }
-  return `Additional read roots available to this run:
-${ctx.options.additionalDirectories.map((directory) => `- ${directory}`).join("\n")}`;
+  return `Additional read-only ZeroShot resource roots available to this run:
+${ctx.options.additionalDirectories.map((directory) => `- ${directory}`).join("\n")}
+
+Use these roots as guidance for skills, design systems, and design templates when they fit the product. Do not modify files in these resource roots.`;
 }
 
 export function compactStateBlock(ctx: PipelineContext): string {
@@ -31,7 +33,7 @@ export function workspaceContractBlock(): string {
 
 export function workingMemoryContractBlock(): string {
   return `Working memory contract:
-- PRODUCT.html is the source truth for intended product direction.
+- ARCHITECT/PRODUCT.html is the source truth for intended product direction.
 - UPDATE.md is the change request in update mode.
 - Use the compact pipeline state above instead of markdown run documents.
 - Keep summaries short and concrete.

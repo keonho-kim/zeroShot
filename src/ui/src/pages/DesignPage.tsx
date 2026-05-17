@@ -60,6 +60,7 @@ export function DesignPage() {
   const [mode, setMode] = useState<DesignRuntimeMode>("codex");
   const [goal, setGoal] = useState("");
   const [activeDesignTemplateId, setActiveDesignTemplateId] = useState("");
+  const [activeDesignSystemId, setActiveDesignSystemId] = useState("");
   const [timelineItems, setTimelineItems] = useState<DesignTimelineItem[]>([]);
   const [runtimeError, setRuntimeError] = useState("");
   const [designResult, setDesignResult] = useState<DesignRuntimeResponse | null>(null);
@@ -114,6 +115,7 @@ export function DesignPage() {
       return;
     }
     setActiveDesignTemplateId(settingsQuery.data.activeDesignTemplateId ?? "");
+    setActiveDesignSystemId(settingsQuery.data.activeDesignSystemId ?? "");
   }, [settingsQuery.data]);
 
   useEffect(() => {
@@ -157,10 +159,11 @@ export function DesignPage() {
   }, [artifactMode]);
 
   const saveSettingsMutation = useMutation({
-    mutationFn: async (next: { activeSkillId: string; activeDesignTemplateId: string }) => saveProjectSettings({
+    mutationFn: async (next: { activeSkillId: string; activeDesignTemplateId: string; activeDesignSystemId: string }) => saveProjectSettings({
       projectRoot,
       activeSkillId: next.activeSkillId || undefined,
-      activeDesignTemplateId: next.activeDesignTemplateId || undefined
+      activeDesignTemplateId: next.activeDesignTemplateId || undefined,
+      activeDesignSystemId: next.activeDesignSystemId || undefined
     })
   });
 
@@ -180,7 +183,8 @@ export function DesignPage() {
         mode,
         goal: nextGoal,
         locale,
-        activeDesignTemplateId: activeDesignTemplateId || undefined
+        activeDesignTemplateId: activeDesignTemplateId || undefined,
+        activeDesignSystemId: activeDesignSystemId || undefined
       }, (event) => {
         setTimelineItems((items) => upsertTimelineItem(items, event));
       });
@@ -395,13 +399,18 @@ export function DesignPage() {
     return <Navigate to="/home" replace />;
   }
 
-  const resources = resourcesQuery.data ?? { skills: [], designTemplates: [] };
+  const resources = resourcesQuery.data ?? { skills: [], designTemplates: [], designSystems: [] };
   const hasProductHtml = Boolean(productArtifactQuery.data?.content.trim());
   const hasDesignHtml = Boolean(designArtifactQuery.data?.content.trim());
 
   const changeDesignTemplate = (nextDesignTemplateId: string) => {
     setActiveDesignTemplateId(nextDesignTemplateId);
-    saveSettingsMutation.mutate({ activeSkillId: "", activeDesignTemplateId: nextDesignTemplateId });
+    saveSettingsMutation.mutate({ activeSkillId: "", activeDesignTemplateId: nextDesignTemplateId, activeDesignSystemId });
+  };
+
+  const changeDesignSystem = (nextDesignSystemId: string) => {
+    setActiveDesignSystemId(nextDesignSystemId);
+    saveSettingsMutation.mutate({ activeSkillId: "", activeDesignTemplateId, activeDesignSystemId: nextDesignSystemId });
   };
 
   const runMakeover = (requestedGoal: string) => {
@@ -474,11 +483,13 @@ export function DesignPage() {
             goal={goal}
             setGoal={setGoal}
             activeDesignTemplateId={activeDesignTemplateId}
+            activeDesignSystemId={activeDesignSystemId}
             runtimeError={runtimeError}
             timelineItems={timelineItems}
             isRunning={designMutation.isPending}
             isComplete={makeoverComplete}
             onChangeDesignTemplate={changeDesignTemplate}
+            onChangeDesignSystem={changeDesignSystem}
             onAutoRun={() => {
               const autoGoal = "알아서 해주세요. 제품 기획서에 가장 잘 맞는 세련된 디자인 방향으로 구성해주세요.";
               setGoal(autoGoal);

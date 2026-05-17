@@ -149,6 +149,18 @@ export function SettingsPage() {
                   />
                 </div>
                 <div>
+                  <label className="mb-2 block text-sm font-medium">Design Systems Root</label>
+                  <Input
+                    value={appSettings.resourceRoots.designSystems}
+                    onChange={(event) => setAppSettings({
+                      ...appSettings,
+                      resourceRoots: { ...appSettings.resourceRoots, designSystems: event.target.value }
+                    })}
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
                   <label className="mb-2 block text-sm font-medium">Design Templates Root</label>
                   <Input
                     value={appSettings.resourceRoots.designTemplates}
