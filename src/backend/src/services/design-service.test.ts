@@ -1,6 +1,19 @@
 import { describe, expect, test } from "bun:test";
-import { composeDesignMarkdown } from "@backend/services/design-service";
-import type { DesignRuntimeResponse } from "@backend/types";
+import { composeDesignMarkdown, validateDesignRecommendations } from "@backend/services/design-service";
+import type { DesignRuntimeResponse, ResourceManifest } from "@backend/types";
+
+function resource(id: string): ResourceManifest {
+  return {
+    id,
+    name: id,
+    description: `${id} description`,
+    tags: [],
+    root: `/tmp/resources/${id}`,
+    manifestPath: `/tmp/resources/${id}/SKILL.md`,
+    body: "",
+    files: []
+  };
+}
 
 describe("design service", () => {
   test("composes DESIGN runtime markdown from runtime output", () => {
@@ -38,5 +51,68 @@ describe("design service", () => {
     expect(markdown).toContain("**Create frames**");
     expect(markdown).toContain("`DESIGN/index.html`");
     expect(markdown).toContain("## Generated Files");
+  });
+
+  test("validates design recommendation resource ids against the catalog", () => {
+    const catalog = {
+      designSystems: ["system-a", "system-b", "system-c", "system-d", "system-e"].map(resource),
+      designTemplates: ["template-a", "template-b", "template-c", "template-d", "template-e"].map(resource)
+    };
+    const recommendations = validateDesignRecommendations({
+      title: "Recommended direction",
+      summary: "Pick a system and template.",
+      designSystems: catalog.designSystems.map((item, index) => ({
+        id: `system-${index}`,
+        resourceId: item.id,
+        label: `System ${index + 1}`,
+        detail: "User-facing design direction.",
+        reason: "It matches the product plan."
+      })),
+      designTemplates: catalog.designTemplates.map((item, index) => ({
+        id: `template-${index}`,
+        resourceId: item.id,
+        label: `Template ${index + 1}`,
+        detail: "User-facing screen structure.",
+        reason: "It supports the main workflow."
+      }))
+    }, catalog);
+
+    expect(recommendations.designSystems).toHaveLength(5);
+    expect(recommendations.designTemplates).toHaveLength(5);
+  });
+
+  test("rejects design recommendation resource ids outside the catalog", () => {
+    const catalog = {
+      designSystems: ["system-a", "system-b", "system-c", "system-d", "system-e"].map(resource),
+      designTemplates: ["template-a", "template-b", "template-c", "template-d", "template-e"].map(resource)
+    };
+
+    expect(() => validateDesignRecommendations({
+      title: "Recommended direction",
+      summary: "Pick a system and template.",
+      designSystems: [
+        ...catalog.designSystems.slice(0, 4).map((item, index) => ({
+          id: `system-${index}`,
+          resourceId: item.id,
+          label: `System ${index + 1}`,
+          detail: "User-facing design direction.",
+          reason: "It matches the product plan."
+        })),
+        {
+          id: "system-invalid",
+          resourceId: "missing-system",
+          label: "Missing system",
+          detail: "Invalid design direction.",
+          reason: "This must fail."
+        }
+      ],
+      designTemplates: catalog.designTemplates.map((item, index) => ({
+        id: `template-${index}`,
+        resourceId: item.id,
+        label: `Template ${index + 1}`,
+        detail: "User-facing screen structure.",
+        reason: "It supports the main workflow."
+      }))
+    }, catalog)).toThrow("unknown resourceId");
   });
 });

@@ -11,11 +11,12 @@ import {
   fetchProductArtifact,
   fetchProjectSettings,
   fetchResources,
+  requestDesignRecommendationsStream,
   requestDesignRuntimeStream,
   saveDesignArtifact,
   saveProjectSettings
 } from "@/lib/api";
-import type { DesignRuntimeMode, DesignRuntimeResponse } from "@/types/api";
+import type { DesignRecommendationResponse, DesignRuntimeMode, DesignRuntimeResponse } from "@/types/api";
 import {
   applyArtifactSourcePatch,
   type ArtifactEditorTab,
@@ -38,6 +39,7 @@ import { type DesignTimelineItem, upsertTimelineItem } from "@/pages/design/desi
 import { cn } from "@/utils/cn";
 
 type MakeoverStep = "brief" | "loading" | "workbench" | "preview";
+type DesignResourceSelectionMode = "manual" | "omakase";
 
 function AgentLoadingStage(props: { label: string }) {
   return (
@@ -61,6 +63,11 @@ export function DesignPage() {
   const [goal, setGoal] = useState("");
   const [activeDesignTemplateId, setActiveDesignTemplateId] = useState("");
   const [activeDesignSystemId, setActiveDesignSystemId] = useState("");
+  const [activeDesignTemplateSelectionMode, setActiveDesignTemplateSelectionMode] = useState<DesignResourceSelectionMode>("manual");
+  const [activeDesignSystemSelectionMode, setActiveDesignSystemSelectionMode] = useState<DesignResourceSelectionMode>("manual");
+  const [recommendations, setRecommendations] = useState<DesignRecommendationResponse | null>(null);
+  const [recommendationTimelineItems, setRecommendationTimelineItems] = useState<DesignTimelineItem[]>([]);
+  const [recommendationError, setRecommendationError] = useState("");
   const [timelineItems, setTimelineItems] = useState<DesignTimelineItem[]>([]);
   const [runtimeError, setRuntimeError] = useState("");
   const [designResult, setDesignResult] = useState<DesignRuntimeResponse | null>(null);
@@ -116,6 +123,8 @@ export function DesignPage() {
     }
     setActiveDesignTemplateId(settingsQuery.data.activeDesignTemplateId ?? "");
     setActiveDesignSystemId(settingsQuery.data.activeDesignSystemId ?? "");
+    setActiveDesignTemplateSelectionMode("manual");
+    setActiveDesignSystemSelectionMode("manual");
   }, [settingsQuery.data]);
 
   useEffect(() => {
@@ -136,6 +145,11 @@ export function DesignPage() {
   useEffect(() => {
     setMakeoverStep("brief");
     setMakeoverComplete(false);
+    setRecommendations(null);
+    setRecommendationTimelineItems([]);
+    setRecommendationError("");
+    setActiveDesignTemplateSelectionMode("manual");
+    setActiveDesignSystemSelectionMode("manual");
     setArtifactMode("preview");
   }, [projectRoot]);
 
@@ -165,6 +179,32 @@ export function DesignPage() {
       activeDesignTemplateId: next.activeDesignTemplateId || undefined,
       activeDesignSystemId: next.activeDesignSystemId || undefined
     })
+  });
+
+  const recommendationMutation = useMutation({
+    mutationFn: async () => {
+      setRecommendationError("");
+      setRecommendationTimelineItems([]);
+      return requestDesignRecommendationsStream({
+        projectRoot,
+        locale
+      }, (event) => {
+        setRecommendationTimelineItems((items) => upsertTimelineItem(items, event));
+      });
+    },
+    onSuccess: (nextRecommendations) => {
+      setRecommendations(nextRecommendations);
+      setRecommendationTimelineItems([]);
+      setRecommendationError("");
+      setActiveDesignSystemId((current) => nextRecommendations.designSystems.some((option) => option.resourceId === current) ? current : "");
+      setActiveDesignTemplateId((current) => nextRecommendations.designTemplates.some((option) => option.resourceId === current) ? current : "");
+      setActiveDesignSystemSelectionMode("manual");
+      setActiveDesignTemplateSelectionMode("manual");
+    },
+    onError: (error) => {
+      setRecommendationError(error instanceof Error ? error.message : String(error));
+      setRecommendations(null);
+    }
   });
 
   const designMutation = useMutation({
@@ -395,21 +435,37 @@ export function DesignPage() {
     return () => window.removeEventListener("message", handleMessage);
   }, [artifactSource]);
 
-  if (!projectRoot) {
-    return <Navigate to="/home" replace />;
-  }
-
   const resources = resourcesQuery.data ?? { skills: [], designTemplates: [], designSystems: [] };
   const hasProductHtml = Boolean(productArtifactQuery.data?.content.trim());
   const hasDesignHtml = Boolean(designArtifactQuery.data?.content.trim());
 
-  const changeDesignTemplate = (nextDesignTemplateId: string) => {
+  useEffect(() => {
+    if (
+      !projectRoot ||
+      makeoverStep !== "brief" ||
+      !hasProductHtml ||
+      recommendations ||
+      recommendationMutation.isPending ||
+      recommendationError
+    ) {
+      return;
+    }
+    recommendationMutation.mutate();
+  }, [hasProductHtml, makeoverStep, projectRoot, recommendationError, recommendationMutation, recommendations]);
+
+  if (!projectRoot) {
+    return <Navigate to="/home" replace />;
+  }
+
+  const changeDesignTemplate = (nextDesignTemplateId: string, nextMode: DesignResourceSelectionMode) => {
     setActiveDesignTemplateId(nextDesignTemplateId);
+    setActiveDesignTemplateSelectionMode(nextMode);
     saveSettingsMutation.mutate({ activeSkillId: "", activeDesignTemplateId: nextDesignTemplateId, activeDesignSystemId });
   };
 
-  const changeDesignSystem = (nextDesignSystemId: string) => {
+  const changeDesignSystem = (nextDesignSystemId: string, nextMode: DesignResourceSelectionMode) => {
     setActiveDesignSystemId(nextDesignSystemId);
+    setActiveDesignSystemSelectionMode(nextMode);
     saveSettingsMutation.mutate({ activeSkillId: "", activeDesignTemplateId, activeDesignSystemId: nextDesignSystemId });
   };
 
@@ -478,18 +534,29 @@ export function DesignPage() {
           <DesignRuntimeSetup
             projectRoot={projectRoot}
             resources={resources}
+            recommendations={recommendations}
+            recommendationTimelineItems={recommendationTimelineItems}
+            recommendationError={recommendationError}
+            isLoadingRecommendations={recommendationMutation.isPending}
             designResult={designResult}
             hasProductHtml={hasProductHtml}
             goal={goal}
             setGoal={setGoal}
             activeDesignTemplateId={activeDesignTemplateId}
             activeDesignSystemId={activeDesignSystemId}
+            activeDesignTemplateSelectionMode={activeDesignTemplateSelectionMode}
+            activeDesignSystemSelectionMode={activeDesignSystemSelectionMode}
             runtimeError={runtimeError}
             timelineItems={timelineItems}
             isRunning={designMutation.isPending}
             isComplete={makeoverComplete}
             onChangeDesignTemplate={changeDesignTemplate}
             onChangeDesignSystem={changeDesignSystem}
+            onRetryRecommendations={() => {
+              setRecommendations(null);
+              setRecommendationError("");
+              recommendationMutation.mutate();
+            }}
             onAutoRun={() => {
               const autoGoal = "알아서 해주세요. 제품 기획서에 가장 잘 맞는 세련된 디자인 방향으로 구성해주세요.";
               setGoal(autoGoal);

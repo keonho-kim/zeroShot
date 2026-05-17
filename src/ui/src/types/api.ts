@@ -184,6 +184,21 @@ export interface DesignProgressEvent {
   status: "running" | "completed" | "failed";
 }
 
+export interface DesignRecommendationOption {
+  id: string;
+  resourceId: string;
+  label: string;
+  detail: string;
+  reason: string;
+}
+
+export interface DesignRecommendationResponse {
+  title: string;
+  summary: string;
+  designSystems: DesignRecommendationOption[];
+  designTemplates: DesignRecommendationOption[];
+}
+
 export interface ResourceFileSummary {
   path: string;
   kind: "reference" | "asset" | "example" | "other";

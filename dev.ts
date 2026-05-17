@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 import { spawn, spawnSync, type ChildProcess } from "node:child_process";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 
@@ -14,9 +14,67 @@ type ProcSpec = {
 const processes: ChildProcess[] = [];
 let shuttingDown = false;
 const repoRoot = import.meta.dir;
+const devResourceRoots = {
+  skills: join(repoRoot, "system-asseets", "design", "source-files", "skills"),
+  design_templates: join(repoRoot, "system-asseets", "design", "source-files", "design-templates"),
+  design_systems: join(repoRoot, "system-asseets", "design", "source-files", "design-systems")
+};
 
 async function pathExists(path: string): Promise<boolean> {
   return readFile(path).then(() => true).catch(() => false);
+}
+
+async function directoryExists(path: string): Promise<boolean> {
+  return stat(path).then((info) => info.isDirectory()).catch(() => false);
+}
+
+function readResourceRoot(raw: string, key: keyof typeof devResourceRoots): string {
+  const section = /(?:^|\n)\[resource_roots\]\n(?<body>[\s\S]*?)(?=\n\[|$)/.exec(raw)?.groups?.body ?? "";
+  const value = new RegExp(`^\\s*${key}\\s*=\\s*["'](?<value>[^"']*)["']`, "m").exec(section)?.groups?.value;
+  return value ?? "";
+}
+
+function quoteTomlString(value: string): string {
+  return `"${value.replaceAll("\\", "\\\\").replaceAll("\"", "\\\"")}"`;
+}
+
+function upsertResourceRoot(raw: string, key: keyof typeof devResourceRoots, value: string): string {
+  const line = `${key} = ${quoteTomlString(value)}`;
+  const keyPattern = new RegExp(`^\\s*${key}\\s*=.*$`, "m");
+  if (keyPattern.test(raw)) {
+    return raw.replace(keyPattern, line);
+  }
+  if (/(^|\n)\[resource_roots\]\n/.test(raw)) {
+    return raw.replace(/(^|\n)\[resource_roots\]\n/, (match) => `${match}${line}\n`);
+  }
+  return `${raw.trimEnd()}\n\n[resource_roots]\n${line}\n`;
+}
+
+function shouldUseDevResourceRoot(current: string, key: keyof typeof devResourceRoots): boolean {
+  if (!current) {
+    return true;
+  }
+  if (key === "skills" && current.endsWith("/.agents/skills")) {
+    return true;
+  }
+  return false;
+}
+
+async function ensureDevResourceRoots(configPath: string): Promise<void> {
+  let raw = await readFile(configPath, "utf8");
+  let next = raw;
+
+  for (const key of Object.keys(devResourceRoots) as Array<keyof typeof devResourceRoots>) {
+    const current = readResourceRoot(next, key);
+    const expected = devResourceRoots[key];
+    if (shouldUseDevResourceRoot(current, key) && await directoryExists(expected)) {
+      next = upsertResourceRoot(next, key, expected);
+    }
+  }
+
+  if (next !== raw) {
+    await writeFile(configPath, next, "utf8");
+  }
 }
 
 async function ensureDevConfig(): Promise<string> {
@@ -26,6 +84,7 @@ async function ensureDevConfig(): Promise<string> {
 
   const configPath = join(repoRoot, "config.dev.toml");
   if (await pathExists(configPath)) {
+    await ensureDevResourceRoots(configPath);
     return configPath;
   }
 
@@ -36,6 +95,7 @@ async function ensureDevConfig(): Promise<string> {
 
   const sample = await readFile(samplePath, "utf8");
   await writeFile(configPath, sample.replaceAll("{{ZEROSHOT_REPO_ROOT}}", repoRoot), "utf8");
+  await ensureDevResourceRoots(configPath);
   return configPath;
 }
 
@@ -46,7 +106,9 @@ async function ensureLocalCliEntry(): Promise<string> {
 
   const entryPath = join(tmpdir(), "zeroshot-dev-cli", "zeroshot");
   await mkdir(dirname(entryPath), { recursive: true });
-  const result = spawnSync("go", ["build", "-o", entryPath, join(repoRoot, "src", "cli")], {
+  await rm(entryPath, { force: true });
+  const result = spawnSync("go", ["build", "-o", entryPath, "."], {
+    cwd: join(repoRoot, "src", "cli"),
     encoding: "utf8"
   });
   if (result.status !== 0) {

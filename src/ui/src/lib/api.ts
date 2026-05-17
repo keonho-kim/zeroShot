@@ -8,6 +8,7 @@ import type {
   BootstrapResult,
   CodexSettings,
   DesignProgressEvent,
+  DesignRecommendationResponse,
   DesignRuntimeMode,
   DesignRuntimeResponse,
   DirectoryEntry,
@@ -254,6 +255,61 @@ export async function requestDesignRuntimeStream(
   }
 
   throw new Error("Design runtime stream ended before a design response was returned.");
+}
+
+export async function requestDesignRecommendationsStream(
+  payload: {
+    projectRoot: string;
+    locale: string;
+  },
+  onProgress: (event: DesignProgressEvent) => void
+) {
+  const response = await fetch("/api/design/recommendations/stream", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || "Design recommendation request failed.");
+  }
+  if (!response.body) {
+    throw new Error("Design recommendation stream is unavailable.");
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  while (true) {
+    const { done, value } = await reader.read();
+    buffer += decoder.decode(value, { stream: !done });
+    const parts = buffer.split("\n\n");
+    buffer = parts.pop() ?? "";
+
+    for (const part of parts) {
+      const parsed = parseStreamEvent(part);
+      if (!parsed) {
+        continue;
+      }
+      if (parsed.event === "progress") {
+        onProgress(parsed.data as DesignProgressEvent);
+      }
+      if (parsed.event === "complete") {
+        return (parsed.data as { recommendations: DesignRecommendationResponse }).recommendations;
+      }
+      if (parsed.event === "error") {
+        throw new Error((parsed.data as { message: string }).message);
+      }
+    }
+
+    if (done) {
+      break;
+    }
+  }
+
+  throw new Error("Design recommendation stream ended before recommendations were returned.");
 }
 
 export async function startBuild(payload: { projectRoot: string; productContent?: string; options?: PipelineOptions }) {

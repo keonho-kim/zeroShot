@@ -8,7 +8,7 @@ import { readAuthStatus, saveAuthFile } from "@backend/services/auth-service.js"
 import { buildArchitectDecisions, buildArchitectProductHtml, type ArchitectProgressEvent } from "@backend/services/architect-service.js";
 import { readLatestDesignSession, readProjectSettings, recordArchitectSession, recordDesignSession, saveProjectSettings } from "@backend/services/app-storage-service.js";
 import { inferBootstrapRequest, runBootstrap } from "@backend/services/bootstrap-service.js";
-import { buildDesignRuntime } from "@backend/services/design-service.js";
+import { buildDesignRuntime, recommendDesignResources } from "@backend/services/design-service.js";
 import { highlightCode, normalizeHighlightLanguage } from "@backend/services/code-highlighting-service.js";
 import { appendAppEvent } from "@backend/services/event-log-service.js";
 import { createDirectory, deleteEntry, designEntryPath, readDesignHtmlSnapshot, readProductHtml, readProductHtmlSnapshot, upsertArtifactManifest, writeArtifactFile, writeDesignHtmlSnapshot, writeProductHtml, writeProductHtmlSnapshot, writeUpdateDocument } from "@backend/services/file-service.js";
@@ -570,6 +570,55 @@ router.put("/projects/design-artifact", asyncHandler(async (req: Request, res: R
 router.get("/design/latest", asyncHandler(async (req: Request, res: Response) => {
   const projectRoot = await getValidatedProjectRoot(String(req.query.projectRoot ?? ""));
   res.json(await readLatestDesignSession(projectRoot));
+}));
+
+router.post("/design/recommendations/stream", asyncHandler(async (req: Request, res: Response) => {
+  const auth = await readAuthStatus();
+  if (!auth.valid) {
+    res.status(412).json(auth);
+    return;
+  }
+
+  const body = req.body as {
+    projectRoot?: string;
+    locale?: string;
+    model?: string;
+  };
+  const projectRoot = await getValidatedProjectRoot(String(body.projectRoot ?? ""));
+  const projectState = await readProjectState(projectRoot);
+  if (!projectState.hasProductHtml) {
+    res.status(409).type("text").send("PRODUCT BLUEPRINT is required before DESIGN recommendations can run.");
+    return;
+  }
+
+  res.writeHead(200, {
+    "Content-Type": "text/event-stream",
+    "Cache-Control": "no-cache",
+    Connection: "keep-alive"
+  });
+
+  let seq = 0;
+  const writeEvent = (type: string, data: object) => {
+    seq += 1;
+    res.write(`id: ${seq}\n`);
+    res.write(`event: ${type}\n`);
+    res.write(`data: ${JSON.stringify(data)}\n\n`);
+  };
+
+  try {
+    const recommendations = await recommendDesignResources({
+      projectRoot,
+      locale: body.locale === "ko" ? "ko" : "en",
+      model: typeof body.model === "string" && body.model.trim() ? body.model.trim() : undefined,
+      onProgress: (event: DesignProgressEvent) => writeEvent("progress", event)
+    });
+    writeEvent("complete", { recommendations });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    writeEvent("error", { message: `Design recommendations failed: ${message}` });
+  } finally {
+    res.end();
+  }
 }));
 
 router.post("/design/runtime/stream", asyncHandler(async (req: Request, res: Response) => {

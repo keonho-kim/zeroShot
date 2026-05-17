@@ -5,11 +5,13 @@ import { z } from "zod";
 import { loadAppConfig } from "@backend/config/app-config.js";
 import { buildDesignPrompt, modeDisplayName } from "@backend/prompts/design/runtime-prompt.js";
 import { architectProductPath, readProductHtml } from "@backend/services/file-service.js";
-import { buildResourcePromptContext } from "@backend/services/resource-service.js";
+import { buildResourcePromptContext, listResourceCatalog, resourceCatalogSummary } from "@backend/services/resource-service.js";
 import type {
+  DesignRecommendationResponse,
   DesignProgressEvent,
   DesignRuntimeMode,
-  DesignRuntimeResponse
+  DesignRuntimeResponse,
+  ResourceManifest
 } from "@backend/types.js";
 
 const designRuntimeSchema = {
@@ -111,6 +113,69 @@ const designRuntimeResponseSchema = z.object({
   })).min(1).max(6)
 });
 
+const designRecommendationSchema = {
+  type: "object",
+  properties: {
+    title: { type: "string" },
+    summary: { type: "string" },
+    designSystems: {
+      type: "array",
+      minItems: 5,
+      maxItems: 5,
+      items: {
+        type: "object",
+        properties: {
+          id: { type: "string" },
+          resourceId: { type: "string" },
+          label: { type: "string" },
+          detail: { type: "string" },
+          reason: { type: "string" }
+        },
+        required: ["id", "resourceId", "label", "detail", "reason"],
+        additionalProperties: false
+      }
+    },
+    designTemplates: {
+      type: "array",
+      minItems: 5,
+      maxItems: 5,
+      items: {
+        type: "object",
+        properties: {
+          id: { type: "string" },
+          resourceId: { type: "string" },
+          label: { type: "string" },
+          detail: { type: "string" },
+          reason: { type: "string" }
+        },
+        required: ["id", "resourceId", "label", "detail", "reason"],
+        additionalProperties: false
+      }
+    }
+  },
+  required: ["title", "summary", "designSystems", "designTemplates"],
+  additionalProperties: false
+};
+
+const designRecommendationResponseSchema = z.object({
+  title: z.string().trim().min(1),
+  summary: z.string().trim().min(1),
+  designSystems: z.array(z.object({
+    id: z.string().trim().min(1),
+    resourceId: z.string().trim().min(1),
+    label: z.string().trim().min(1),
+    detail: z.string().trim().min(1),
+    reason: z.string().trim().min(1)
+  })).length(5),
+  designTemplates: z.array(z.object({
+    id: z.string().trim().min(1),
+    resourceId: z.string().trim().min(1),
+    label: z.string().trim().min(1),
+    detail: z.string().trim().min(1),
+    reason: z.string().trim().min(1)
+  })).length(5)
+});
+
 function asReasoningEffort(value: string): ModelReasoningEffort {
   if (value === "minimal" || value === "low" || value === "medium" || value === "high" || value === "xhigh") {
     return value;
@@ -184,6 +249,135 @@ function describeProgress(event: ThreadEvent, locale: string): DesignProgressEve
   return null;
 }
 
+function describeRecommendationProgress(event: ThreadEvent, locale: string): DesignProgressEvent | null {
+  if (event.type === "thread.started") {
+    return {
+      id: "session",
+      title: progressText(locale, "디자인 추천 세션 시작", "Design recommendation started"),
+      detail: progressText(locale, "제품 기획서와 로컬 디자인 자산을 추천 작업에 넘겼습니다.", "Product planning and local design resources are ready for recommendation."),
+      status: "completed"
+    };
+  }
+  if (event.type === "turn.started") {
+    return {
+      id: "analysis",
+      title: progressText(locale, "디자인 후보 정리 중", "Organizing design candidates"),
+      detail: progressText(locale, "ARCHITECT 결과와 디자인 시스템, 템플릿 카탈로그를 비교하고 있습니다.", "Comparing ARCHITECT output with design systems and templates."),
+      status: "running"
+    };
+  }
+  if (event.type === "turn.completed") {
+    return {
+      id: "complete",
+      title: progressText(locale, "디자인 후보 준비 완료", "Design candidates ready"),
+      detail: progressText(locale, "사용자가 고를 수 있는 디자인 기조와 화면 구성을 정리했습니다.", "Prepared design system and screen structure options."),
+      status: "completed"
+    };
+  }
+  if (event.type === "turn.failed") {
+    return {
+      id: "failed",
+      title: progressText(locale, "디자인 추천 실패", "Design recommendation failed"),
+      detail: event.error.message,
+      status: "failed"
+    };
+  }
+  if (event.type === "error") {
+    return {
+      id: "failed",
+      title: progressText(locale, "디자인 추천 스트림 오류", "Design recommendation stream error"),
+      detail: event.message,
+      status: "failed"
+    };
+  }
+
+  const item = event.item;
+  if (item.type === "reasoning") {
+    return {
+      id: "reasoning",
+      title: progressText(locale, "제품과 자산 매칭 중", "Matching product to resources"),
+      detail: progressText(locale, "제품 성격에 맞는 디자인 시스템과 템플릿 후보를 추리고 있습니다.", "Finding design systems and templates that fit the product."),
+      status: event.type === "item.completed" ? "completed" : "running"
+    };
+  }
+  if (item.type === "agent_message") {
+    return {
+      id: "draft",
+      title: progressText(locale, "추천 선택지 작성 중", "Writing recommendation options"),
+      detail: progressText(locale, "이름 대신 사용자가 이해할 수 있는 느낌과 이유로 선택지를 작성하고 있습니다.", "Writing options as readable direction and rationale instead of raw resource names."),
+      status: event.type === "item.completed" ? "completed" : "running"
+    };
+  }
+  return null;
+}
+
+function resourceList(title: string, resources: ResourceManifest[]): string {
+  return [
+    `## ${title}`,
+    ...resources.map((resource) => [
+      `- id: ${resource.id}`,
+      `  name: ${resource.name}`,
+      resource.description ? `  description: ${resource.description.replace(/\s+/g, " ").slice(0, 240)}` : "",
+      resource.tags.length ? `  tags: ${resource.tags.join(", ")}` : ""
+    ].filter(Boolean).join("\n"))
+  ].join("\n");
+}
+
+function buildRecommendationPrompt(params: {
+  locale: string;
+  productHtml: string;
+  architectContext: string;
+  catalog: { skills: ResourceManifest[]; designTemplates: ResourceManifest[]; designSystems: ResourceManifest[] };
+}): string {
+  const language = params.locale === "ko" ? "Korean" : "English";
+  return [
+    "You are ZeroShot DESIGN recommendation agent.",
+    "",
+    "Return only JSON matching the provided schema.",
+    "Recommend exactly 5 design systems and exactly 5 design templates for the MAKEOVER request flow.",
+    "Every resourceId must be copied exactly from the provided resource catalog.",
+    "Do not invent resource IDs. Do not expose raw resource names as labels.",
+    "Write labels, details, and reasons as user-facing choices that describe the feel, structure, and fit.",
+    `Use ${language} for title, summary, labels, details, and reasons.`,
+    "",
+    "Recommendation criteria:",
+    "- Use ARCHITECT/PRODUCT.html as the primary product contract.",
+    "- Match the product's target user, workflow density, interaction style, and content shape.",
+    "- Prefer polished, modern product-grade UI/UX over generic templates.",
+    "- Skills are available read-only context, but are not user-selectable.",
+    "",
+    resourceCatalogSummary(params.catalog),
+    "",
+    resourceList("Selectable Design Systems", params.catalog.designSystems),
+    "",
+    resourceList("Selectable Design Templates", params.catalog.designTemplates),
+    "",
+    "ARCHITECT folder context:",
+    params.architectContext || "No ARCHITECT folder context was found.",
+    "",
+    "ARCHITECT/PRODUCT.html source:",
+    params.productHtml || "No ARCHITECT/PRODUCT.html was found."
+  ].join("\n");
+}
+
+function assertResourceIds(kind: string, selectedIds: string[], resources: ResourceManifest[]): void {
+  const available = new Set(resources.map((resource) => resource.id));
+  const invalid = selectedIds.filter((id) => !available.has(id));
+  if (invalid.length) {
+    throw new Error(`${kind} recommendation used unknown resourceId: ${invalid.join(", ")}`);
+  }
+}
+
+export function validateDesignRecommendations(
+  response: unknown,
+  catalog: { designTemplates: ResourceManifest[]; designSystems: ResourceManifest[] }
+): DesignRecommendationResponse {
+  const parsed = designRecommendationResponseSchema.parse(response);
+  assertResourceIds("Design system", parsed.designSystems.map((option) => option.resourceId), catalog.designSystems);
+  assertResourceIds("Design template", parsed.designTemplates.map((option) => option.resourceId), catalog.designTemplates);
+  return parsed;
+}
+
 export function composeDesignMarkdown(response: DesignRuntimeResponse): string {
   return [
     "# DESIGN",
@@ -214,6 +408,61 @@ export function composeDesignMarkdown(response: DesignRuntimeResponse): string {
     ...response.files.map((file) => `- \`${file.path}\` (${file.type}) - ${file.title}`),
     ""
   ].join("\n");
+}
+
+export async function recommendDesignResources(params: {
+  projectRoot: string;
+  locale: string;
+  model?: string;
+  onProgress?: (event: DesignProgressEvent) => void;
+}): Promise<DesignRecommendationResponse> {
+  const appConfig = await loadAppConfig();
+  const productHtml = await readProductHtml(params.projectRoot).catch(() => "");
+  const architectContext = await readArchitectContext(params.projectRoot).catch(() => "");
+  const catalog = await listResourceCatalog();
+
+  const codex = new Codex();
+  const thread = codex.startThread({
+    workingDirectory: params.projectRoot,
+    skipGitRepoCheck: true,
+    approvalPolicy: "never" satisfies ApprovalMode,
+    sandboxMode: "read-only" satisfies SandboxMode,
+    modelReasoningEffort: asReasoningEffort(appConfig.defaults.planReasoning),
+    additionalDirectories: [appConfig.resourceRoots.skills, appConfig.resourceRoots.designTemplates, appConfig.resourceRoots.designSystems],
+    ...(params.model ? { model: params.model } : {})
+  });
+
+  const { events } = await thread.runStreamed(buildRecommendationPrompt({
+    locale: params.locale,
+    productHtml,
+    architectContext,
+    catalog
+  }), {
+    outputSchema: designRecommendationSchema
+  });
+  let finalResponse = "";
+
+  for await (const event of events) {
+    const progress = describeRecommendationProgress(event, params.locale);
+    if (progress) {
+      params.onProgress?.(progress);
+    }
+    if (event.type === "item.completed" && event.item.type === "agent_message") {
+      finalResponse = event.item.text;
+    }
+    if (event.type === "turn.failed") {
+      throw new Error(event.error.message);
+    }
+    if (event.type === "error") {
+      throw new Error(event.message);
+    }
+  }
+
+  if (!finalResponse.trim()) {
+    throw new Error("Codex did not return design recommendations.");
+  }
+
+  return validateDesignRecommendations(JSON.parse(finalResponse), catalog);
 }
 
 async function readArchitectContext(projectRoot: string): Promise<string> {

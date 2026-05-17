@@ -22,6 +22,6 @@ Rules:
 Available files:
 ${files}
 
-SKILL.md body:
+Resource body:
 ${resource.body.slice(0, 32000)}`;
 }
