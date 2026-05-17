@@ -13,7 +13,7 @@
     },
     "cli": {
       "name": "@keonhokim/zeroshot",
-      "version": "0.0.0-dev.6",
+      "version": "0.0.0-dev.7",
       "bin": {
         "zeroshot": "dist/index.js",
       },
@@ -33,7 +33,7 @@
     },
     "src/backend": {
       "name": "@zeroshot/backend",
-      "version": "0.0.0-dev.6",
+      "version": "0.0.0-dev.7",
       "dependencies": {
         "@iarna/toml": "^2.2.5",
         "@openai/codex-sdk": "^0.130.0",
@@ -57,7 +57,7 @@
     },
     "src/ui": {
       "name": "@zeroshot/frontend",
-      "version": "0.0.0-dev.6",
+      "version": "0.0.0-dev.7",
       "dependencies": {
         "@floating-ui/react": "^0.27.19",
         "@fontsource/noto-sans": "^5.2.10",
