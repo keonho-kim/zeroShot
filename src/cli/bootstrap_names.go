@@ -1,7 +1,6 @@
 package main
 
 import (
-	"os/exec"
 	"regexp"
 	"strings"
 )
@@ -79,13 +78,4 @@ func rubyModuleName(value string) string {
 		parts[index] = strings.ToUpper(part[:1]) + part[1:]
 	}
 	return strings.Join(parts, "")
-}
-
-func firstAvailableTool(names ...string) string {
-	for _, name := range names {
-		if _, err := exec.LookPath(name); err == nil {
-			return name
-		}
-	}
-	return ""
 }

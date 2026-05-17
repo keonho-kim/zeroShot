@@ -1,7 +1,7 @@
 import { spawn } from "node:child_process";
 import { basename } from "node:path";
 import { buildBootstrapCommandSpec } from "@backend/core/cli-command.js";
-import type { BootstrapRequest, BootstrapResult } from "@backend/types.js";
+import type { BootstrapRequest, BootstrapResult, PipelineCommandSpec } from "@backend/types.js";
 
 export function inferBootstrapRequest(params: {
   projectRoot: string;
@@ -69,9 +69,23 @@ function inferServerLanguage(text: string): string {
   return "typescript";
 }
 
-export async function runBootstrap(request: BootstrapRequest): Promise<BootstrapResult> {
+export async function runBootstrap(
+  request: BootstrapRequest,
+  runner: (spec: PipelineCommandSpec) => Promise<{ stdout: string; stderr: string }> = runBootstrapCommand
+): Promise<BootstrapResult> {
   const spec = buildBootstrapCommandSpec(request);
-  const output = await new Promise<{ stdout: string; stderr: string }>((resolve, reject) => {
+  const output = await runner(spec);
+
+  return {
+    command: spec.command,
+    args: spec.args,
+    stdout: output.stdout,
+    stderr: output.stderr
+  };
+}
+
+export async function runBootstrapCommand(spec: PipelineCommandSpec): Promise<{ stdout: string; stderr: string }> {
+  return new Promise((resolve, reject) => {
     const child = spawn(spec.command, spec.args, {
       cwd: spec.cwd,
       env: spec.env
@@ -94,11 +108,4 @@ export async function runBootstrap(request: BootstrapRequest): Promise<Bootstrap
       reject(new Error(stderr.trim() || stdout.trim() || `bootstrap exited with code ${code ?? 1}`));
     });
   });
-
-  return {
-    command: spec.command,
-    args: spec.args,
-    stdout: output.stdout,
-    stderr: output.stderr
-  };
 }

@@ -16,10 +16,12 @@ import {
 import {
   createArchitectProductHtml,
   fetchProjectSettings,
+  fetchProjectState,
   requestArchitectDecisionsStream,
   runArchitectBootstrap
 } from "@/lib/api";
 import { cn } from "@/utils/cn";
+import { clearMissingProjectSelection, hasValidSelectedProject, isMissingSelectedProjectError } from "@/entities/project/stale-project";
 
 function bootstrapArg(args: string[], flag: string): string {
   const index = args.indexOf(flag);
@@ -89,6 +91,11 @@ function AgentLoadingStage(props: { label: string }) {
 export function ArchitectProgressPage() {
   const navigate = useNavigate();
   const projectRoot = useAppStore((state) => state.projectRoot);
+  const setProjectRoot = useAppStore((state) => state.setProjectRoot);
+  const setProjectState = useAppStore((state) => state.setProjectState);
+  const setCandidateProjectPath = useAppStore((state) => state.setCandidateProjectPath);
+  const setSelectedBrowserEntryPath = useAppStore((state) => state.setSelectedBrowserEntryPath);
+  const setProjectPickerOpen = useAppStore((state) => state.setProjectPickerOpen);
   const setArchitectProductContent = useAppStore((state) => state.setArchitectProductContent);
   const locale = useMemo(() => detectLocale(navigator.language), []);
   const requestKey = useArchitectFlowStore((state) => state.requestKey);
@@ -117,10 +124,18 @@ export function ArchitectProgressPage() {
   const setTutorialOpen = useArchitectFlowStore((state) => state.setTutorialOpen);
   const setContinuePromptOpen = useArchitectFlowStore((state) => state.setContinuePromptOpen);
 
+  const projectStateQuery = useQuery({
+    queryKey: ["project-state", projectRoot],
+    queryFn: () => fetchProjectState(projectRoot),
+    enabled: Boolean(projectRoot),
+    retry: (failureCount, error) => !isMissingSelectedProjectError(error) && failureCount < 3
+  });
+
   const projectSettingsQuery = useQuery({
     queryKey: ["project-settings", projectRoot],
     queryFn: () => fetchProjectSettings(projectRoot),
-    enabled: Boolean(projectRoot)
+    enabled: hasValidSelectedProject(projectRoot, projectStateQuery.data),
+    retry: (failureCount, error) => !isMissingSelectedProjectError(error) && failureCount < 3
   });
 
   const activeSkillId = projectSettingsQuery.data?.activeSkillId ?? "";
@@ -166,6 +181,9 @@ export function ArchitectProgressPage() {
     mutationFn: async () => {
       if (!decisionSet) {
         throw new Error("Architect decisions are required before bootstrap.");
+      }
+      if (!hasValidSelectedProject(projectRoot, projectStateQuery.data)) {
+        throw new Error("A valid selected project is required before bootstrap.");
       }
       return runArchitectBootstrap({
         projectRoot,
@@ -226,7 +244,32 @@ export function ArchitectProgressPage() {
   }, [setContinuePromptOpen]);
 
   useEffect(() => {
-    if (!projectRoot || !userBrief.trim() || !requestKey || projectSettingsQuery.isLoading) {
+    if (!projectRoot || (!isMissingSelectedProjectError(projectStateQuery.error) && !isMissingSelectedProjectError(projectSettingsQuery.error))) {
+      return;
+    }
+    clearMissingProjectSelection({
+      setProjectRoot,
+      setProjectState,
+      setCandidateProjectPath,
+      setSelectedBrowserEntryPath,
+      setProjectPickerOpen
+    });
+  }, [
+    projectRoot,
+    projectSettingsQuery.error,
+    projectStateQuery.error,
+    setCandidateProjectPath,
+    setProjectPickerOpen,
+    setProjectRoot,
+    setProjectState,
+    setSelectedBrowserEntryPath
+  ]);
+
+  useEffect(() => {
+    if (!projectRoot || !userBrief.trim() || !requestKey || projectSettingsQuery.isLoading || projectSettingsQuery.isError) {
+      return;
+    }
+    if (projectStateQuery.isLoading || projectStateQuery.isError || !hasValidSelectedProject(projectRoot, projectStateQuery.data)) {
       return;
     }
     if (startedRequestKey === requestKey || decisionSet) {
@@ -265,6 +308,9 @@ export function ArchitectProgressPage() {
     markRequestStarted,
     omakaseMode,
     projectRoot,
+    projectStateQuery.data,
+    projectStateQuery.isError,
+    projectStateQuery.isLoading,
     projectSettingsQuery.isLoading,
     requestKey,
     startedRequestKey,

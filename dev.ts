@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
-import { spawn, type ChildProcess } from "node:child_process";
-import { chmod, mkdir, readFile, writeFile } from "node:fs/promises";
+import { spawn, spawnSync, type ChildProcess } from "node:child_process";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 
@@ -46,12 +46,12 @@ async function ensureLocalCliEntry(): Promise<string> {
 
   const entryPath = join(tmpdir(), "zeroshot-dev-cli", "zeroshot");
   await mkdir(dirname(entryPath), { recursive: true });
-  await writeFile(entryPath, [
-    "#!/bin/sh",
-    `exec go run ${JSON.stringify(join(repoRoot, "src", "cli"))} "$@"`,
-    ""
-  ].join("\n"), "utf8");
-  await chmod(entryPath, 0o755);
+  const result = spawnSync("go", ["build", "-o", entryPath, join(repoRoot, "src", "cli")], {
+    encoding: "utf8"
+  });
+  if (result.status !== 0) {
+    throw new Error(result.stderr || result.stdout || "failed to build local ZeroShot CLI");
+  }
   return entryPath;
 }
 

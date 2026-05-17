@@ -4,91 +4,167 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
+	"runtime"
 	"strings"
 )
 
+type bootstrapCommandSpec struct {
+	cwd     string
+	command string
+	args    []string
+}
+
+type bootstrapInitPlan struct {
+	setup    string
+	commands []bootstrapCommandSpec
+}
+
+type toolResolver func(name string) bool
+
+const (
+	initSetupExisting     = "existing"
+	initSetupPythonNative = "python-native"
+	initSetupMaven        = "maven"
+	initSetupRuby         = "ruby"
+)
+
+func defaultToolResolver(name string) bool {
+	_, err := exec.LookPath(name)
+	return err == nil
+}
+
 func runLanguageInit(target bootstrapTarget, flags *bootstrapFlagSet) error {
-	if hasProjectMarker(target.root, target.language) {
+	plan, err := buildLanguageInitPlan(target, flags, defaultToolResolver)
+	if err != nil {
+		return err
+	}
+	if plan.setup == initSetupExisting {
 		fmt.Println("[bootstrap] init: existing project marker found, skipping init")
 		return nil
+	}
+	switch plan.setup {
+	case initSetupPythonNative:
+		fmt.Println("[bootstrap] init: uv not found, using native python")
+		if err := writeNativePythonProject(target, flags.python, false); err != nil {
+			return err
+		}
+	case initSetupMaven:
+		fmt.Println("[bootstrap] init: gradle not found, creating Maven boilerplate")
+		if err := writeMavenProject(target, javaPackageName(target.module, target.name), false); err != nil {
+			return err
+		}
+	case initSetupRuby:
+		if err := writeRubyProject(target, false); err != nil {
+			return err
+		}
+	}
+	return runBootstrapCommands(plan.commands)
+}
+
+func buildLanguageInitPlan(target bootstrapTarget, flags *bootstrapFlagSet, hasTool toolResolver) (bootstrapInitPlan, error) {
+	if hasProjectMarker(target.root, target.language) {
+		return bootstrapInitPlan{setup: initSetupExisting}, nil
 	}
 
 	switch target.language {
 	case "python":
-		return initPython(target, flags.python)
+		return buildPythonInitPlan(target, flags.python, hasTool)
 	case "typescript", "javascript":
-		return initJavaScript(target)
+		return buildJavaScriptInitPlan(target, hasTool)
 	case "go":
-		return runTool(target.root, "go", "mod", "init", target.module)
-	case "rust":
-		if target.projectType == "library" {
-			return runTool(target.root, "cargo", "init", "--lib", ".")
+		if !hasTool("go") {
+			return bootstrapInitPlan{}, fmt.Errorf("go was not found in PATH")
 		}
-		return runTool(target.root, "cargo", "init", "--bin", ".")
+		return bootstrapInitPlan{commands: []bootstrapCommandSpec{{cwd: target.root, command: "go", args: []string{"mod", "init", target.module}}}}, nil
+	case "rust":
+		if !hasTool("cargo") {
+			return bootstrapInitPlan{}, fmt.Errorf("cargo was not found in PATH")
+		}
+		args := []string{"init", "--bin", "."}
+		if target.projectType == "library" {
+			args = []string{"init", "--lib", "."}
+		}
+		return bootstrapInitPlan{commands: []bootstrapCommandSpec{{cwd: target.root, command: "cargo", args: args}}}, nil
 	case "java":
-		return initJava(target)
+		return buildJavaInitPlan(target, hasTool)
 	case "ruby":
-		return initRuby(target)
+		if !hasAnyTool(hasTool, "gem", "ruby") {
+			return bootstrapInitPlan{}, fmt.Errorf("neither gem nor ruby was found in PATH")
+		}
+		return bootstrapInitPlan{setup: initSetupRuby}, nil
 	case "zig":
-		return runTool(target.root, "zig", "init")
+		if !hasTool("zig") {
+			return bootstrapInitPlan{}, fmt.Errorf("zig was not found in PATH")
+		}
+		return bootstrapInitPlan{commands: []bootstrapCommandSpec{{cwd: target.root, command: "zig", args: []string{"init"}}}}, nil
 	default:
-		return fmt.Errorf("unsupported language: %s", target.language)
+		return bootstrapInitPlan{}, fmt.Errorf("unsupported language: %s", target.language)
 	}
 }
 
-func initPython(target bootstrapTarget, pythonVersion string) error {
-	if _, err := exec.LookPath("uv"); err == nil {
+func buildPythonInitPlan(target bootstrapTarget, pythonVersion string, hasTool toolResolver) (bootstrapInitPlan, error) {
+	if hasTool("uv") {
 		args := []string{"init", "--name", target.name, "--python", pythonVersion, "--vcs", "none"}
-		if target.projectType == "library" {
+		switch target.projectType {
+		case "library":
 			args = append(args, "--lib")
-		} else if target.projectType == "script" {
+		case "script":
 			args = append(args, "--app")
-		} else {
+		default:
 			args = append(args, "--package")
 		}
 		args = append(args, target.root)
-		return runTool("", "uv", args...)
+		return bootstrapInitPlan{commands: []bootstrapCommandSpec{{command: "uv", args: args}}}, nil
 	}
 
-	python := firstAvailableTool("python3", "python")
+	python := firstAvailableToolByResolver(hasTool, "python3", "python")
 	if python == "" {
-		return fmt.Errorf("neither uv nor python was found in PATH")
+		return bootstrapInitPlan{}, fmt.Errorf("neither uv nor python was found in PATH")
 	}
-	fmt.Println("[bootstrap] init: uv not found, using native python")
-	if err := writeNativePythonProject(target, pythonVersion, false); err != nil {
-		return err
-	}
-	return runTool(target.root, python, "-m", "venv", ".venv")
+	return bootstrapInitPlan{
+		setup: initSetupPythonNative,
+		commands: []bootstrapCommandSpec{{
+			cwd:     target.root,
+			command: python,
+			args:    []string{"-m", "venv", ".venv"},
+		}},
+	}, nil
 }
 
-func initJavaScript(target bootstrapTarget) error {
-	if _, err := exec.LookPath("bun"); err == nil {
-		return runTool(target.root, "bun", "init", "-y")
+func buildJavaScriptInitPlan(target bootstrapTarget, hasTool toolResolver) (bootstrapInitPlan, error) {
+	if hasTool("bun") {
+		return bootstrapInitPlan{commands: []bootstrapCommandSpec{{cwd: target.root, command: "bun", args: []string{"init", "-y"}}}}, nil
 	}
-	if _, err := exec.LookPath("npm"); err == nil {
+	if hasTool("npm") {
 		fmt.Println("[bootstrap] init: bun not found, using npm")
-		return runTool(target.root, "npm", "init", "-y")
+		return bootstrapInitPlan{commands: []bootstrapCommandSpec{{cwd: target.root, command: "npm", args: []string{"init", "-y"}}}}, nil
 	}
-	return fmt.Errorf("neither bun nor npm was found in PATH")
+	return bootstrapInitPlan{}, fmt.Errorf("neither bun nor npm was found in PATH")
 }
 
-func initJava(target bootstrapTarget) error {
+func buildJavaInitPlan(target bootstrapTarget, hasTool toolResolver) (bootstrapInitPlan, error) {
 	javaPackage := javaPackageName(target.module, target.name)
-	if _, err := exec.LookPath("gradle"); err == nil {
-		return runTool(target.root, "gradle", "init", "--type", "java-application", "--dsl", "groovy", "--test-framework", "junit-jupiter", "--project-name", target.name, "--package", javaPackage)
+	if hasTool("gradle") {
+		return bootstrapInitPlan{commands: []bootstrapCommandSpec{{
+			cwd:     target.root,
+			command: "gradle",
+			args:    []string{"init", "--type", "java-application", "--dsl", "groovy", "--test-framework", "junit-jupiter", "--project-name", target.name, "--package", javaPackage},
+		}}}, nil
 	}
-	if _, err := exec.LookPath("mvn"); err == nil {
-		fmt.Println("[bootstrap] init: gradle not found, creating Maven boilerplate")
-		return writeMavenProject(target, javaPackage, false)
+	if hasTool("mvn") {
+		return bootstrapInitPlan{setup: initSetupMaven}, nil
 	}
-	return fmt.Errorf("neither gradle nor maven was found in PATH")
+	return bootstrapInitPlan{}, fmt.Errorf("neither gradle nor maven was found in PATH")
 }
 
-func initRuby(target bootstrapTarget) error {
-	if firstAvailableTool("gem", "ruby") == "" {
-		return fmt.Errorf("neither gem nor ruby was found in PATH")
+func runBootstrapCommands(commands []bootstrapCommandSpec) error {
+	for _, command := range commands {
+		if err := runTool(command.cwd, command.command, command.args...); err != nil {
+			return err
+		}
 	}
-	return writeRubyProject(target, false)
+	return nil
 }
 
 func runTool(cwd string, name string, args ...string) error {
@@ -107,44 +183,100 @@ func runTool(cwd string, name string, args ...string) error {
 }
 
 func installBootstrapDependencies(target bootstrapTarget, flags *bootstrapFlagSet) error {
+	commands, err := buildDependencyCommandSpecs(target, flags, defaultToolResolver)
+	if err != nil {
+		return err
+	}
+	return runBootstrapCommands(commands)
+}
+
+func buildDependencyCommandSpecs(target bootstrapTarget, flags *bootstrapFlagSet, hasTool toolResolver) ([]bootstrapCommandSpec, error) {
 	switch target.language {
 	case "python":
-		if _, err := exec.LookPath("uv"); err == nil {
-			if err := runTool(target.root, "uv", append([]string{"add", "--dev"}, pythonDevDependencies()...)...); err != nil {
-				return err
-			}
-			if flags.profile == "llm" {
-				if err := runTool(target.root, "uv", append([]string{"add"}, pythonLLMDependencies()...)...); err != nil {
-					return err
-				}
-			}
-		}
+		return buildPythonDependencyCommands(target, flags, hasTool), nil
 	case "typescript", "javascript":
-		if _, err := exec.LookPath("bun"); err == nil {
-			if target.role == "ui" {
-				if err := runTool(target.root, "bun", append([]string{"add"}, frontendDependencies()...)...); err != nil {
-					return err
-				}
-				return runTool(target.root, "bun", append([]string{"add", "-d"}, frontendDevDependencies()...)...)
-			}
-			return runTool(target.root, "bun", "add", "zod", "@sentry/node")
-		}
-		if _, err := exec.LookPath("npm"); err == nil {
-			if target.role == "ui" {
-				if err := runTool(target.root, "npm", append([]string{"install"}, frontendDependencies()...)...); err != nil {
-					return err
-				}
-				return runTool(target.root, "npm", append([]string{"install", "-D"}, frontendDevDependencies()...)...)
-			}
-			return runTool(target.root, "npm", "install", "zod", "@sentry/node")
-		}
+		return buildJavaScriptDependencyCommands(target, hasTool)
 	case "rust":
-		if err := runTool(target.root, "cargo", "add", "tokio", "--features", "full"); err != nil {
-			return err
+		if !hasTool("cargo") {
+			return nil, fmt.Errorf("cargo was not found in PATH")
 		}
-		return runTool(target.root, "cargo", "add", "serde", "serde_json", "thiserror", "tracing", "tracing-subscriber")
+		return []bootstrapCommandSpec{
+			{cwd: target.root, command: "cargo", args: []string{"add", "tokio", "--features", "full"}},
+			{cwd: target.root, command: "cargo", args: []string{"add", "serde", "serde_json", "thiserror", "tracing", "tracing-subscriber"}},
+		}, nil
+	default:
+		return nil, nil
 	}
-	return nil
+}
+
+func buildPythonDependencyCommands(target bootstrapTarget, flags *bootstrapFlagSet, hasTool toolResolver) []bootstrapCommandSpec {
+	if hasTool("uv") {
+		commands := []bootstrapCommandSpec{{
+			cwd:     target.root,
+			command: "uv",
+			args:    append([]string{"add", "--dev"}, pythonDevDependencies()...),
+		}}
+		if flags.profile == "llm" {
+			commands = append(commands, bootstrapCommandSpec{
+				cwd:     target.root,
+				command: "uv",
+				args:    append([]string{"add"}, pythonLLMDependencies()...),
+			})
+		}
+		return commands
+	}
+
+	python := venvPythonPath(target.root)
+	if !pathExists(python) {
+		return nil
+	}
+	args := append([]string{"-m", "pip", "install"}, pythonDevDependencies()...)
+	if flags.profile == "llm" {
+		args = append(args, pythonLLMDependencies()...)
+	}
+	return []bootstrapCommandSpec{{cwd: target.root, command: python, args: args}}
+}
+
+func buildJavaScriptDependencyCommands(target bootstrapTarget, hasTool toolResolver) ([]bootstrapCommandSpec, error) {
+	if hasTool("bun") {
+		if target.role == "ui" {
+			return []bootstrapCommandSpec{
+				{cwd: target.root, command: "bun", args: append([]string{"add"}, frontendDependencies()...)},
+				{cwd: target.root, command: "bun", args: append([]string{"add", "-d"}, frontendDevDependencies()...)},
+			}, nil
+		}
+		return []bootstrapCommandSpec{{cwd: target.root, command: "bun", args: []string{"add", "zod", "@sentry/node"}}}, nil
+	}
+	if hasTool("npm") {
+		if target.role == "ui" {
+			return []bootstrapCommandSpec{
+				{cwd: target.root, command: "npm", args: append([]string{"install"}, frontendDependencies()...)},
+				{cwd: target.root, command: "npm", args: append([]string{"install", "-D"}, frontendDevDependencies()...)},
+			}, nil
+		}
+		return []bootstrapCommandSpec{{cwd: target.root, command: "npm", args: []string{"install", "zod", "@sentry/node"}}}, nil
+	}
+	return nil, fmt.Errorf("neither bun nor npm was found in PATH")
+}
+
+func hasAnyTool(hasTool toolResolver, names ...string) bool {
+	return firstAvailableToolByResolver(hasTool, names...) != ""
+}
+
+func firstAvailableToolByResolver(hasTool toolResolver, names ...string) string {
+	for _, name := range names {
+		if hasTool(name) {
+			return name
+		}
+	}
+	return ""
+}
+
+func venvPythonPath(root string) string {
+	if runtime.GOOS == "windows" {
+		return filepath.Join(root, ".venv", "Scripts", "python.exe")
+	}
+	return filepath.Join(root, ".venv", "bin", "python")
 }
 
 func pythonDevDependencies() []string {

@@ -6,16 +6,16 @@ import (
 	"strings"
 )
 
-func applyStandardScaffold(target bootstrapTarget, force bool, pythonVersion string) error {
+func applyStandardScaffold(target bootstrapTarget, force bool, pythonVersion string, writeMetadata bool) error {
 	switch target.role {
 	case "ui":
-		return scaffoldFrontend(target, force)
+		return scaffoldFrontend(target, force, writeMetadata)
 	default:
-		return scaffoldBackend(target, force, pythonVersion)
+		return scaffoldBackend(target, force, pythonVersion, writeMetadata)
 	}
 }
 
-func scaffoldFrontend(target bootstrapTarget, force bool) error {
+func scaffoldFrontend(target bootstrapTarget, force bool, writeMetadata bool) error {
 	extension := "ts"
 	if target.language == "javascript" {
 		extension = "js"
@@ -26,16 +26,18 @@ func scaffoldFrontend(target bootstrapTarget, force bool) error {
 			return err
 		}
 	}
-	if err := writeFrontendPackageJSON(target, force); err != nil {
-		return err
+	if writeMetadata {
+		if err := writeFrontendPackageJSON(target, force); err != nil {
+			return err
+		}
 	}
 	return writeFileIfMissing(filepath.Join(sourceRoot, "app", "main."+extension), "export function main() {\n  return null;\n}\n", force)
 }
 
-func scaffoldBackend(target bootstrapTarget, force bool, pythonVersion string) error {
+func scaffoldBackend(target bootstrapTarget, force bool, pythonVersion string, writeMetadata bool) error {
 	switch target.language {
 	case "python":
-		return scaffoldPython(target, force, pythonVersion)
+		return scaffoldPython(target, force, pythonVersion, writeMetadata)
 	case "typescript", "javascript":
 		return scaffoldTypeScriptBackend(target, force)
 	case "go":
@@ -43,10 +45,12 @@ func scaffoldBackend(target bootstrapTarget, force bool, pythonVersion string) e
 	case "rust":
 		return scaffoldRust(target, force)
 	case "java":
-		return scaffoldJava(target, force)
+		return scaffoldJava(target, force, writeMetadata)
 	case "ruby":
-		if err := writeRubyProject(target, force); err != nil {
-			return err
+		if writeMetadata {
+			if err := writeRubyProject(target, force); err != nil {
+				return err
+			}
 		}
 		return scaffoldRuby(target, force)
 	case "zig":
@@ -56,7 +60,7 @@ func scaffoldBackend(target bootstrapTarget, force bool, pythonVersion string) e
 	}
 }
 
-func scaffoldPython(target bootstrapTarget, force bool, pythonVersion string) error {
+func scaffoldPython(target bootstrapTarget, force bool, pythonVersion string, writeMetadata bool) error {
 	module := pythonModuleName(target.module)
 	if module == "" {
 		module = pythonModuleName(target.name)
@@ -70,7 +74,7 @@ func scaffoldPython(target bootstrapTarget, force bool, pythonVersion string) er
 			return err
 		}
 	}
-	if !pathExists(filepath.Join(target.root, "pyproject.toml")) {
+	if writeMetadata && !pathExists(filepath.Join(target.root, "pyproject.toml")) {
 		if err := writeNativePythonProject(target, pythonVersion, force); err != nil {
 			return err
 		}
@@ -114,7 +118,7 @@ func scaffoldRust(target bootstrapTarget, force bool) error {
 	return nil
 }
 
-func scaffoldJava(target bootstrapTarget, force bool) error {
+func scaffoldJava(target bootstrapTarget, force bool, writeMetadata bool) error {
 	javaPackage := javaPackageName(target.module, target.name)
 	base := filepath.Join(append([]string{target.root, "src", "main", "java"}, strings.Split(javaPackage, ".")...)...)
 	for _, dir := range []string{"api", "core", "common", "integrations", "services", "models", "config"} {
@@ -122,7 +126,7 @@ func scaffoldJava(target bootstrapTarget, force bool) error {
 			return err
 		}
 	}
-	if pathExists(filepath.Join(target.root, "build.gradle")) || pathExists(filepath.Join(target.root, "build.gradle.kts")) {
+	if !writeMetadata || pathExists(filepath.Join(target.root, "build.gradle")) || pathExists(filepath.Join(target.root, "build.gradle.kts")) {
 		return nil
 	}
 	return writeMavenProject(target, javaPackage, force)

@@ -207,5 +207,5 @@ func bootstrapTargetProject(target bootstrapTarget, flags *bootstrapFlagSet) err
 	} else {
 		fmt.Println("[bootstrap] init: skipped by --skip-init")
 	}
-	return applyStandardScaffold(target, flags.force, flags.python)
+	return applyStandardScaffold(target, flags.force, flags.python, !flags.skipInit)
 }

@@ -20,3 +20,7 @@ export function clearMissingProjectSelection(actions: ProjectSelectionActions): 
   actions.setSelectedBrowserEntryPath("");
   actions.setProjectPickerOpen(true);
 }
+
+export function hasValidSelectedProject(projectRoot: string, projectState: ProjectState | null | undefined): projectState is ProjectState {
+  return Boolean(projectRoot && projectState);
+}

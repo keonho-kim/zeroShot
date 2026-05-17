@@ -44,4 +44,6 @@ Codex-related pipeline execution stays in TypeScript because it depends on the T
 
 Full-stack projects use `src/server` and `src/ui`. Backend scaffolds use `api`, `core`, `common`, `integrations`, `services`, `models`, and `config` areas, adapted to each language's conventions. Frontend scaffolds use `app`, `pages`, `components`, `hooks`, `stores`, `types`, `common`, and `lib`.
 
-Bootstrap also creates `AGENTS.md`, `.agents/PROJECT_CONTEXT.md`, `ARCHITECT/PRODUCT.html`, `DESIGN/`, and local `.agents/skills` copies. `ARCHITECT/PRODUCT.html` is the canonical product blueprint; root `PRODUCT.html`, root `DESIGN.md`, and `PRODUCT.md` are intentionally not generated.
+`--skip-init` skips package manager and toolchain initialization, including dependency installation and package metadata files such as `pyproject.toml`, `package.json`, `Cargo.toml`, and `go.mod`. It still creates the ZeroShot folders and source layout.
+
+Bootstrap also creates `AGENTS.md`, `.agents/PROJECT_CONTEXT.md`, `ARCHITECT/`, `DESIGN/`, and local `.agents/skills` copies. `ARCHITECT/PRODUCT.html` is generated later by the ARCHITECT session after product questions are complete; root `PRODUCT.html`, root `DESIGN.md`, and `PRODUCT.md` are intentionally not generated.
