@@ -187,6 +187,10 @@ function progressText(locale: string, ko: string, en: string): string {
   return locale === "ko" ? ko : en;
 }
 
+function designArtifactDisplayPath(path: string): string {
+  return path === "DESIGN/index.html" ? "INTERACTIVE CANVAS" : path;
+}
+
 function describeProgress(event: ThreadEvent, locale: string): DesignProgressEvent | null {
   if (event.type === "thread.started") {
     return {
@@ -208,7 +212,7 @@ function describeProgress(event: ThreadEvent, locale: string): DesignProgressEve
     return {
       id: "complete",
       title: progressText(locale, "디자인 런타임 결과 준비", "Design runtime output ready"),
-      detail: progressText(locale, "DESIGN/index.html로 저장할 MAKEOVER 산출물을 준비했습니다.", "Prepared the MAKEOVER artifact for DESIGN/index.html."),
+      detail: progressText(locale, "INTERACTIVE CANVAS로 저장할 MAKEOVER 산출물을 준비했습니다.", "Prepared the MAKEOVER artifact for INTERACTIVE CANVAS."),
       status: "completed"
     };
   }
@@ -401,11 +405,11 @@ export function composeDesignMarkdown(response: DesignRuntimeResponse): string {
     "",
     "## Tracked Artifacts",
     "",
-    ...response.artifacts.map((artifact) => `- \`${artifact.path}\` (${artifact.type}) - ${artifact.title}: ${artifact.description}`),
+    ...response.artifacts.map((artifact) => `- \`${designArtifactDisplayPath(artifact.path)}\` (${artifact.type}) - ${artifact.title}: ${artifact.description}`),
     "",
     "## Generated Files",
     "",
-    ...response.files.map((file) => `- \`${file.path}\` (${file.type}) - ${file.title}`),
+    ...response.files.map((file) => `- \`${designArtifactDisplayPath(file.path)}\` (${file.type}) - ${file.title}`),
     ""
   ].join("\n");
 }
@@ -566,7 +570,7 @@ export async function buildDesignRuntime(params: {
 
   const parsed = designRuntimeResponseSchema.parse(JSON.parse(finalResponse));
   if (!parsed.files.some((file) => file.path === "DESIGN/index.html")) {
-    throw new Error("Design runtime did not return DESIGN/index.html.");
+    throw new Error("Design runtime did not return INTERACTIVE CANVAS.");
   }
   const response: DesignRuntimeResponse = {
     id: crypto.randomUUID(),

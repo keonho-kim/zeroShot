@@ -16,7 +16,7 @@
   }
 
   .design-artifact-layout.enterprise {
-    grid-template-columns: minmax(152px, 0.42fr) minmax(480px, 1.8fr) minmax(184px, 0.48fr);
+    grid-template-columns: minmax(220px, 0.58fr) minmax(520px, 1.65fr) minmax(220px, 0.55fr);
   }
 }
 

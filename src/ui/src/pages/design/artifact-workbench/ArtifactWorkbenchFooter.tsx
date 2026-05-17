@@ -13,7 +13,7 @@ export function ArtifactWorkbenchFooter(props: {
 }) {
   return (
     <div className="design-artifact-footer">
-      <span>{props.hasProductHtml ? "DESIGN/index.html loaded" : "DESIGN/index.html required"}</span>
+      <span>{props.hasProductHtml ? "INTERACTIVE CANVAS loaded" : "INTERACTIVE CANVAS required"}</span>
       <div className="design-artifact-actions">
         <Button variant="outline" disabled={!props.sourceHistory.length} onClick={props.onUndo}>
           <Undo2 aria-hidden="true" />

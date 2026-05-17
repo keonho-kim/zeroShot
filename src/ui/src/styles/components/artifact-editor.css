@@ -154,6 +154,7 @@
 }
 
 .preview-viewport {
+  position: relative;
   width: min(100%, 1280px);
   height: 680px;
   overflow: hidden;
@@ -170,6 +171,14 @@
   width: 100%;
   border: 0;
   background: var(--background);
+}
+
+.artifact-comment-button {
+  position: absolute;
+  right: 0.75rem;
+  bottom: 0.75rem;
+  z-index: 2;
+  box-shadow: 3px 3px 0 var(--border);
 }
 
 .preview-viewport-tablet {
@@ -248,6 +257,61 @@
 .design-codex-chat textarea {
   min-height: 4rem;
   font-size: 0.78rem;
+}
+
+.design-chat-mentions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.design-codex-chat .design-chat-mention {
+  display: inline-flex;
+  max-width: 100%;
+  border: 1px solid #93c5fd;
+  border-radius: 999px;
+  background: #dbeafe;
+  padding: 0.2rem 0.45rem;
+  color: #1d4ed8;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+  text-transform: none;
+}
+
+.design-chat-clear {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--background);
+  padding: 0.2rem 0.45rem;
+  color: var(--muted-foreground);
+  font-size: 0.7rem;
+  font-weight: 850;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.design-comment-chip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  border: 2px solid var(--border);
+  border-radius: 2px;
+  background: var(--panel);
+  padding: 0.45rem 0.55rem;
+}
+
+.design-codex-chat .design-comment-chip span {
+  color: var(--foreground);
+}
+
+.design-comment-chip button {
+  border: 0;
+  background: transparent;
+  color: var(--primary);
+  font-size: 0.7rem;
+  font-weight: 850;
+  text-transform: uppercase;
 }
 
 .design-work-log {
@@ -344,13 +408,23 @@
 
 .design-layer-button {
   display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
   gap: 0.25rem;
+  column-gap: 0.55rem;
+  align-items: start;
   border: 2px solid var(--border);
   border-radius: 2px;
   background: var(--panel);
   padding: 0.55rem;
   color: var(--foreground);
   text-align: left;
+}
+
+.design-layer-button input {
+  width: 1rem;
+  height: 1rem;
+  margin: 0.05rem 0 0;
+  accent-color: var(--primary);
 }
 
 .design-layer-button:hover,
@@ -370,6 +444,7 @@
 
 .design-layer-button small {
   display: block;
+  grid-column: 2;
   overflow: hidden;
   color: inherit;
   font-size: 0.72rem;
@@ -591,4 +666,161 @@
   color: var(--muted-foreground);
   font-size: 0.875rem;
   line-height: 1.5;
+}
+
+.artifact-comment-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  background: rgba(17, 24, 39, 0.62);
+  padding: 1rem;
+}
+
+.artifact-comment-modal {
+  display: grid;
+  gap: 0.75rem;
+  width: min(1120px, 100%);
+  max-height: min(92vh, 900px);
+  overflow: auto;
+  border: 2px solid var(--border);
+  border-radius: 2px;
+  background: var(--background);
+  padding: 0.9rem;
+  box-shadow: 8px 8px 0 var(--border);
+}
+
+.artifact-comment-header,
+.artifact-comment-tools,
+.artifact-comment-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.artifact-comment-header h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.4rem, 3vw, 2.1rem);
+  font-weight: 400;
+  line-height: 1;
+}
+
+.artifact-comment-tools {
+  flex-wrap: wrap;
+}
+
+.artifact-comment-tools input {
+  min-width: min(100%, 220px);
+  flex: 1 1 220px;
+}
+
+.artifact-comment-canvas-wrap {
+  display: grid;
+  min-height: 260px;
+  overflow: auto;
+  border: 2px solid var(--border);
+  border-radius: 2px;
+  background: var(--surface);
+  padding: 0.75rem;
+  place-items: center;
+}
+
+.artifact-comment-canvas {
+  position: relative;
+  width: min(100%, 960px);
+  aspect-ratio: var(--capture-width) / var(--capture-height);
+  overflow: hidden;
+  border: 2px solid var(--border);
+  border-radius: 2px;
+  background: var(--background);
+  cursor: crosshair;
+  user-select: none;
+}
+
+.artifact-comment-canvas img,
+.artifact-comment-drawing {
+  position: absolute;
+  inset: 0;
+  height: 100%;
+  width: 100%;
+}
+
+.artifact-comment-canvas img {
+  object-fit: fill;
+  pointer-events: none;
+}
+
+.artifact-comment-target {
+  position: absolute;
+  border: 3px solid #dc2626;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.78);
+  pointer-events: none;
+}
+
+.artifact-comment-drawing {
+  pointer-events: none;
+}
+
+.artifact-comment-drawing polyline {
+  fill: none;
+  stroke: #dc2626;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 5;
+}
+
+.artifact-comment-note {
+  position: absolute;
+  z-index: 2;
+  max-width: min(24rem, 72%);
+  border: 2px solid #dc2626;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.84);
+  padding: 0.35rem 0.5rem;
+  color: #111827;
+  font-size: 0.8rem;
+  font-weight: 800;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+  pointer-events: none;
+}
+
+.artifact-comment-cursor {
+  position: absolute;
+  right: 0.5rem;
+  bottom: 0.5rem;
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  border: 2px solid var(--border);
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.88);
+  color: var(--foreground);
+  pointer-events: none;
+}
+
+.artifact-comment-loading {
+  display: grid;
+  min-height: 260px;
+  width: 100%;
+  place-items: center;
+  color: var(--muted-foreground);
+  font-size: 0.8rem;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.artifact-comment-actions {
+  flex-wrap: wrap;
+}
+
+.artifact-comment-actions span {
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+  font-weight: 850;
+  text-transform: uppercase;
 }
