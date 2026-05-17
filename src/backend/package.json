@@ -1,6 +1,6 @@
 {
   "name": "@zeroshot/backend",
-  "version": "0.0.0-dev.7",
+  "version": "0.0.0-dev.8",
   "private": true,
   "type": "module",
   "exports": {
