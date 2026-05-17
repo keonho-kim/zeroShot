@@ -7,6 +7,7 @@ import type {
   ArtifactSourcePatch
 } from "@/entities/design/artifact-editor";
 import type { DesignRuntimeResponse } from "@/types/api";
+import type { DesignTimelineItem } from "@/pages/design/design-page-model";
 
 export type ArtifactViewport = "desktop" | "tablet" | "mobile";
 
@@ -41,6 +42,7 @@ export interface ArtifactWorkbenchProps {
   aiInstruction: string;
   setAiInstruction: Dispatch<SetStateAction<string>>;
   artifactError: string;
+  timelineItems: DesignTimelineItem[];
   sourceHistory: ArtifactHistoryEntry[];
   redoHistory: ArtifactHistoryEntry[];
   isSaving: boolean;

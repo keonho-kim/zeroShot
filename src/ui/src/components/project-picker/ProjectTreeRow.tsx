@@ -1,6 +1,7 @@
 import { Check, ChevronDown, ChevronRight, FolderPlus, FolderOpen, FolderTree } from "lucide-react";
 import type { DirectoryEntry } from "@/types/api";
 import { FloatingActionMenu, type FloatingActionMenuItem } from "@/components/ui/FloatingActionMenu";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/utils/cn";
 import { PathBadge } from "./PathBadge";
 import { ProjectTreeMainButton } from "./ProjectTreeMainButton";
@@ -49,13 +50,6 @@ export function ProjectTreeRow({
             icon: <FolderPlus className="size-4" />,
             disabled: !selected || createPending,
             onSelect: onCreateDirectory
-          },
-          {
-            id: "select-project",
-            label: current ? "Current project" : "Select project",
-            icon: current ? <Check className="size-4" /> : <FolderTree className="size-4" />,
-            disabled: current || selectionPending,
-            onSelect: onSelectProject
           }
         ]
       : [])
@@ -63,6 +57,7 @@ export function ProjectTreeRow({
 
   return (
     <div
+      data-tree-entry-path={entry.path}
       className={cn(
         "grid w-full grid-cols-[32px_40px_minmax(0,1fr)_auto] items-center gap-3 rounded-md px-3 py-2 text-left transition hover:bg-[var(--surface-hover)]",
         selected && "bg-[var(--surface-active)] text-[var(--background)] hover:bg-[var(--surface-active)]"
@@ -90,8 +85,14 @@ export function ProjectTreeRow({
       <div className="flex flex-wrap items-center justify-end gap-2 pl-2">
         {!childrenLoaded && expanded && !loadError ? <PathBadge>Loading</PathBadge> : null}
         {loadError ? <PathBadge>{loadError}</PathBadge> : null}
-        {current ? <PathBadge active>현재 BUILD</PathBadge> : null}
+        {current ? <PathBadge active>선택된 프로젝트</PathBadge> : null}
         {entry.hasWorkHistory ? <PathBadge active={!!entry.runsCount}>{entry.runsCount ? `UPDATE (${entry.runsCount})` : "History"}</PathBadge> : null}
+        {entry.isDirectory && selected && !current ? (
+          <Button className="h-8 px-3 py-1 text-xs" disabled={selectionPending} onClick={onSelectProject}>
+            <FolderTree className="size-3.5" />
+            프로젝트 선택
+          </Button>
+        ) : null}
         <FloatingActionMenu label={`${entry.name} actions`} items={actionItems} />
       </div>
     </div>

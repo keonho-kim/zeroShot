@@ -1,10 +1,11 @@
 import { join } from "node:path";
 import { readdir } from "node:fs/promises";
 import { exists } from "@backend/core/path-guards.js";
+import { architectProductPath, designEntryPath } from "@backend/services/file-service.js";
 import { analyzeProjectSource } from "@backend/services/source-analysis-service.js";
 import type { ProjectState } from "@backend/types.js";
 
-const nonProjectEntries = new Set([".DS_Store", ".work.history", "runs", "PRODUCT.md", "PRODUCT.html", "DESIGN.md", "DESIGN.runtime.json", "artifacts.json", "UPDATE.md"]);
+const nonProjectEntries = new Set([".DS_Store", ".work.history", "runs", "ARCHITECT", "DESIGN", "PRODUCT.md", "PRODUCT.html", "DESIGN.md", "DESIGN.runtime.json", "artifacts.json", "UPDATE.md"]);
 
 async function isProjectDirectoryEmpty(projectRoot: string): Promise<boolean> {
   const entries = await readdir(projectRoot, { withFileTypes: true });
@@ -27,8 +28,8 @@ async function listRunNames(projectRoot: string): Promise<{ hasHistory: boolean;
 }
 
 export async function readProjectState(projectRoot: string): Promise<ProjectState> {
-  const productHtmlPath = join(projectRoot, "PRODUCT.html");
-  const designPath = join(projectRoot, "DESIGN.md");
+  const productHtmlPath = join(projectRoot, architectProductPath);
+  const designPath = join(projectRoot, designEntryPath);
   const updatePath = join(projectRoot, "UPDATE.md");
   const hasProductHtml = await exists(productHtmlPath);
   const [isDirectoryEmpty, source, history] = await Promise.all([

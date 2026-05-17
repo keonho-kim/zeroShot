@@ -53,7 +53,6 @@ export function buildPipelineCommandSpec(
 }
 
 export function buildBootstrapCommandSpec(request: BootstrapRequest): PipelineCommandSpec {
-  const workspaceRoot = getWorkspaceRoot();
   const cliEntry = process.env.ZEROSHOT_APP_CLI_ENTRY;
   const args = [
     "bootstrap",
@@ -91,19 +90,10 @@ export function buildBootstrapCommandSpec(request: BootstrapRequest): PipelineCo
     args.push("--force");
   }
 
-  if (cliEntry) {
-    return {
-      command: cliEntry,
-      args,
-      cwd: request.projectRoot,
-      env: process.env
-    };
-  }
-
   return {
-    command: "go",
-    args: ["run", ".", ...args],
-    cwd: join(workspaceRoot, "src", "cli"),
+    command: cliEntry || "zeroshot",
+    args,
+    cwd: request.projectRoot,
     env: process.env
   };
 }

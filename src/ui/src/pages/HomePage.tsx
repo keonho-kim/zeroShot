@@ -9,6 +9,7 @@ import { fetchProjectState } from "@/lib/api";
 import { useAppStore } from "@/stores/app-store";
 import { useBodyClass } from "@/hooks/useBodyClass";
 import { buildDisabledReason, canStartBuild, canStartDesign, canStartUpdate, updateDisabledReason } from "@/entities/project/project-core";
+import { clearMissingProjectSelection, isMissingSelectedProjectError } from "@/entities/project/stale-project";
 import { cn } from "@/utils/cn";
 
 function formatProjectName(projectRoot: string): string {
@@ -65,11 +66,13 @@ export function HomePage() {
   const setProjectPickerOpen = useAppStore((state) => state.setProjectPickerOpen);
   const setProjectBrowserPath = useAppStore((state) => state.setProjectBrowserPath);
   const setCandidateProjectPath = useAppStore((state) => state.setCandidateProjectPath);
+  const setSelectedBrowserEntryPath = useAppStore((state) => state.setSelectedBrowserEntryPath);
 
   const projectStateQuery = useQuery({
     queryKey: ["project-state", projectRoot],
     queryFn: () => fetchProjectState(projectRoot),
-    enabled: Boolean(projectRoot)
+    enabled: Boolean(projectRoot),
+    retry: (failureCount, error) => !isMissingSelectedProjectError(error) && failureCount < 3
   });
 
   useBodyClass("home-page");
@@ -88,6 +91,19 @@ export function HomePage() {
     setProjectState(projectStateQuery.data ?? null);
   }, [projectRoot, projectStateQuery.data, setProjectState]);
 
+  useEffect(() => {
+    if (!projectRoot || !isMissingSelectedProjectError(projectStateQuery.error)) {
+      return;
+    }
+    clearMissingProjectSelection({
+      setProjectRoot,
+      setProjectState,
+      setCandidateProjectPath,
+      setSelectedBrowserEntryPath,
+      setProjectPickerOpen
+    });
+  }, [projectRoot, projectStateQuery.error, setCandidateProjectPath, setProjectPickerOpen, setProjectRoot, setProjectState, setSelectedBrowserEntryPath]);
+
   const buildEnabled = Boolean(projectRoot && projectState && canStartBuild(projectState));
   const architectDisabled = !projectRoot;
   const designDisabled = !projectRoot || !projectState || !canStartDesign(projectState);
@@ -97,8 +113,10 @@ export function HomePage() {
   const buildReason = projectState ? buildDisabledReason(projectState) : "프로젝트를 먼저 선택하세요.";
   const updateReason = projectState ? updateDisabledReason(projectState) : "프로젝트를 먼저 선택하세요.";
   const openProjectPicker = () => {
+    const initialPath = projectRoot || candidateProjectPath;
     setProjectBrowserPath("");
-    setCandidateProjectPath(projectRoot || candidateProjectPath);
+    setCandidateProjectPath(initialPath);
+    setSelectedBrowserEntryPath(initialPath);
     setProjectPickerOpen(true);
   };
 

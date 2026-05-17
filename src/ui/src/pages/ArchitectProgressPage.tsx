@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { AlertCircle, ArrowLeft, ArrowRight, Check, CheckCircle2, ChevronDown, Clock, Eye, Layers3, LoaderCircle, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Eye, Layers3, X } from "lucide-react";
 import { useEffect, useMemo } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useAppStore } from "@/stores/app-store";
@@ -9,27 +9,86 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
   allDecisionsAnswered,
-  buildBlueprintHtml,
   detectLocale,
   firstRoundEndIndex,
   selectedOption
 } from "@/entities/architect/architect-core";
 import {
+  createArchitectProductHtml,
   fetchProjectSettings,
-  fetchResources,
   requestArchitectDecisionsStream,
-  runArchitectBootstrap,
-  saveProductHtml,
-  startBuild
+  runArchitectBootstrap
 } from "@/lib/api";
 import { cn } from "@/utils/cn";
+
+function bootstrapArg(args: string[], flag: string): string {
+  const index = args.indexOf(flag);
+  const value = index >= 0 ? args[index + 1] : "";
+  return value && !value.startsWith("--") ? value : "";
+}
+
+function titleCase(value: string): string {
+  if (!value) {
+    return "";
+  }
+  if (value === "typescript") {
+    return "TypeScript";
+  }
+  if (value === "javascript") {
+    return "JavaScript";
+  }
+  return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
+function bootstrapLanguageSummary(args: string[]): { summary: string; profile: string } | null {
+  const projectType = bootstrapArg(args, "--type");
+  if (!projectType) {
+    return null;
+  }
+
+  const language = bootstrapArg(args, "--language");
+  const serverLanguage = bootstrapArg(args, "--server-language") || language;
+  const uiLanguage = bootstrapArg(args, "--ui-language");
+  const profile = bootstrapArg(args, "--profile");
+  const typeLabel = titleCase(projectType);
+  let stackLabel = "";
+
+  if (projectType === "fullstack") {
+    const serverLabel = titleCase(serverLanguage);
+    const uiLabel = uiLanguage === "typescript" || uiLanguage === "javascript" ? "React" : titleCase(uiLanguage);
+    stackLabel = [serverLabel, uiLabel].filter(Boolean).join(" + ");
+  } else if (projectType === "frontend") {
+    stackLabel = titleCase(uiLanguage || language);
+  } else {
+    stackLabel = titleCase(serverLanguage || language);
+  }
+
+  if (!stackLabel) {
+    return null;
+  }
+
+  return {
+    summary: `${typeLabel} · ${stackLabel}`,
+    profile: profile === "llm" ? "LLM profile" : ""
+  };
+}
+
+function AgentLoadingStage(props: { label: string }) {
+  return (
+    <div className="agent-loading-stage" role="status" aria-live="polite">
+      <span className="agent-dot-wave" aria-hidden="true">
+        <i />
+        <i />
+        <i />
+      </span>
+      <h2>{props.label}</h2>
+    </div>
+  );
+}
 
 export function ArchitectProgressPage() {
   const navigate = useNavigate();
   const projectRoot = useAppStore((state) => state.projectRoot);
-  const currentJob = useAppStore((state) => state.currentJob);
-  const clearLogs = useAppStore((state) => state.clearLogs);
-  const setCurrentJob = useAppStore((state) => state.setCurrentJob);
   const setArchitectProductContent = useAppStore((state) => state.setArchitectProductContent);
   const locale = useMemo(() => detectLocale(navigator.language), []);
   const requestKey = useArchitectFlowStore((state) => state.requestKey);
@@ -45,10 +104,7 @@ export function ArchitectProgressPage() {
   const blueprintOpen = useArchitectFlowStore((state) => state.blueprintOpen);
   const tutorialOpen = useArchitectFlowStore((state) => state.tutorialOpen);
   const continuePromptOpen = useArchitectFlowStore((state) => state.continuePromptOpen);
-  const architectPending = useArchitectFlowStore((state) => state.architectPending);
   const architectError = useArchitectFlowStore((state) => state.architectError);
-  const timelineItems = useArchitectFlowStore((state) => state.timelineItems);
-  const expandedTimelineId = useArchitectFlowStore((state) => state.expandedTimelineId);
   const markRequestStarted = useArchitectFlowStore((state) => state.markRequestStarted);
   const addProgress = useArchitectFlowStore((state) => state.addProgress);
   const completeRequest = useArchitectFlowStore((state) => state.completeRequest);
@@ -60,12 +116,7 @@ export function ArchitectProgressPage() {
   const setBlueprintOpen = useArchitectFlowStore((state) => state.setBlueprintOpen);
   const setTutorialOpen = useArchitectFlowStore((state) => state.setTutorialOpen);
   const setContinuePromptOpen = useArchitectFlowStore((state) => state.setContinuePromptOpen);
-  const setExpandedTimelineId = useArchitectFlowStore((state) => state.setExpandedTimelineId);
 
-  const resourcesQuery = useQuery({
-    queryKey: ["resources"],
-    queryFn: fetchResources
-  });
   const projectSettingsQuery = useQuery({
     queryKey: ["project-settings", projectRoot],
     queryFn: () => fetchProjectSettings(projectRoot),
@@ -74,64 +125,40 @@ export function ArchitectProgressPage() {
 
   const activeSkillId = projectSettingsQuery.data?.activeSkillId ?? "";
   const activeDesignTemplateId = projectSettingsQuery.data?.activeDesignTemplateId ?? "";
-  const activeSkill = resourcesQuery.data?.skills.find((resource) => resource.id === activeSkillId);
-  const activeDesignTemplate = resourcesQuery.data?.designTemplates.find((resource) => resource.id === activeDesignTemplateId);
   const decisions = decisionSet?.decisions ?? [];
   const currentDecision = decisions[stepIndex];
   const isComplete = decisionSet !== null && stepIndex >= decisions.length;
   const currentSelection = currentDecision ? answers[currentDecision.id] : "";
+  const pinnedChoices = decisionSet
+    ? decisions.slice(0, Math.min(stepIndex, decisions.length)).map((decision) => ({
+      decision,
+      option: selectedOption(answers, decision)
+    })).filter((item) => item.option)
+    : [];
   const canCreateBlueprint = decisionSet !== null && allDecisionsAnswered(decisions, answers);
   const roundOneEndIndex = decisionSet ? firstRoundEndIndex(decisions) : -1;
   const roundOneDecision = decisions[roundOneEndIndex];
   const roundOneSelection = roundOneDecision ? answers[roundOneDecision.id] : "";
-  const productPreviewHtml = useMemo(() => {
-    if (!decisionSet || !canCreateBlueprint) {
-      return "";
-    }
-    return buildBlueprintHtml({
-      locale,
-      decisionSet,
-      answers,
-      projectRoot,
-      userBrief: submittedBrief,
-      resources: {
-        skillName: activeSkill?.name,
-        designTemplateName: activeDesignTemplate?.name
-      }
-    });
-  }, [activeDesignTemplate?.name, activeSkill?.name, answers, canCreateBlueprint, decisionSet, locale, projectRoot, submittedBrief]);
-  const saveBlueprintMutation = useMutation({
-    mutationFn: async (next: "design" | "build") => {
-      if (!productPreviewHtml) {
+  const createBlueprintMutation = useMutation({
+    mutationFn: async () => {
+      if (!decisionSet || !canCreateBlueprint) {
         throw new Error("Architect decisions are required before a product blueprint can be created.");
       }
-      const html = productPreviewHtml;
-      await saveProductHtml({ projectRoot, content: html });
-      return { html, next };
+      return createArchitectProductHtml({
+        projectRoot,
+        userBrief: submittedBrief || userBrief,
+        decisionSet,
+        answers,
+        locale,
+        activeSkillId: activeSkillId || undefined,
+        activeDesignTemplateId: activeDesignTemplateId || undefined
+      });
     },
-    onSuccess: ({ html, next }) => {
-      setBlueprintHtml(html);
-      setArchitectProductContent(html);
+    onSuccess: (file) => {
+      setBlueprintHtml(file.content);
+      setArchitectProductContent(file.content);
       setBlueprintReady(true);
-      setContinuePromptOpen(false);
-      if (next === "design") {
-        navigate("/design");
-        return;
-      }
-      if (next === "build") {
-        buildMutation.mutate(html);
-      }
-    }
-  });
-
-  const buildMutation = useMutation({
-    mutationFn: async (productContent?: string) => {
-      clearLogs();
-      return startBuild({ projectRoot, productContent, options: { responseLanguage: locale } });
-    },
-    onSuccess: (job) => {
-      setCurrentJob(job);
-      navigate("/build");
+      setContinuePromptOpen(true);
     }
   });
 
@@ -147,6 +174,7 @@ export function ArchitectProgressPage() {
       });
     }
   });
+  const bootstrapSummary = bootstrapMutation.data ? bootstrapLanguageSummary(bootstrapMutation.data.args) : null;
 
   const selectDecisionOption = (optionId: string) => {
     if (!currentDecision) {
@@ -163,11 +191,20 @@ export function ArchitectProgressPage() {
       return;
     }
     if (stepIndex === roundOneEndIndex && roundOneSelection && !bootstrapMutation.isSuccess) {
+      if (!bootstrapMutation.isPending) {
+        bootstrapMutation.mutate(undefined, {
+          onSuccess: () => setStepIndex((value) => Math.min(decisions.length, value + 1))
+        });
+      }
       return;
     }
     if (stepIndex + 1 >= decisions.length) {
       setStepIndex(decisions.length);
-      setContinuePromptOpen(true);
+      if (!blueprintReady && !createBlueprintMutation.isPending) {
+        createBlueprintMutation.mutate();
+      } else if (blueprintReady) {
+        setContinuePromptOpen(true);
+      }
       return;
     }
     setStepIndex((value) => value + 1);
@@ -235,36 +272,11 @@ export function ArchitectProgressPage() {
   ]);
 
   useEffect(() => {
-    if (!decisionSet || roundOneEndIndex < 0 || !roundOneSelection || bootstrapMutation.isPending || bootstrapMutation.isSuccess || bootstrapMutation.isError) {
+    if (!omakaseMode || !decisionSet || !canCreateBlueprint || createBlueprintMutation.isPending || blueprintReady) {
       return;
     }
-    if (omakaseMode) {
-      setContinuePromptOpen(false);
-    }
-    bootstrapMutation.mutate();
-  }, [
-    bootstrapMutation,
-    bootstrapMutation.isError,
-    bootstrapMutation.isPending,
-    bootstrapMutation.isSuccess,
-    decisionSet,
-    omakaseMode,
-    roundOneEndIndex,
-    roundOneSelection,
-    setContinuePromptOpen
-  ]);
-
-  useEffect(() => {
-    if (!bootstrapMutation.isSuccess) {
-      return;
-    }
-    if (stepIndex <= roundOneEndIndex) {
-      setStepIndex(omakaseMode ? decisions.length : Math.min(decisions.length, roundOneEndIndex + 1));
-    }
-    if (omakaseMode) {
-      setContinuePromptOpen(true);
-    }
-  }, [bootstrapMutation.isSuccess, decisions.length, omakaseMode, roundOneEndIndex, setContinuePromptOpen, setStepIndex, stepIndex]);
+    createBlueprintMutation.mutate();
+  }, [blueprintReady, canCreateBlueprint, createBlueprintMutation, createBlueprintMutation.isPending, decisionSet, omakaseMode]);
 
   if (!projectRoot) {
     return <Navigate to="/home" replace />;
@@ -286,173 +298,175 @@ export function ArchitectProgressPage() {
         </Button>
       ) : null}
       <PageHeader title="ARCHITECT" projectRoot={projectRoot} />
-      <div className="architect-chat">
-        <section className="architect-thread" aria-label="Architect conversation">
+      <div className={cn("architect-chat", decisionSet && "architect-chat-board")}>
+        <section className={cn("architect-thread", decisionSet && "architect-decision-workspace")} aria-label="Architect conversation">
           {!decisionSet ? (
-            <Card className="architect-timeline" aria-label="Architect progress">
-              <div className="timeline-heading">
-                <p className="decision-kicker">{locale === "ko" ? "Progress" : "Progress"}</p>
-                <h2>{locale === "ko" ? "제품 방향을 정리하고 있어요." : "Shaping the product direction."}</h2>
-                <p>{userBrief}</p>
-              </div>
-              <div className="timeline-list">
-                {timelineItems.map((item) => {
-                  const expanded = expandedTimelineId === item.id;
-                  return (
-                    <div className={cn("timeline-item", item.status)} key={item.id}>
-                      <div className="timeline-status" aria-hidden="true">
-                        {item.status === "completed" ? <CheckCircle2 className="size-4" /> : item.status === "failed" ? <AlertCircle className="size-4" /> : <LoaderCircle className="size-4 animate-spin" />}
-                      </div>
-                      <button
-                        type="button"
-                        className="timeline-summary"
-                        onClick={() => setExpandedTimelineId(expanded ? null : item.id)}
-                        aria-expanded={expanded}
-                      >
-                        <span>
-                          <strong>{item.title}</strong>
-                          <small>{item.detail}</small>
-                        </span>
-                        <span className="timeline-count">
-                          {item.updates.length}
-                          <Clock className="size-3" />
-                        </span>
-                        <ChevronDown className={cn("size-4 timeline-chevron", expanded && "open")} />
-                      </button>
-                      {expanded ? (
-                        <div className="timeline-details">
-                          {item.updates.map((update, index) => (
-                            <p key={`${item.id}-${index}`}>{update}</p>
-                          ))}
-                        </div>
-                      ) : null}
-                    </div>
-                  );
-                })}
-                {!timelineItems.length && architectPending ? (
-                  <div className="timeline-item running">
-                    <div className="timeline-status" aria-hidden="true">
-                      <LoaderCircle className="size-4 animate-spin" />
-                    </div>
-                    <div className="timeline-summary">
-                      <span>
-                        <strong>{locale === "ko" ? "요청 준비 중" : "Preparing request"}</strong>
-                        <small>{locale === "ko" ? "제품 방향 분석을 시작하고 있습니다." : "Starting product direction analysis."}</small>
-                      </span>
-                    </div>
-                  </div>
-                ) : null}
-              </div>
+            <Card className="architect-loading-card" aria-label="Architect progress">
+              <AgentLoadingStage label={locale === "ko" ? "요구사항 분석 중" : "Analyzing requirements"} />
               {architectError ? (
                 <p className="architect-error">{architectError}</p>
               ) : null}
             </Card>
           ) : null}
 
-          {submittedBrief && decisionSet ? (
-            <div className="chat-bubble user">
-              <span>{submittedBrief}</span>
-            </div>
-          ) : null}
+          {decisionSet ? (
+            <>
+              {isComplete ? (
+                <div className="architect-blueprint-workspace">
+                  <section className="architect-choice-board architect-blueprint-board" aria-label={locale === "ko" ? "설계 선택 보드" : "Blueprint choice board"}>
+                    <div className="choice-board-heading">
+                      <strong>{locale === "ko" ? "설계 보드" : "Blueprint board"}</strong>
+                      <span>{pinnedChoices.length} / {decisions.length}</span>
+                    </div>
+                    <div className="pinned-choice-list">
+                      <article className="pinned-choice-note architect-blueprint-note idea" style={{ ["--pin-index" as string]: 0 }}>
+                        <span>{locale === "ko" ? "아이디어" : "Your idea"}</span>
+                        <strong>{submittedBrief || userBrief}</strong>
+                      </article>
+                      {(bootstrapMutation.isPending || bootstrapMutation.isSuccess || bootstrapMutation.isError) ? (
+                        <article className={cn("pinned-choice-note", "architect-blueprint-note", "bootstrap", bootstrapMutation.isError && "failed")} style={{ ["--pin-index" as string]: 1 }}>
+                          <span>{locale === "ko" ? "부트스트랩" : "Bootstrap"}</span>
+                          <strong>
+                            {bootstrapMutation.isPending
+                              ? (locale === "ko" ? "초기 구조 준비 중" : "Preparing structure")
+                              : bootstrapMutation.isSuccess
+                                ? (locale === "ko" ? "실행 컨텍스트 준비 완료" : "Execution context ready")
+                                : (locale === "ko" ? "초기 구조 준비 실패" : "Bootstrap failed")}
+                          </strong>
+                          {bootstrapMutation.isSuccess && bootstrapSummary ? (
+                            <p>{[bootstrapSummary.summary, bootstrapSummary.profile].filter(Boolean).join(" · ")}</p>
+                          ) : null}
+                        </article>
+                      ) : null}
+                      {pinnedChoices.map(({ decision, option }, index) => (
+                        <article className="pinned-choice-note architect-blueprint-note" key={decision.id} style={{ ["--pin-index" as string]: index + 2 }}>
+                          <span>{decision.title}</span>
+                          <strong>{option?.label}</strong>
+                          <p>{option?.detail}</p>
+                        </article>
+                      ))}
+                    </div>
+                  </section>
 
-          {decisions.slice(0, Math.min(stepIndex, decisions.length)).map((decision) => {
-            const option = selectedOption(answers, decision);
-            return option ? (
-              <div className="chat-bubble user" key={decision.id}>
-                <span>{option.label}</span>
-              </div>
-            ) : null;
-          })}
-
-          {decisionSet && !isComplete && currentDecision ? (
-            <Card className="decision-card">
-              <div className="decision-kicker">
-                <Layers3 className="size-4" />
-                {currentDecision.section} · {stepIndex + 1} / {decisions.length}
-              </div>
-              <h2>{currentDecision.title}</h2>
-              <p>{currentDecision.prompt}</p>
-              {bootstrapMutation.isPending ? (
-                <div className="timeline-item running">
-                  <div className="timeline-status" aria-hidden="true">
-                    <LoaderCircle className="size-4 animate-spin" />
-                  </div>
-                  <div className="timeline-summary">
-                    <span>
-                      <strong>{locale === "ko" ? "프로젝트 부트스트랩 실행 중" : "Running project bootstrap"}</strong>
-                      <small>{locale === "ko" ? "Round 1 선택을 기반으로 초기 구조와 프로젝트 컨텍스트를 생성합니다." : "Creating the initial structure and project context from Round 1 choices."}</small>
-                    </span>
+                  <div className="architect-stage-panel">
+                    <Card className="decision-card complete architect-blueprint-status">
+                      {createBlueprintMutation.isPending ? (
+                        <AgentLoadingStage label={locale === "ko" ? "설계 도면 작성 중" : "Writing the product blueprint"} />
+                      ) : (
+                        <>
+                          <div className="decision-kicker">{locale === "ko" ? "PRODUCT.html ready" : "PRODUCT.html ready"}</div>
+                          <h2>{locale === "ko" ? "설계 도면 작성 완료" : "Product blueprint ready"}</h2>
+                          <p>{locale === "ko" ? "Codex가 작성한 제품 기획서를 확인한 뒤 DESIGN으로 이어갈 수 있습니다." : "Review the Codex-written product blueprint, then continue into DESIGN."}</p>
+                        </>
+                      )}
+                      {blueprintHtml ? (
+                        <div className="product-html-preview architect-design-preview">
+                          <iframe title="Product blueprint preview" srcDoc={blueprintHtml} />
+                        </div>
+                      ) : null}
+                      {bootstrapMutation.isError ? (
+                        <p className="architect-error">{bootstrapMutation.error instanceof Error ? bootstrapMutation.error.message : String(bootstrapMutation.error)}</p>
+                      ) : null}
+                      {createBlueprintMutation.isError ? <p className="architect-error">{locale === "ko" ? "PRODUCT.html을 생성하지 못했습니다." : "PRODUCT.html could not be created."}</p> : null}
+                    </Card>
                   </div>
                 </div>
-              ) : null}
-              {bootstrapMutation.isSuccess ? (
-                <div className="timeline-item completed">
-                  <div className="timeline-status" aria-hidden="true">
-                    <CheckCircle2 className="size-4" />
-                  </div>
-                  <div className="timeline-summary">
-                    <span>
-                      <strong>{locale === "ko" ? "프로젝트 부트스트랩 완료" : "Project bootstrap complete"}</strong>
-                      <small>{bootstrapMutation.data.command} {bootstrapMutation.data.args.join(" ")}</small>
-                    </span>
-                  </div>
-                </div>
-              ) : null}
-              {bootstrapMutation.isError ? (
-                <p className="architect-error">{bootstrapMutation.error instanceof Error ? bootstrapMutation.error.message : String(bootstrapMutation.error)}</p>
-              ) : null}
-              <div className="choice-grid">
-                {currentDecision.options.map((option, index) => {
-                  const selected = currentSelection === option.id;
-                  return (
-                    <button
-                      type="button"
-                      className={cn("choice-card", selected && "selected")}
-                      key={option.id}
-                      disabled={bootstrapMutation.isPending}
-                      onClick={() => selectDecisionOption(option.id)}
-                    >
-                      <span className="choice-check">{selected ? <Check className="size-4" /> : null}</span>
-                      <strong>{option.label}{index === 0 ? (locale === "ko" ? " · 추천" : " · Recommended") : ""}</strong>
-                      <span>{option.detail}</span>
-                    </button>
-                  );
-                })}
-              </div>
-              <div className="decision-actions">
-                <Button variant="outline" disabled={stepIndex === 0} onClick={() => setStepIndex((value) => Math.max(0, value - 1))}>
-                  <ArrowLeft className="size-4" />
-                  {locale === "ko" ? "이전" : "Back"}
-                </Button>
-                <Button disabled={!currentSelection || bootstrapMutation.isPending || stepIndex === roundOneEndIndex && !bootstrapMutation.isSuccess || saveBlueprintMutation.isPending || !canCreateBlueprint && stepIndex + 1 >= decisions.length} onClick={goNext}>
-                  {stepIndex + 1 >= decisions.length
-                    ? (locale === "ko" ? "제품 화면 만들기" : "Create product preview")
-                    : (locale === "ko" ? "다음" : "Next")}
-                  <ArrowRight className="size-4" />
-                </Button>
-              </div>
-            </Card>
-          ) : null}
+              ) : (
+                <>
+                  <aside className="architect-left-notes" aria-label={locale === "ko" ? "초기 입력과 부트스트랩 상태" : "Initial brief and bootstrap status"}>
+                    <div className="architect-brief-note">
+                      <span>{locale === "ko" ? "아이디어" : "Your IDEA"}</span>
+                      <p>{submittedBrief || userBrief}</p>
+                    </div>
 
-          {isComplete ? (
-            <Card className="decision-card complete">
-              <div className="decision-kicker">{locale === "ko" ? "Design preview ready" : "Design preview ready"}</div>
-              <h2>{locale === "ko" ? "디자인 미리보기" : "Design preview"}</h2>
-              <p>{locale === "ko" ? "방금 선택한 설계 결과를 실제 화면으로 확인한 뒤 DESIGN 또는 BUILD로 이어갈 수 있습니다." : "Review the generated screen, then continue into DESIGN or BUILD."}</p>
-              {productPreviewHtml ? (
-                <div className="product-html-preview architect-design-preview">
-                  <iframe title="Design preview" srcDoc={productPreviewHtml} />
-                </div>
-              ) : null}
-              {bootstrapMutation.isPending ? (
-                <p>{locale === "ko" ? "Round 1 선택을 기반으로 프로젝트 부트스트랩을 실행 중입니다." : "Running project bootstrap from Round 1 choices."}</p>
-              ) : null}
-              {bootstrapMutation.isError ? (
-                <p className="architect-error">{bootstrapMutation.error instanceof Error ? bootstrapMutation.error.message : String(bootstrapMutation.error)}</p>
-              ) : null}
-              {saveBlueprintMutation.isError ? <p className="architect-error">{locale === "ko" ? "제품 미리보기를 저장하지 못했습니다." : "The product preview could not be saved."}</p> : null}
-              {buildMutation.isError ? <p className="architect-error">{locale === "ko" ? "BUILD를 시작하지 못했습니다." : "BUILD could not be started."}</p> : null}
-            </Card>
+                    {(bootstrapMutation.isPending || bootstrapMutation.isSuccess || bootstrapMutation.isError) ? (
+                      <div className={cn("architect-brief-note", "architect-bootstrap-note", bootstrapMutation.isError && "failed")}>
+                        <span>{locale === "ko" ? "부트스트랩" : "Bootstrap"}</span>
+                        <p>
+                          {bootstrapMutation.isPending
+                            ? (locale === "ko" ? "프로젝트 초기 구조를 준비하고 있어요." : "Preparing the initial project structure.")
+                            : bootstrapMutation.isSuccess
+                              ? (locale === "ko" ? "초기 프로젝트 구조와 Codex 실행 컨텍스트를 준비했습니다." : "Initial project structure and Codex execution context are ready.")
+                              : (locale === "ko" ? "프로젝트 초기 구조 준비에 실패했습니다." : "Project bootstrap failed.")}
+                        </p>
+                        {bootstrapMutation.isSuccess && bootstrapSummary ? (
+                          <div className="architect-bootstrap-summary">
+                            <strong>{bootstrapSummary.summary}</strong>
+                            {bootstrapSummary.profile ? <small>{bootstrapSummary.profile}</small> : null}
+                          </div>
+                        ) : null}
+                      </div>
+                    ) : null}
+                  </aside>
+
+                  <div className="architect-stage-panel">
+                    {currentDecision ? (
+                      <Card className="decision-card">
+                        <div className="decision-kicker">
+                          <Layers3 className="size-4" />
+                          {currentDecision.section} · {stepIndex + 1} / {decisions.length}
+                        </div>
+                        <h2>{currentDecision.title}</h2>
+                        <p>{currentDecision.prompt}</p>
+                        {bootstrapMutation.isError ? (
+                          <p className="architect-error">{bootstrapMutation.error instanceof Error ? bootstrapMutation.error.message : String(bootstrapMutation.error)}</p>
+                        ) : null}
+                        <div className="choice-grid">
+                          {currentDecision.options.map((option, index) => {
+                            const selected = currentSelection === option.id;
+                            return (
+                              <button
+                                type="button"
+                                className={cn("choice-card", selected && "selected")}
+                                key={option.id}
+                                disabled={bootstrapMutation.isPending || createBlueprintMutation.isPending}
+                                onClick={() => selectDecisionOption(option.id)}
+                              >
+                                <span className="choice-check">{selected ? <Check className="size-4" /> : null}</span>
+                                <strong>{option.label}{index === 0 ? (locale === "ko" ? " · 추천" : " · Recommended") : ""}</strong>
+                                <span>{option.detail}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                        <div className="decision-actions">
+                          <Button variant="outline" disabled={stepIndex === 0} onClick={() => setStepIndex((value) => Math.max(0, value - 1))}>
+                            <ArrowLeft className="size-4" />
+                            {locale === "ko" ? "이전" : "Back"}
+                          </Button>
+                          <Button disabled={!currentSelection || bootstrapMutation.isPending || createBlueprintMutation.isPending || !canCreateBlueprint && stepIndex + 1 >= decisions.length} onClick={goNext}>
+                            {stepIndex + 1 >= decisions.length
+                              ? (locale === "ko" ? "PRODUCT.html 만들기" : "Create PRODUCT.html")
+                              : (locale === "ko" ? "다음" : "Next")}
+                            <ArrowRight className="size-4" />
+                          </Button>
+                        </div>
+                      </Card>
+                    ) : null}
+                  </div>
+
+                  <aside className="architect-choice-board" aria-label={locale === "ko" ? "선택 히스토리" : "Choice history"}>
+                    <div className="choice-board-heading">
+                      <strong>{locale === "ko" ? "선택 보드" : "Choice board"}</strong>
+                      <span>{pinnedChoices.length} / {decisions.length}</span>
+                    </div>
+                    {pinnedChoices.length ? (
+                      <div className="pinned-choice-list">
+                        {pinnedChoices.map(({ decision, option }, index) => (
+                          <article className="pinned-choice-note" key={decision.id} style={{ ["--pin-index" as string]: index }}>
+                            <span>{decision.title}</span>
+                            <strong>{option?.label}</strong>
+                            <p>{option?.detail}</p>
+                          </article>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="choice-board-empty">{locale === "ko" ? "선택지가 여기에 정리됩니다." : "Choices will be pinned here."}</p>
+                    )}
+                  </aside>
+                </>
+              )}
+            </>
           ) : null}
         </section>
       </div>
@@ -478,17 +492,14 @@ export function ArchitectProgressPage() {
           <Card className="app-modal">
             <p className="modal-eyebrow">CONTINUE TO?</p>
             <h2>{locale === "ko" ? "다음 단계 선택" : "Choose the next step"}</h2>
-            <p>{locale === "ko" ? "현재 설계를 바탕으로 디자인 검토를 진행하거나 바로 BUILD를 시작합니다." : "Use the current blueprint to continue into design review or start BUILD."}</p>
+            <p>{locale === "ko" ? "현재 설계를 바탕으로 디자인 검토를 시작합니다." : "Use the current blueprint to continue into design review."}</p>
             <div className="modal-actions">
               <Button
                 variant="outline"
-                disabled={saveBlueprintMutation.isPending}
-                onClick={() => saveBlueprintMutation.mutate("design")}
+                disabled={createBlueprintMutation.isPending}
+                onClick={() => navigate("/design", { state: { fromArchitect: true } })}
               >
                 DESIGN
-              </Button>
-              <Button disabled={saveBlueprintMutation.isPending || buildMutation.isPending || currentJob?.status === "running"} onClick={() => saveBlueprintMutation.mutate("build")}>
-                BUILD
               </Button>
               <Button variant="outline" onClick={() => setContinuePromptOpen(false)}>CANCEL</Button>
             </div>

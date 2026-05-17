@@ -1,5 +1,5 @@
 import { Card } from "@/components/ui/card";
-import { ArtifactHistoryPanel } from "@/pages/design/artifact-workbench/ArtifactHistoryPanel";
+import { ArtifactCodexPanel } from "@/pages/design/artifact-workbench/ArtifactCodexPanel";
 import { ArtifactInspector } from "@/pages/design/artifact-workbench/ArtifactInspector";
 import { ArtifactLayerPanel } from "@/pages/design/artifact-workbench/ArtifactLayerPanel";
 import { ArtifactRequiredState } from "@/pages/design/artifact-workbench/ArtifactRequiredState";
@@ -31,15 +31,11 @@ export function ArtifactWorkbench(props: ArtifactWorkbenchProps) {
           />
 
           <div className="design-artifact-layout enterprise">
-            <ArtifactLayerPanel
-              trackedArtifacts={props.trackedArtifacts}
-              layerSearch={props.layerSearch}
-              setLayerSearch={props.setLayerSearch}
-              filteredTargets={props.filteredTargets}
-              selectedTarget={props.selectedTarget}
-              setSelectedTarget={props.setSelectedTarget}
-              setArtifactMode={props.setArtifactMode}
-              onHighlightTarget={props.onHighlightTarget}
+            <ArtifactCodexPanel
+              aiInstruction={props.aiInstruction}
+              setAiInstruction={props.setAiInstruction}
+              timelineItems={props.timelineItems}
+              onApplySelectedTargetAiInstruction={props.onApplySelectedTargetAiInstruction}
             />
 
             <ArtifactStage
@@ -52,25 +48,32 @@ export function ArtifactWorkbench(props: ArtifactWorkbenchProps) {
               setSourceDraft={props.setSourceDraft}
             />
 
-            <ArtifactInspector
-              selectedTarget={props.selectedTarget}
-              artifactTab={props.artifactTab}
-              setArtifactTab={props.setArtifactTab}
-              aiInstruction={props.aiInstruction}
-              setAiInstruction={props.setAiInstruction}
-              attributeDraft={props.attributeDraft}
-              setAttributeDraft={props.setAttributeDraft}
-              outerHtmlDraft={props.outerHtmlDraft}
-              setOuterHtmlDraft={props.setOuterHtmlDraft}
-              sourceDraft={props.sourceDraft}
-              setSourceDraft={props.setSourceDraft}
-              onCommitPatch={props.onCommitPatch}
-              onApplyAttributeDraft={props.onApplyAttributeDraft}
-              onApplySelectedTargetAiInstruction={props.onApplySelectedTargetAiInstruction}
-            />
+            <div className="design-right-panel">
+              <ArtifactLayerPanel
+                trackedArtifacts={props.trackedArtifacts}
+                layerSearch={props.layerSearch}
+                setLayerSearch={props.setLayerSearch}
+                filteredTargets={props.filteredTargets}
+                selectedTarget={props.selectedTarget}
+                setSelectedTarget={props.setSelectedTarget}
+                setArtifactMode={props.setArtifactMode}
+                onHighlightTarget={props.onHighlightTarget}
+              />
+              <ArtifactInspector
+                selectedTarget={props.selectedTarget}
+                artifactTab={props.artifactTab}
+                setArtifactTab={props.setArtifactTab}
+                attributeDraft={props.attributeDraft}
+                setAttributeDraft={props.setAttributeDraft}
+                outerHtmlDraft={props.outerHtmlDraft}
+                setOuterHtmlDraft={props.setOuterHtmlDraft}
+                sourceDraft={props.sourceDraft}
+                setSourceDraft={props.setSourceDraft}
+                onCommitPatch={props.onCommitPatch}
+                onApplyAttributeDraft={props.onApplyAttributeDraft}
+              />
+            </div>
           </div>
-
-          <ArtifactHistoryPanel sourceHistory={props.sourceHistory} redoHistory={props.redoHistory} />
         </>
       ) : (
         <ArtifactRequiredState />
@@ -80,12 +83,9 @@ export function ArtifactWorkbench(props: ArtifactWorkbenchProps) {
 
       <ArtifactWorkbenchFooter
         hasProductHtml={props.hasProductHtml}
-        artifactMode={props.artifactMode}
-        sourceDraft={props.sourceDraft}
         sourceHistory={props.sourceHistory}
         redoHistory={props.redoHistory}
         isSaving={props.isSaving}
-        onCommitPatch={props.onCommitPatch}
         onUndo={props.onUndo}
         onRedo={props.onRedo}
         onSave={props.onSave}

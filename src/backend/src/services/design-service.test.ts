@@ -3,7 +3,7 @@ import { composeDesignMarkdown } from "@backend/services/design-service";
 import type { DesignRuntimeResponse } from "@backend/types";
 
 describe("design service", () => {
-  test("composes DESIGN.md from runtime output", () => {
+  test("composes DESIGN runtime markdown from runtime output", () => {
     const response: DesignRuntimeResponse = {
       id: "design-1",
       projectRoot: "/tmp/project",
@@ -23,8 +23,11 @@ describe("design service", () => {
         { label: "Implement", detail: "Apply the component states in code.", owner: "codex" }
       ],
       artifacts: [
-        { path: "DESIGN.md", type: "text/markdown", title: "Design brief", description: "Runtime output." },
-        { path: "DESIGN.runtime.json", type: "application/json", title: "Runtime JSON", description: "Structured output." }
+        { path: "DESIGN/index.html", type: "text/html", title: "Makeover entry", description: "Interactive UI." },
+        { path: "DESIGN/components/cards.html", type: "text/html", title: "Cards", description: "Component partial." }
+      ],
+      files: [
+        { path: "DESIGN/index.html", type: "text/html", title: "Makeover entry", content: "<!doctype html><html><body>Design</body></html>" }
       ]
     };
 
@@ -33,6 +36,7 @@ describe("design service", () => {
     expect(markdown).toContain("Runtime mode: Wireframe");
     expect(markdown).toContain("## Layout");
     expect(markdown).toContain("**Create frames**");
-    expect(markdown).toContain("`DESIGN.runtime.json`");
+    expect(markdown).toContain("`DESIGN/index.html`");
+    expect(markdown).toContain("## Generated Files");
   });
 });

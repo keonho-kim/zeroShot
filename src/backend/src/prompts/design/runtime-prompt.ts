@@ -10,6 +10,13 @@ export const designRuntimeRulesPrompt = `Rules:
 - Keep the design direction consistent with ZeroShot's light grid workbench: flat white panels, hard black borders, editorial serif labels, and monospace operational controls.
 - Make the output concrete enough for a designer or Codex agent to execute without guessing.
 - Include exactly the artifacts that should be tracked by the design runtime.
+- Generate actual DESIGN files. DESIGN/index.html is required and must be the interactive HTML entry.
+- Optional supporting HTML files must live under DESIGN/pages/ or DESIGN/components/; optional assets must live under DESIGN/assets/.
+- Do not create root PRODUCT.html, root DESIGN.md, or root DESIGN.runtime.json.
+- Treat the user's design request as directional input, not a literal wireframe to copy.
+- Use ARCHITECT/PRODUCT.html as the primary product contract and produce a polished, modern UI/UX direction that improves on the user's rough wording.
+- When browsing/search capability is available, study comparable apps, dashboards, or product experiences before choosing layout, interaction flow, density, and visual hierarchy. Digest the patterns; do not copy branding or copyrighted UI.
+- Prefer a mature product-grade interface over a simplistic placeholder: include realistic states, navigation, content hierarchy, empty/error/loading states, and refined responsive behavior.
 - Include wireframe or presentation editing details when the mode requests them, but do not pretend external files were created.
 - When recommending HTML artifact edits, require stable data-od-id attributes on major editable elements, data-od-edit="text|link|image|container" where clear, and human-readable data-od-label values.
 - Preserve data-od-id attributes during any proposed source changes so the DESIGN editor can patch selected elements deterministically.`;
@@ -45,6 +52,7 @@ export function buildDesignPrompt(params: {
   goal: string;
   locale: string;
   productHtml: string;
+  architectContext: string;
   resourceContext: string;
 }): string {
   const language = params.locale === "ko" ? "Korean" : "English";
@@ -66,6 +74,9 @@ ${params.goal || "Continue from the current product blueprint."}
 Active resource context:
 ${params.resourceContext || "none"}
 
-PRODUCT.html source:
-${params.productHtml || "No PRODUCT.html was found. Work from the user design request and project context."}`;
+ARCHITECT folder context:
+${params.architectContext || "No ARCHITECT folder context was found."}
+
+ARCHITECT/PRODUCT.html source:
+${params.productHtml || "No ARCHITECT/PRODUCT.html was found. Work from the user design request and project context."}`;
 }

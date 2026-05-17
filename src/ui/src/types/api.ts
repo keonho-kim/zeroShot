@@ -85,7 +85,22 @@ export interface CodexSettings {
     modelProvider?: string;
     approvalPolicy?: string;
     sandboxMode?: string;
+    modelReasoningEffort?: string;
+    approvalsReviewer?: string;
+    goalsEnabled?: boolean;
   };
+}
+
+export interface ProjectCodexSettingsStatus {
+  projectRoot: string;
+  configPath: string;
+  exists: boolean;
+  trusted: boolean;
+  model?: string;
+  modelReasoningEffort?: string;
+  approvalPolicy?: string;
+  sandboxMode?: string;
+  goalsEnabled: boolean;
 }
 
 export interface JobSnapshot {
@@ -139,6 +154,13 @@ export interface DesignRuntimeArtifact {
   description: string;
 }
 
+export interface DesignRuntimeFile {
+  path: string;
+  type: string;
+  title: string;
+  content: string;
+}
+
 export interface DesignRuntimeResponse {
   id: string;
   projectRoot: string;
@@ -150,6 +172,7 @@ export interface DesignRuntimeResponse {
   sections: DesignRuntimeSection[];
   actions: DesignRuntimeAction[];
   artifacts: DesignRuntimeArtifact[];
+  files: DesignRuntimeFile[];
 }
 
 export interface DesignProgressEvent {

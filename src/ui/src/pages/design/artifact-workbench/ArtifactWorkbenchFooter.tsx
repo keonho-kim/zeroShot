@@ -1,30 +1,20 @@
-import { ArrowRight, Code2, LoaderCircle, Save, Undo2 } from "lucide-react";
+import { ArrowRight, LoaderCircle, Save, Undo2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import type { ArtifactEditorMode, ArtifactHistoryEntry } from "@/entities/design/artifact-editor";
-import type { CommitArtifactPatch } from "@/pages/design/artifact-workbench/types";
+import type { ArtifactHistoryEntry } from "@/entities/design/artifact-editor";
 
 export function ArtifactWorkbenchFooter(props: {
   hasProductHtml: boolean;
-  artifactMode: ArtifactEditorMode;
-  sourceDraft: string;
   sourceHistory: ArtifactHistoryEntry[];
   redoHistory: ArtifactHistoryEntry[];
   isSaving: boolean;
-  onCommitPatch: CommitArtifactPatch;
   onUndo: () => void;
   onRedo: () => void;
   onSave: () => void;
 }) {
   return (
     <div className="design-artifact-footer">
-      <span>{props.hasProductHtml ? "PRODUCT BLUEPRINT loaded" : "PRODUCT BLUEPRINT required"}</span>
+      <span>{props.hasProductHtml ? "DESIGN/index.html loaded" : "DESIGN/index.html required"}</span>
       <div className="design-artifact-actions">
-        {props.artifactMode === "source" ? (
-          <Button variant="outline" onClick={() => props.onCommitPatch({ kind: "set-full-source", source: props.sourceDraft })}>
-            <Code2 aria-hidden="true" />
-            Apply Source
-          </Button>
-        ) : null}
         <Button variant="outline" disabled={!props.sourceHistory.length} onClick={props.onUndo}>
           <Undo2 aria-hidden="true" />
           Undo

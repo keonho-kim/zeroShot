@@ -33,13 +33,31 @@ function entriesSignature(entries: DirectoryEntry[]): string {
   return entries.map(entrySignature).join("::");
 }
 
+export function prioritizeSelectedDirectory(entries: DirectoryEntry[], selectedPath: string): DirectoryEntry[] {
+  if (!selectedPath) {
+    return entries;
+  }
+
+  const selectedIndex = entries.findIndex((entry) => entry.isDirectory && entry.path === selectedPath);
+  if (selectedIndex <= 0) {
+    return entries;
+  }
+
+  return [
+    entries[selectedIndex],
+    ...entries.slice(0, selectedIndex),
+    ...entries.slice(selectedIndex + 1)
+  ];
+}
+
 export function mergeTreeChildren(
   treeChildrenByPath: Record<string, DirectoryEntry[]>,
   path: string,
   entries: DirectoryEntry[]
 ): Record<string, DirectoryEntry[]> {
-  const current = treeChildrenByPath[path] ?? [];
-  if (entriesSignature(current) === entriesSignature(entries)) {
+  const hasCurrent = Object.hasOwn(treeChildrenByPath, path);
+  const current = hasCurrent ? treeChildrenByPath[path] : [];
+  if (hasCurrent && entriesSignature(current) === entriesSignature(entries)) {
     return treeChildrenByPath;
   }
 

@@ -53,7 +53,7 @@ export function ArchitectPage() {
                 className={omakaseMode ? "build-choice-card" : "build-choice-card selected"}
                 onClick={() => setOmakaseMode(false)}
               >
-                <span>{locale === "ko" ? "라운드 질문" : "Guided rounds"}</span>
+                <span>{locale === "ko" ? "같이 설계하기" : "Plan Together"}</span>
                 <small>{locale === "ko" ? "제품 개요, 상세, 개발 상세 질문을 순서대로 답합니다." : "Answer product overview, product detail, and development detail rounds."}</small>
               </button>
               <button
@@ -62,13 +62,21 @@ export function ArchitectPage() {
                 onClick={() => setOmakaseMode(true)}
               >
                 <span>{locale === "ko" ? "오마카세 모드" : "Omakase mode"}</span>
-                <small>{locale === "ko" ? "Codex가 질문을 만들고 각 답변까지 자율주행처럼 선택합니다." : "Codex generates the questions and simulates every answer autonomously."}</small>
+                <small>
+                  {locale === "ko"
+                    ? "AI 에이전트가 요구사항부터 기능 구성까지 알아서 판단해 설계를 완성합니다."
+                    : "AI agent decides everything from requirements to feature structure and completes the design."}
+                </small>
               </button>
             </div>
             <Textarea
               value={userBrief}
               onChange={(event) => setUserBrief(event.target.value)}
-              placeholder={locale === "ko" ? "예: 기관 알림, 준비물, 일정, 선생님 메시지를 한곳에서 확인하고 바로 대응하는 보호자용 앱" : "Example: A parent app for checking school notices, supplies, schedules, and teacher messages in one place."}
+              placeholder={
+                locale === "ko"
+                  ? "어떤 앱을 만들고 싶나요? 대충 적어도 괜찮아요. 예: 헬스장 회원 예약 앱"
+                  : "What kind of app do you want to build? Rough ideas are fine. Example: A booking app for gym members."
+              }
             />
             <div className="decision-actions architect-input-actions">
               <Button type="button" disabled={!userBrief.trim()} onClick={startArchitectFlow}>

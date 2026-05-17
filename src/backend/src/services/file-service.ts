@@ -3,6 +3,9 @@ import { mkdir, readFile, rm, stat } from "node:fs/promises";
 import { isAbsolute, join } from "node:path";
 import { ensureFileContent, resolveExistingPath } from "@backend/core/path-guards.js";
 
+export const architectProductPath = "ARCHITECT/PRODUCT.html";
+export const designEntryPath = "DESIGN/index.html";
+
 export interface ArtifactManifestEntry {
   path: string;
   type: string;
@@ -24,7 +27,7 @@ export interface ProjectFileSnapshot {
   updatedAt: string;
 }
 
-export async function writeProjectDocument(projectRoot: string, filename: "UPDATE.md" | "DESIGN.md" | "DESIGN.runtime.json", content: string): Promise<void> {
+export async function writeProjectDocument(projectRoot: string, filename: "UPDATE.md", content: string): Promise<void> {
   await ensureFileContent(join(projectRoot, filename), content);
 }
 
@@ -33,26 +36,30 @@ export async function writeUpdateDocument(projectRoot: string, content: string):
 }
 
 export async function readProductHtml(projectRoot: string): Promise<string> {
-  return readFile(join(projectRoot, "PRODUCT.html"), "utf8");
+  return readFile(join(projectRoot, architectProductPath), "utf8");
 }
 
-export async function readProductHtmlSnapshot(projectRoot: string): Promise<ProjectFileSnapshot> {
-  const path = join(projectRoot, "PRODUCT.html");
+async function readProjectFileSnapshot(projectRoot: string, relativePath: string, mime: string): Promise<ProjectFileSnapshot> {
+  const path = join(projectRoot, relativePath);
   const [content, fileStats] = await Promise.all([
     readFile(path, "utf8"),
     stat(path)
   ]);
   return {
-    path: "PRODUCT.html",
+    path: relativePath,
     content,
-    mime: "text/html",
+    mime,
     etag: fileEtag(content, fileStats.mtimeMs),
     updatedAt: fileStats.mtime.toISOString()
   };
 }
 
+export async function readProductHtmlSnapshot(projectRoot: string): Promise<ProjectFileSnapshot> {
+  return readProjectFileSnapshot(projectRoot, architectProductPath, "text/html");
+}
+
 export async function writeProductHtml(projectRoot: string, content: string): Promise<void> {
-  await ensureFileContent(join(projectRoot, "PRODUCT.html"), content);
+  await ensureFileContent(join(projectRoot, architectProductPath), content);
 }
 
 export async function writeProductHtmlSnapshot(projectRoot: string, content: string, etag?: string): Promise<ProjectFileSnapshot> {
@@ -64,6 +71,34 @@ export async function writeProductHtmlSnapshot(projectRoot: string, content: str
   }
   await writeProductHtml(projectRoot, content);
   return readProductHtmlSnapshot(projectRoot);
+}
+
+export async function readDesignHtml(projectRoot: string): Promise<string> {
+  return readFile(join(projectRoot, designEntryPath), "utf8");
+}
+
+export async function readDesignHtmlSnapshot(projectRoot: string): Promise<ProjectFileSnapshot> {
+  return readProjectFileSnapshot(projectRoot, designEntryPath, "text/html");
+}
+
+export async function writeDesignHtml(projectRoot: string, content: string): Promise<void> {
+  await ensureFileContent(join(projectRoot, designEntryPath), content);
+}
+
+export async function writeDesignHtmlSnapshot(projectRoot: string, content: string, etag?: string): Promise<ProjectFileSnapshot> {
+  if (etag) {
+    const current = await readDesignHtmlSnapshot(projectRoot);
+    if (current.etag !== etag) {
+      throw Object.assign(new Error("DESIGN artifact changed since it was loaded."), { statusCode: 409 });
+    }
+  }
+  await writeDesignHtml(projectRoot, content);
+  return readDesignHtmlSnapshot(projectRoot);
+}
+
+export async function writeArtifactFile(projectRoot: string, relativePath: string, content: string): Promise<void> {
+  const safePath = assertValidArtifactPath(relativePath);
+  await ensureFileContent(join(projectRoot, safePath), content);
 }
 
 export async function readArtifactManifest(projectRoot: string): Promise<ArtifactManifest> {

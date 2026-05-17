@@ -103,6 +103,23 @@
   text-transform: uppercase;
 }
 
+.design-zoom-control button {
+  min-height: 2.1rem;
+  border: 2px solid var(--border);
+  border-radius: 2px;
+  background: var(--panel);
+  padding: 0.35rem 0.55rem;
+  color: var(--foreground);
+  font-size: 0.72rem;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.design-zoom-control button:hover {
+  background: var(--foreground);
+  color: var(--background);
+}
+
 .design-zoom-control input {
   width: 8rem;
   accent-color: var(--foreground);
@@ -183,6 +200,7 @@
   overflow: auto;
 }
 
+.design-codex-panel,
 .design-layer-panel {
   display: grid;
   align-content: start;
@@ -190,6 +208,81 @@
   max-height: 640px;
   min-height: 0;
   overflow: auto;
+}
+
+.design-right-panel {
+  display: grid;
+  align-content: start;
+  gap: 0.75rem;
+  min-height: 0;
+}
+
+.design-codex-chat {
+  display: grid;
+  gap: 0.55rem;
+  border: 2px solid var(--border);
+  border-radius: 2px;
+  background: var(--surface);
+  padding: 0.75rem;
+}
+
+.design-codex-chat span {
+  color: var(--primary);
+  font-size: 0.7rem;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.design-codex-chat strong,
+.design-codex-chat p {
+  min-width: 0;
+}
+
+.design-codex-chat p {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+  line-height: 1.45;
+}
+
+.design-codex-chat textarea {
+  min-height: 5rem;
+  font-size: 0.78rem;
+}
+
+.design-work-log {
+  display: grid;
+  gap: 0.55rem;
+  border: 2px solid var(--border);
+  border-radius: 2px;
+  background: var(--surface);
+  padding: 0.75rem;
+}
+
+.design-work-log > strong {
+  font-size: 0.8rem;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.design-work-log div {
+  display: grid;
+  gap: 0.15rem;
+  border-top: 2px solid var(--border);
+  padding-top: 0.5rem;
+}
+
+.design-work-log span {
+  font-size: 0.75rem;
+  font-weight: 850;
+}
+
+.design-work-log small,
+.design-work-log p {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: 0.72rem;
+  line-height: 1.4;
 }
 
 .design-artifact-chip-list {
@@ -331,7 +424,7 @@
 .design-editor-tabs {
   display: grid;
   gap: 0.35rem;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .design-editor-tabs button {
@@ -499,4 +592,3 @@
   font-size: 0.875rem;
   line-height: 1.5;
 }
-

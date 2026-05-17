@@ -1,4 +1,4 @@
-import { MousePointer2, Sparkles } from "lucide-react";
+import { MousePointer2 } from "lucide-react";
 import type { Dispatch, SetStateAction } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -12,10 +12,7 @@ import { cn } from "@/utils/cn";
 
 const editorTabs = [
   ["content", "Content"],
-  ["style", "Style"],
-  ["attributes", "Attributes"],
-  ["html", "HTML"],
-  ["source", "Source"]
+  ["style", "Style"]
 ] satisfies Array<[ArtifactEditorTab, string]>;
 
 const styleFields = [
@@ -37,8 +34,6 @@ export function ArtifactInspector(props: {
   selectedTarget: ArtifactEditTarget | null;
   artifactTab: ArtifactEditorTab;
   setArtifactTab: Dispatch<SetStateAction<ArtifactEditorTab>>;
-  aiInstruction: string;
-  setAiInstruction: Dispatch<SetStateAction<string>>;
   attributeDraft: string;
   setAttributeDraft: Dispatch<SetStateAction<string>>;
   outerHtmlDraft: string;
@@ -47,7 +42,6 @@ export function ArtifactInspector(props: {
   setSourceDraft: Dispatch<SetStateAction<string>>;
   onCommitPatch: CommitArtifactPatch;
   onApplyAttributeDraft: () => void;
-  onApplySelectedTargetAiInstruction: () => void;
 }) {
   if (!props.selectedTarget) {
     return (
@@ -55,7 +49,7 @@ export function ArtifactInspector(props: {
         <div className="design-empty-source">
           <MousePointer2 aria-hidden="true" />
           <strong>요소를 선택하세요</strong>
-          <span>미리보기나 레이어 패널에서 target을 선택하면 Content, Style, Attributes, HTML, Source 탭이 활성화됩니다.</span>
+          <span>미리보기나 레이어 패널에서 target을 선택하면 Content와 Style 편집이 활성화됩니다.</span>
         </div>
       </aside>
     );
@@ -85,13 +79,7 @@ export function ArtifactInspector(props: {
       </div>
 
       {props.artifactTab === "content" ? (
-        <ArtifactContentEditor
-          target={target}
-          aiInstruction={props.aiInstruction}
-          setAiInstruction={props.setAiInstruction}
-          onCommitPatch={props.onCommitPatch}
-          onApplySelectedTargetAiInstruction={props.onApplySelectedTargetAiInstruction}
-        />
+        <ArtifactContentEditor target={target} onCommitPatch={props.onCommitPatch} />
       ) : null}
 
       {props.artifactTab === "style" ? (
@@ -147,10 +135,7 @@ export function ArtifactInspector(props: {
 
 function ArtifactContentEditor(props: {
   target: ArtifactEditTarget;
-  aiInstruction: string;
-  setAiInstruction: Dispatch<SetStateAction<string>>;
   onCommitPatch: CommitArtifactPatch;
-  onApplySelectedTargetAiInstruction: () => void;
 }) {
   return (
     <div className="design-manual-controls">
@@ -227,14 +212,6 @@ function ArtifactContentEditor(props: {
           />
         </label>
       )}
-      <label>
-        <span>AI scoped instruction</span>
-        <Textarea value={props.aiInstruction} onChange={(event) => props.setAiInstruction(event.target.value)} placeholder="예: 이 CTA를 더 명확한 결제 시작 액션으로 바꿔주세요." />
-      </label>
-      <Button variant="outline" disabled={!props.aiInstruction.trim()} onClick={props.onApplySelectedTargetAiInstruction}>
-        <Sparkles aria-hidden="true" />
-        선택 요소를 DESIGN 요청으로 보내기
-      </Button>
     </div>
   );
 }

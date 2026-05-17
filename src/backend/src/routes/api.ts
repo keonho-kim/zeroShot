@@ -2,16 +2,16 @@ import express, { type NextFunction, type Request, type RequestHandler, type Res
 import { stat } from "node:fs/promises";
 import { basename, relative } from "node:path";
 import { loadAppConfig, saveAppConfig } from "@backend/config/app-config.js";
-import { loadCodexSettings, saveCodexSettings } from "@backend/config/codex-config.js";
-import { assertPathWithinRoots, isWithin, listDirectoryEntries } from "@backend/core/path-guards.js";
+import { loadCodexSettings, readProjectCodexSettings, saveCodexSettings, saveProjectCodexSettings } from "@backend/config/codex-config.js";
+import { assertPathWithinRoots, assertProjectRootWithinRoots, isWithin, listDirectoryEntries } from "@backend/core/path-guards.js";
 import { readAuthStatus, saveAuthFile } from "@backend/services/auth-service.js";
-import { buildArchitectDecisions, type ArchitectProgressEvent } from "@backend/services/architect-service.js";
+import { buildArchitectDecisions, buildArchitectProductHtml, type ArchitectProgressEvent } from "@backend/services/architect-service.js";
 import { readLatestDesignSession, readProjectSettings, recordArchitectSession, recordDesignSession, saveProjectSettings } from "@backend/services/app-storage-service.js";
 import { inferBootstrapRequest, runBootstrap } from "@backend/services/bootstrap-service.js";
 import { buildDesignRuntime } from "@backend/services/design-service.js";
 import { highlightCode, normalizeHighlightLanguage } from "@backend/services/code-highlighting-service.js";
 import { appendAppEvent } from "@backend/services/event-log-service.js";
-import { createDirectory, deleteEntry, readProductHtml, readProductHtmlSnapshot, upsertArtifactManifest, writeProductHtml, writeProductHtmlSnapshot, writeProjectDocument, writeUpdateDocument } from "@backend/services/file-service.js";
+import { createDirectory, deleteEntry, designEntryPath, readDesignHtmlSnapshot, readProductHtml, readProductHtmlSnapshot, upsertArtifactManifest, writeArtifactFile, writeDesignHtmlSnapshot, writeProductHtml, writeProductHtmlSnapshot, writeUpdateDocument } from "@backend/services/file-service.js";
 import { readRunDetail, listRuns } from "@backend/services/history-service.js";
 import { jobManager } from "@backend/services/job-manager.js";
 import { readProjectHistoryMeta, readProjectState } from "@backend/services/project-service.js";
@@ -26,7 +26,7 @@ function asyncHandler(handler: RequestHandler): RequestHandler {
 
 async function getValidatedProjectRoot(projectRoot: string): Promise<string> {
   const config = await loadAppConfig();
-  return assertPathWithinRoots(projectRoot, getBrowsableRoots(config), "browsable roots");
+  return assertProjectRootWithinRoots(projectRoot, getBrowsableRoots(config), "browsable roots");
 }
 
 function getBrowsableRoots(config: Awaited<ReturnType<typeof loadAppConfig>>): string[] {
@@ -273,6 +273,11 @@ router.get("/projects/product-artifact", asyncHandler(async (req: Request, res: 
   res.json(await readProductHtmlSnapshot(projectRoot));
 }));
 
+router.get("/projects/design-artifact", asyncHandler(async (req: Request, res: Response) => {
+  const projectRoot = await getValidatedProjectRoot(String(req.query.projectRoot ?? ""));
+  res.json(await readDesignHtmlSnapshot(projectRoot));
+}));
+
 router.post("/architect/decisions", asyncHandler(async (req: Request, res: Response) => {
   const auth = await readAuthStatus();
   if (!auth.valid) {
@@ -416,6 +421,64 @@ router.post("/architect/bootstrap", asyncHandler(async (req: Request, res: Respo
   res.json(await runBootstrap(request));
 }));
 
+router.post("/architect/product-html", asyncHandler(async (req: Request, res: Response) => {
+  const auth = await readAuthStatus();
+  if (!auth.valid) {
+    res.status(412).json(auth);
+    return;
+  }
+
+  const body = req.body as {
+    projectRoot?: string;
+    userBrief?: string;
+    decisionSet?: unknown;
+    answers?: Record<string, string>;
+    locale?: string;
+    model?: string;
+    activeSkillId?: string;
+    activeDesignTemplateId?: string;
+  };
+  const projectRoot = await getValidatedProjectRoot(String(body.projectRoot ?? ""));
+  if (!body.decisionSet || typeof body.userBrief !== "string" || !body.userBrief.trim()) {
+    res.status(400).json({ message: "Architect decisions and user brief are required" });
+    return;
+  }
+
+  try {
+    const appConfig = await loadAppConfig();
+    const html = await buildArchitectProductHtml({
+      projectRoot,
+      userBrief: body.userBrief.trim(),
+      decisionSet: body.decisionSet as Parameters<typeof buildArchitectProductHtml>[0]["decisionSet"],
+      answers: body.answers ?? {},
+      locale: body.locale === "ko" ? "ko" : "en",
+      reasoning: appConfig.defaults.planReasoning,
+      model: typeof body.model === "string" && body.model.trim() ? body.model.trim() : undefined,
+      additionalDirectories: [appConfig.resourceRoots.skills, appConfig.resourceRoots.designTemplates],
+      resourceContext: await buildResourcePromptContext({
+        activeSkillId: body.activeSkillId,
+        activeDesignTemplateId: body.activeDesignTemplateId
+      })
+    });
+    const file = await writeProductHtmlSnapshot(projectRoot, html);
+    await upsertArtifactManifest(projectRoot, [{
+      path: file.path,
+      type: "text/html",
+      title: "PRODUCT BLUEPRINT",
+      entry: true
+    }]);
+    await appendAppEvent("product_artifact_saved", {
+      projectRoot,
+      path: file.path,
+      etag: file.etag
+    });
+    res.json(file);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    res.status(502).json({ message: `Codex could not create PRODUCT.html: ${message}` });
+  }
+}));
+
 router.put("/projects/product-html", asyncHandler(async (req: Request, res: Response) => {
   const body = req.body as { projectRoot: string; content?: string; markdownMirror?: string };
   const projectRoot = await getValidatedProjectRoot(body.projectRoot);
@@ -426,9 +489,9 @@ router.put("/projects/product-html", asyncHandler(async (req: Request, res: Resp
 
   await writeProductHtml(projectRoot, body.content);
   await upsertArtifactManifest(projectRoot, [{
-    path: "PRODUCT.html",
+    path: "ARCHITECT/PRODUCT.html",
     type: "text/html",
-    title: "PRODUCT.html",
+    title: "ARCHITECT/PRODUCT.html",
     entry: true
   }]);
   await appendAppEvent("product_html_saved", { projectRoot });
@@ -446,12 +509,40 @@ router.put("/projects/product-artifact", asyncHandler(async (req: Request, res: 
   try {
     const file = await writeProductHtmlSnapshot(projectRoot, body.content, body.etag);
     await upsertArtifactManifest(projectRoot, [{
-      path: "PRODUCT.html",
+      path: file.path,
       type: "text/html",
       title: "PRODUCT BLUEPRINT",
       entry: true
     }]);
     await appendAppEvent("product_artifact_saved", {
+      projectRoot,
+      path: file.path,
+      etag: file.etag
+    });
+    res.json(file);
+  } catch (error) {
+    const err = error as Error & { statusCode?: number };
+    res.status(err.statusCode ?? 500).json({ message: err.message });
+  }
+}));
+
+router.put("/projects/design-artifact", asyncHandler(async (req: Request, res: Response) => {
+  const body = req.body as { projectRoot: string; content?: string; etag?: string };
+  const projectRoot = await getValidatedProjectRoot(body.projectRoot);
+  if (typeof body.content !== "string" || !body.content.trim()) {
+    res.status(400).json({ message: "Design artifact content is required" });
+    return;
+  }
+
+  try {
+    const file = await writeDesignHtmlSnapshot(projectRoot, body.content, body.etag);
+    await upsertArtifactManifest(projectRoot, [{
+      path: file.path,
+      type: "text/html",
+      title: "DESIGN MAKEOVER",
+      entry: true
+    }]);
+    await appendAppEvent("design_artifact_saved", {
       projectRoot,
       path: file.path,
       etag: file.etag
@@ -517,14 +608,27 @@ router.post("/design/runtime/stream", asyncHandler(async (req: Request, res: Res
       model: typeof body.model === "string" && body.model.trim() ? body.model.trim() : undefined,
       onProgress: (event: DesignProgressEvent) => writeEvent("progress", event)
     });
-    await writeProjectDocument(projectRoot, "DESIGN.md", design.designMarkdown);
-    await writeProjectDocument(projectRoot, "DESIGN.runtime.json", `${JSON.stringify(design, null, 2)}\n`);
-    await upsertArtifactManifest(projectRoot, design.artifacts.map((artifact) => ({
-      path: artifact.path,
-      type: artifact.type,
-      title: artifact.title,
-      entry: artifact.path === "PRODUCT.html"
-    })));
+    for (const file of design.files) {
+      if (!file.path.startsWith("DESIGN/")) {
+        throw new Error(`Design runtime returned a file outside DESIGN/: ${file.path}`);
+      }
+      await writeArtifactFile(projectRoot, file.path, file.content);
+    }
+    await writeArtifactFile(projectRoot, "DESIGN/runtime.json", `${JSON.stringify(design, null, 2)}\n`);
+    await upsertArtifactManifest(projectRoot, [
+      ...design.artifacts.map((artifact) => ({
+        path: artifact.path,
+        type: artifact.type,
+        title: artifact.title,
+        entry: artifact.path === designEntryPath
+      })),
+      ...design.files.map((file) => ({
+        path: file.path,
+        type: file.type,
+        title: file.title,
+        entry: file.path === designEntryPath
+      }))
+    ]);
     await recordDesignSession(design);
     await appendAppEvent("design_runtime_created", {
       projectRoot,
@@ -647,6 +751,17 @@ router.get("/settings/codex", asyncHandler(async (_req: Request, res: Response) 
 router.put("/settings/codex", asyncHandler(async (req: Request, res: Response) => {
   await saveCodexSettings(req.body);
   res.status(204).end();
+}));
+
+router.get("/settings/codex/project", asyncHandler(async (req: Request, res: Response) => {
+  const projectRoot = await getValidatedProjectRoot(String(req.query.projectRoot ?? ""));
+  res.json(await readProjectCodexSettings(projectRoot));
+}));
+
+router.post("/settings/codex/project", asyncHandler(async (req: Request, res: Response) => {
+  const body = req.body as { projectRoot?: string };
+  const projectRoot = await getValidatedProjectRoot(String(body.projectRoot ?? ""));
+  res.json(await saveProjectCodexSettings(projectRoot));
 }));
 
 router.get("/settings/app", asyncHandler(async (_req: Request, res: Response) => {

@@ -16,12 +16,12 @@
   }
 
   .design-artifact-layout.enterprise {
-    grid-template-columns: minmax(190px, 0.55fr) minmax(360px, 1.25fr) minmax(280px, 0.7fr);
+    grid-template-columns: minmax(190px, 0.42fr) minmax(540px, 1.8fr) minmax(230px, 0.48fr);
   }
 }
 
 @media (min-width: 1024px) {
-  .architect-chat:has(.product-html-preview) {
+  .architect-chat:has(.product-html-preview):not(.architect-chat-board) {
     align-items: stretch;
     grid-template-columns: minmax(420px, 0.95fr) minmax(440px, 1.05fr);
   }
@@ -30,6 +30,26 @@
   .design-result-grid {
     align-items: start;
     grid-template-columns: minmax(420px, 0.95fr) minmax(440px, 1.05fr);
+  }
+}
+
+@media (max-width: 980px) {
+  .design-page-workbench-wide {
+    width: min(100%, calc(100vw - 2rem));
+  }
+
+  .architect-decision-workspace {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .architect-left-notes,
+  .architect-choice-board {
+    position: static;
+    max-height: none;
+  }
+
+  .architect-blueprint-workspace {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 

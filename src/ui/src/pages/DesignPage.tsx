@@ -2,14 +2,17 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { PageHeader } from "@/components/PageHeader";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { useAppStore } from "@/stores/app-store";
 import {
+  fetchDesignArtifact,
   fetchLatestDesign,
   fetchProductArtifact,
   fetchProjectSettings,
   fetchResources,
   requestDesignRuntimeStream,
-  saveProductArtifact,
+  saveDesignArtifact,
   saveProjectSettings
 } from "@/lib/api";
 import type { DesignRuntimeMode, DesignRuntimeResponse } from "@/types/api";
@@ -31,8 +34,23 @@ import {
 import { ArtifactWorkbench } from "@/pages/design/artifact-workbench/ArtifactWorkbench";
 import { DesignResult } from "@/pages/design/DesignResult";
 import { DesignRuntimeSetup } from "@/pages/design/DesignRuntimeSetup";
-import { DesignTimeline } from "@/pages/design/DesignTimeline";
 import { type DesignTimelineItem, upsertTimelineItem } from "@/pages/design/design-page-model";
+import { cn } from "@/utils/cn";
+
+type MakeoverStep = "brief" | "loading" | "workbench" | "preview";
+
+function AgentLoadingStage(props: { label: string }) {
+  return (
+    <div className="agent-loading-stage" role="status" aria-live="polite">
+      <span className="agent-dot-wave" aria-hidden="true">
+        <i />
+        <i />
+        <i />
+      </span>
+      <h2>{props.label}</h2>
+    </div>
+  );
+}
 
 export function DesignPage() {
   const queryClient = useQueryClient();
@@ -41,15 +59,16 @@ export function DesignPage() {
   const locale = useMemo(() => navigator.language.toLowerCase().startsWith("ko") ? "ko" : "en", []);
   const [mode, setMode] = useState<DesignRuntimeMode>("codex");
   const [goal, setGoal] = useState("");
-  const [activeSkillId, setActiveSkillId] = useState("");
   const [activeDesignTemplateId, setActiveDesignTemplateId] = useState("");
   const [timelineItems, setTimelineItems] = useState<DesignTimelineItem[]>([]);
   const [runtimeError, setRuntimeError] = useState("");
   const [designResult, setDesignResult] = useState<DesignRuntimeResponse | null>(null);
-  const [artifactMode, setArtifactMode] = useState<ArtifactEditorMode>("manual-edit");
+  const [makeoverStep, setMakeoverStep] = useState<MakeoverStep>("brief");
+  const [makeoverComplete, setMakeoverComplete] = useState(false);
+  const [artifactMode, setArtifactMode] = useState<ArtifactEditorMode>("preview");
   const [artifactTab, setArtifactTab] = useState<ArtifactEditorTab>("content");
   const [artifactViewport, setArtifactViewport] = useState<"desktop" | "tablet" | "mobile">("desktop");
-  const [artifactZoom, setArtifactZoom] = useState(0.85);
+  const [artifactZoom, setArtifactZoom] = useState(1);
   const [layerSearch, setLayerSearch] = useState("");
   const [attributeDraft, setAttributeDraft] = useState("{}");
   const [outerHtmlDraft, setOuterHtmlDraft] = useState("");
@@ -78,6 +97,12 @@ export function DesignPage() {
     enabled: Boolean(projectRoot),
     retry: false
   });
+  const designArtifactQuery = useQuery({
+    queryKey: ["design-artifact", projectRoot],
+    queryFn: () => fetchDesignArtifact(projectRoot),
+    enabled: Boolean(projectRoot),
+    retry: false
+  });
   const latestDesignQuery = useQuery({
     queryKey: ["design-latest", projectRoot],
     queryFn: () => fetchLatestDesign(projectRoot),
@@ -88,7 +113,6 @@ export function DesignPage() {
     if (!settingsQuery.data) {
       return;
     }
-    setActiveSkillId(settingsQuery.data.activeSkillId ?? "");
     setActiveDesignTemplateId(settingsQuery.data.activeDesignTemplateId ?? "");
   }, [settingsQuery.data]);
 
@@ -97,15 +121,27 @@ export function DesignPage() {
   }, [latestDesignQuery.data]);
 
   useEffect(() => {
-    setArtifactSource(productArtifactQuery.data?.content.trim() ? productArtifactQuery.data.content : "");
-    setArtifactEtag(productArtifactQuery.data?.etag ?? "");
+    setArtifactSource(designArtifactQuery.data?.content.trim() ? designArtifactQuery.data.content : "");
+    setArtifactEtag(designArtifactQuery.data?.etag ?? "");
     setArtifactTargets([]);
     setSelectedTarget(null);
     setSourceHistory([]);
     setRedoHistory([]);
     setArtifactError("");
-    setSourceDraft(productArtifactQuery.data?.content.trim() ? productArtifactQuery.data.content : "");
-  }, [productArtifactQuery.data, projectRoot]);
+    setSourceDraft(designArtifactQuery.data?.content.trim() ? designArtifactQuery.data.content : "");
+  }, [designArtifactQuery.data, projectRoot]);
+
+  useEffect(() => {
+    setMakeoverStep("brief");
+    setMakeoverComplete(false);
+    setArtifactMode("preview");
+  }, [projectRoot]);
+
+  useEffect(() => {
+    if (designArtifactQuery.data?.content.trim()) {
+      setMakeoverStep((current) => current === "brief" ? "workbench" : current);
+    }
+  }, [designArtifactQuery.data]);
 
   useEffect(() => {
     setAttributeDraft(readTargetAttributesAsJson(selectedTarget));
@@ -129,18 +165,21 @@ export function DesignPage() {
   });
 
   const designMutation = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (requestedGoal: string) => {
       if (!productArtifactQuery.data?.content.trim()) {
         throw new Error("PRODUCT BLUEPRINT를 먼저 만들어야 DESIGN을 실행할 수 있습니다.");
+      }
+      const nextGoal = requestedGoal.trim();
+      if (!nextGoal) {
+        throw new Error("MAKEOVER 요청을 입력하거나 알아서 해주세요를 선택해야 합니다.");
       }
       setRuntimeError("");
       setTimelineItems([]);
       return requestDesignRuntimeStream({
         projectRoot,
         mode,
-        goal,
+        goal: nextGoal,
         locale,
-        activeSkillId: activeSkillId || undefined,
         activeDesignTemplateId: activeDesignTemplateId || undefined
       }, (event) => {
         setTimelineItems((items) => upsertTimelineItem(items, event));
@@ -149,16 +188,22 @@ export function DesignPage() {
     onSuccess: (design) => {
       setDesignResult(design);
       setTimelineItems([]);
+      setMakeoverComplete(true);
+      setMakeoverStep("workbench");
+      setArtifactMode("preview");
+      window.setTimeout(() => setMakeoverComplete(false), 1200);
       void queryClient.invalidateQueries({ queryKey: ["design-latest", projectRoot] });
+      void queryClient.invalidateQueries({ queryKey: ["design-artifact", projectRoot] });
       void queryClient.invalidateQueries({ queryKey: ["project-state", projectRoot] });
     },
     onError: (error) => {
       setRuntimeError(error instanceof Error ? error.message : String(error));
+      setMakeoverStep("brief");
     }
   });
 
   const saveArtifactMutation = useMutation({
-    mutationFn: async () => saveProductArtifact({
+    mutationFn: async () => saveDesignArtifact({
       projectRoot,
       content: artifactSource,
       etag: artifactEtag
@@ -167,8 +212,7 @@ export function DesignPage() {
       setArtifactEtag(file.etag);
       setArtifactSource(file.content);
       setSourceDraft(file.content);
-      void queryClient.invalidateQueries({ queryKey: ["product-artifact", projectRoot] });
-      void queryClient.invalidateQueries({ queryKey: ["product-html", projectRoot] });
+      void queryClient.invalidateQueries({ queryKey: ["design-artifact", projectRoot] });
       void queryClient.invalidateQueries({ queryKey: ["project-state", projectRoot] });
       setArtifactError("");
     },
@@ -193,14 +237,14 @@ export function DesignPage() {
   }, [artifactTargets, layerSearch]);
   const trackedArtifacts = useMemo(() => {
     const resultArtifacts = designResult?.artifacts ?? [];
-    if (resultArtifacts.some((artifact) => artifact.path === "PRODUCT.html")) {
+    if (resultArtifacts.some((artifact) => artifact.path === "DESIGN/index.html")) {
       return resultArtifacts;
     }
     return [
       {
-        path: "PRODUCT.html",
+        path: "DESIGN/index.html",
         type: "text/html",
-        title: "Editable product artifact",
+        title: "Editable design artifact",
         description: "Iframe bridge source edited by DESIGN runtime."
       },
       ...resultArtifacts
@@ -353,15 +397,23 @@ export function DesignPage() {
 
   const resources = resourcesQuery.data ?? { skills: [], designTemplates: [] };
   const hasProductHtml = Boolean(productArtifactQuery.data?.content.trim());
-
-  const changeSkill = (nextSkillId: string) => {
-    setActiveSkillId(nextSkillId);
-    saveSettingsMutation.mutate({ activeSkillId: nextSkillId, activeDesignTemplateId });
-  };
+  const hasDesignHtml = Boolean(designArtifactQuery.data?.content.trim());
 
   const changeDesignTemplate = (nextDesignTemplateId: string) => {
     setActiveDesignTemplateId(nextDesignTemplateId);
-    saveSettingsMutation.mutate({ activeSkillId, activeDesignTemplateId: nextDesignTemplateId });
+    saveSettingsMutation.mutate({ activeSkillId: "", activeDesignTemplateId: nextDesignTemplateId });
+  };
+
+  const runMakeover = (requestedGoal: string) => {
+    const nextGoal = requestedGoal.trim();
+    if (!nextGoal) {
+      return;
+    }
+    setMode("codex");
+    setArtifactError("");
+    setRuntimeError("");
+    setMakeoverStep("loading");
+    designMutation.mutate(nextGoal);
   };
 
   const applyAttributeDraft = () => {
@@ -380,50 +432,83 @@ export function DesignPage() {
   };
 
   const applySelectedTargetAiInstruction = () => {
-    if (!selectedTarget || !aiInstruction.trim()) {
+    if (!aiInstruction.trim()) {
       return;
     }
-    setGoal([
-      `Selected target: ${selectedTarget.label} (${selectedTarget.id}, ${selectedTarget.tagName})`,
-      "",
-      "Current outerHTML:",
-      selectedTarget.outerHtml || "(not available)",
-      "",
-      "Requested design change:",
-      aiInstruction.trim()
-    ].join("\n"));
+    const nextGoal = selectedTarget
+      ? [
+        `Selected target: ${selectedTarget.label} (${selectedTarget.id}, ${selectedTarget.tagName})`,
+        "",
+        "Current outerHTML:",
+        selectedTarget.outerHtml || "(not available)",
+        "",
+        "Requested design change:",
+        aiInstruction.trim()
+      ].join("\n")
+      : aiInstruction.trim();
+    setGoal(nextGoal);
     setMode("codex");
     setArtifactError("");
+    runMakeover(nextGoal);
   };
 
   return (
-    <div className="builder-shell design-page">
-      <PageHeader title="DESIGN" projectRoot={projectRoot} />
+    <div className={cn("builder-shell design-page", makeoverStep === "workbench" && "design-page-workbench-wide")}>
+      <PageHeader title="MAKEOVER" projectRoot={projectRoot} />
 
       <div className="design-workbench">
-        <DesignRuntimeSetup
-          projectRoot={projectRoot}
-          resources={resources}
-          designResult={designResult}
-          hasProductHtml={hasProductHtml}
-          mode={mode}
-          setMode={setMode}
-          goal={goal}
-          setGoal={setGoal}
-          activeSkillId={activeSkillId}
-          activeDesignTemplateId={activeDesignTemplateId}
-          runtimeError={runtimeError}
-          isRunning={designMutation.isPending}
-          onChangeSkill={changeSkill}
-          onChangeDesignTemplate={changeDesignTemplate}
-          onRun={() => designMutation.mutate()}
-        />
+        {makeoverStep !== "loading" ? (
+          <div className="makeover-step-tabs" role="tablist" aria-label="Makeover pages">
+            <Button variant={makeoverStep === "brief" ? "default" : "outline"} onClick={() => setMakeoverStep("brief")}>1. REQUEST</Button>
+            <Button variant={makeoverStep === "workbench" ? "default" : "outline"} disabled={!hasDesignHtml} onClick={() => setMakeoverStep("workbench")}>2. DESIGN WORKBENCH</Button>
+            <Button variant={makeoverStep === "preview" ? "default" : "outline"} disabled={!designResult} onClick={() => setMakeoverStep("preview")}>3. BRIEF PREVIEW</Button>
+          </div>
+        ) : null}
 
-        <div className="design-editor-grid">
-          <ArtifactWorkbench
+        {makeoverStep === "brief" ? (
+          <DesignRuntimeSetup
+            projectRoot={projectRoot}
+            resources={resources}
+            designResult={designResult}
             hasProductHtml={hasProductHtml}
-            artifactEtag={productArtifactQuery.data?.etag}
-            artifactUpdatedAt={productArtifactQuery.data?.updatedAt}
+            goal={goal}
+            setGoal={setGoal}
+            activeDesignTemplateId={activeDesignTemplateId}
+            runtimeError={runtimeError}
+            timelineItems={timelineItems}
+            isRunning={designMutation.isPending}
+            isComplete={makeoverComplete}
+            onChangeDesignTemplate={changeDesignTemplate}
+            onAutoRun={() => {
+              const autoGoal = "알아서 해주세요. 제품 기획서에 가장 잘 맞는 세련된 디자인 방향으로 구성해주세요.";
+              setGoal(autoGoal);
+              runMakeover(autoGoal);
+            }}
+            onRun={() => runMakeover(goal)}
+          />
+        ) : null}
+
+        {makeoverStep === "loading" ? (
+          <Card className="makeover-loading-card">
+            <AgentLoadingStage label="MAKING OVER" />
+            {timelineItems.length ? (
+              <div className="design-inline-log" aria-label="Makeover progress">
+                {timelineItems.map((item) => (
+                  <div key={item.id}>
+                    <strong>{item.title}</strong>
+                    <span>{item.detail}</span>
+                  </div>
+                ))}
+              </div>
+            ) : null}
+          </Card>
+        ) : null}
+
+        {makeoverStep === "workbench" ? (
+          <ArtifactWorkbench
+            hasProductHtml={hasDesignHtml}
+            artifactEtag={designArtifactQuery.data?.etag}
+            artifactUpdatedAt={designArtifactQuery.data?.updatedAt}
             artifactFrameRef={artifactFrameRef}
             artifactSrcDoc={artifactSrcDoc}
             artifactMode={artifactMode}
@@ -449,11 +534,12 @@ export function DesignPage() {
             aiInstruction={aiInstruction}
             setAiInstruction={setAiInstruction}
             artifactError={artifactError}
+            timelineItems={timelineItems}
             sourceHistory={sourceHistory}
             redoHistory={redoHistory}
             isSaving={saveArtifactMutation.isPending}
             onReload={() => {
-              void productArtifactQuery.refetch();
+              void designArtifactQuery.refetch();
               artifactFrameRef.current?.contentWindow?.postMessage({ __zeroshotArtifact: true, type: "od-refresh-targets" }, "*");
             }}
             onHighlightTarget={highlightTarget}
@@ -464,11 +550,9 @@ export function DesignPage() {
             onRedo={redoArtifactChange}
             onSave={() => saveArtifactMutation.mutate()}
           />
-        </div>
+        ) : null}
 
-        <DesignTimeline items={timelineItems} />
-
-        {designResult ? <DesignResult design={designResult} /> : null}
+        {makeoverStep === "preview" && designResult ? <DesignResult design={designResult} artifactHtml={artifactSource} /> : null}
       </div>
     </div>
   );

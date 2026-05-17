@@ -53,6 +53,22 @@ export async function assertPathWithinRoots(targetPath: string, roots: string[],
   return resolvedTarget;
 }
 
+function isMissingPathError(error: unknown): boolean {
+  const code = (error as NodeJS.ErrnoException).code;
+  return code === "ENOENT" || code === "ENOTDIR";
+}
+
+export async function assertProjectRootWithinRoots(targetPath: string, roots: string[], label: string): Promise<string> {
+  try {
+    return await assertPathWithinRoots(targetPath, roots, label);
+  } catch (error) {
+    if (isMissingPathError(error)) {
+      throw Object.assign(new Error("Project folder no longer exists."), { statusCode: 404 });
+    }
+    throw error;
+  }
+}
+
 export async function resolveUserFilePath(projectRoot: string, userRelativePath = ""): Promise<string> {
   const sanitized = userRelativePath.replace(/^\/+/, "");
   if (sanitized.startsWith(".work.history") || sanitized.startsWith("runs")) {

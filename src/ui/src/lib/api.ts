@@ -14,6 +14,7 @@ import type {
   JobSnapshot,
   PipelineOptions,
   ProductArtifactFile,
+  ProjectCodexSettingsStatus,
   ProjectSettings,
   ProjectState,
   ResourceManifest,
@@ -75,6 +76,14 @@ export async function fetchProductArtifact(projectRoot: string) {
 
 export async function saveProductArtifact(payload: { projectRoot: string; content: string; etag?: string }) {
   return (await client.put<ProductArtifactFile>("/projects/product-artifact", payload)).data;
+}
+
+export async function fetchDesignArtifact(projectRoot: string) {
+  return (await client.get<ProductArtifactFile>("/projects/design-artifact", { params: { projectRoot } })).data;
+}
+
+export async function saveDesignArtifact(payload: { projectRoot: string; content: string; etag?: string }) {
+  return (await client.put<ProductArtifactFile>("/projects/design-artifact", payload)).data;
 }
 
 export async function fetchLatestDesign(projectRoot: string) {
@@ -170,6 +179,18 @@ export async function runArchitectBootstrap(payload: {
   decisions: ArchitectDecision[];
 }) {
   return (await client.post<BootstrapResult>("/architect/bootstrap", payload)).data;
+}
+
+export async function createArchitectProductHtml(payload: {
+  projectRoot: string;
+  userBrief: string;
+  decisionSet: ArchitectDecisionResponse;
+  answers: Record<string, string>;
+  locale: string;
+  activeSkillId?: string;
+  activeDesignTemplateId?: string;
+}) {
+  return (await client.post<ProductArtifactFile>("/architect/product-html", payload)).data;
 }
 
 export async function requestDesignRuntimeStream(
@@ -273,4 +294,12 @@ export async function fetchCodexSettings() {
 
 export async function saveCodexSettings(payload: CodexSettings) {
   await client.put("/settings/codex", payload);
+}
+
+export async function fetchProjectCodexSettings(projectRoot: string) {
+  return (await client.get<ProjectCodexSettingsStatus>("/settings/codex/project", { params: { projectRoot } })).data;
+}
+
+export async function saveProjectCodexSettings(projectRoot: string) {
+  return (await client.post<ProjectCodexSettingsStatus>("/settings/codex/project", { projectRoot })).data;
 }

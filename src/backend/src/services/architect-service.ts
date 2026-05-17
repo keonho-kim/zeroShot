@@ -10,8 +10,8 @@ const architectDecisionSchema = {
     summary: { type: "string" },
     decisions: {
       type: "array",
-      minItems: 2,
-      maxItems: 12,
+      minItems: 5,
+      maxItems: 7,
       items: {
         type: "object",
         properties: {
@@ -59,10 +59,23 @@ const architectDecisionResponseSchema = z.object({
       detail: z.string().trim().min(1),
       productRequirement: z.string().trim().min(1)
     })).min(5).max(6)
-  })).min(2).max(12)
+  })).min(5).max(7)
 });
 
 export type ArchitectDecisionResponse = z.infer<typeof architectDecisionResponseSchema>;
+
+const architectProductHtmlSchema = {
+  type: "object",
+  properties: {
+    html: { type: "string" }
+  },
+  required: ["html"],
+  additionalProperties: false
+};
+
+const architectProductHtmlResponseSchema = z.object({
+  html: z.string().trim().min(1)
+});
 
 function omakaseOption(locale: string): ArchitectDecisionResponse["decisions"][number]["options"][number] {
   return locale === "ko"
@@ -179,28 +192,13 @@ function describeProgress(event: ThreadEvent, locale: string): ArchitectProgress
     };
   }
   if (item.type === "command_execution") {
-    return {
-      id: `command-${item.id}`,
-      title: progressText(locale, "워크스페이스 확인 중", "Checking workspace"),
-      detail: `${item.command}${item.status === "failed" ? " failed" : ""}`,
-      status: item.status === "failed" ? "failed" : item.status === "completed" ? "completed" : "running"
-    };
+    return null;
   }
   if (item.type === "mcp_tool_call") {
-    return {
-      id: `tool-${item.id}`,
-      title: progressText(locale, "도구 실행 중", "Running tool"),
-      detail: `${item.server}.${item.tool}`,
-      status: item.status === "failed" ? "failed" : item.status === "completed" ? "completed" : "running"
-    };
+    return null;
   }
   if (item.type === "web_search") {
-    return {
-      id: `search-${item.id}`,
-      title: progressText(locale, "자료 확인 중", "Checking references"),
-      detail: item.query,
-      status: event.type === "item.completed" ? "completed" : "running"
-    };
+    return null;
   }
 
   return null;
@@ -254,4 +252,82 @@ export async function buildArchitectDecisions(params: {
 
   const parsed = architectDecisionResponseSchema.parse(JSON.parse(finalResponse));
   return normalizeArchitectDecisions(ensureDevelopmentLanguageDecision(parsed, params.goal, params.locale), params.locale);
+}
+
+export async function buildArchitectProductHtml(params: {
+  projectRoot: string;
+  userBrief: string;
+  decisionSet: ArchitectDecisionResponse;
+  answers: Record<string, string>;
+  locale: string;
+  reasoning: string;
+  model?: string;
+  resourceContext?: string;
+  additionalDirectories?: string[];
+}): Promise<string> {
+  const selectedRequirements = params.decisionSet.decisions.map((decision) => {
+    const answerId = params.answers[decision.id];
+    const selected = decision.options.find((option) => option.id === answerId) ?? decision.options[0];
+    return [
+      `Question: ${decision.title}`,
+      `Selected: ${selected?.label ?? "Not selected"}`,
+      `Requirement: ${selected?.productRequirement ?? selected?.detail ?? ""}`
+    ].join("\n");
+  }).join("\n\n");
+
+  const codex = new Codex();
+  const thread = codex.startThread({
+    workingDirectory: params.projectRoot,
+    skipGitRepoCheck: true,
+    approvalPolicy: "never" satisfies ApprovalMode,
+    sandboxMode: "read-only" satisfies SandboxMode,
+    modelReasoningEffort: asReasoningEffort(params.reasoning),
+    additionalDirectories: params.additionalDirectories ?? [],
+    ...(params.model ? { model: params.model } : {})
+  });
+
+  const prompt = [
+    "Create ARCHITECT/PRODUCT.html for this ZeroShot project.",
+    "",
+    "Return only JSON matching the schema. The html field must contain a complete interactive HTML document.",
+    "Do not create files or run commands. Do not return Markdown.",
+    "The HTML must be a product planning document, not implementation code. It should be useful later for DESIGN, BUILD, and UPDATE.",
+    "Use self-contained CSS and lightweight JavaScript only when it improves interactive review.",
+    "Include product concept, target users, key workflows, core screens, data model, integrations, build constraints, and acceptance criteria.",
+    "Write user-facing content in the requested locale.",
+    "",
+    `Locale: ${params.locale}`,
+    "",
+    "Initial user brief:",
+    params.userBrief,
+    "",
+    "Selected architect decisions:",
+    selectedRequirements,
+    "",
+    params.resourceContext ? ["Active resources:", params.resourceContext].join("\n") : ""
+  ].filter(Boolean).join("\n");
+
+  const { events } = await thread.runStreamed(prompt, {
+    outputSchema: architectProductHtmlSchema
+  });
+  let finalResponse = "";
+
+  for await (const event of events) {
+    if (event.type === "item.completed" && event.item.type === "agent_message") {
+      finalResponse = event.item.text;
+    }
+    if (event.type === "turn.failed") {
+      throw new Error(event.error.message);
+    }
+    if (event.type === "error") {
+      throw new Error(event.message);
+    }
+  }
+
+  if (!finalResponse.trim()) {
+    throw new Error("Codex did not return PRODUCT.html.");
+  }
+
+  const parsed = architectProductHtmlResponseSchema.parse(JSON.parse(finalResponse));
+  return parsed.html;
 }

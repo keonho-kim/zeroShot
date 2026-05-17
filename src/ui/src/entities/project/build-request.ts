@@ -112,7 +112,7 @@ export function composeBuildProductContent({
       ? [
         "# PRODUCT",
         "",
-        "Use PRODUCT.html in the project root as the canonical source for this BUILD run."
+        "Use ARCHITECT/PRODUCT.html as the canonical source for this BUILD run."
       ].join("\n")
       : productMarkdown.trim()
   ];

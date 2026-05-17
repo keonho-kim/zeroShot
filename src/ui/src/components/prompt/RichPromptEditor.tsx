@@ -24,7 +24,7 @@ const snippets = [
   { label: "@file", value: "@file:" },
   { label: "@symbol", value: "@symbol:" },
   { label: "/command", value: "/build " },
-  { label: "artifact", value: '<artifact path="PRODUCT.html">' },
+  { label: "artifact", value: '<artifact path="ARCHITECT/PRODUCT.html">' },
   { label: "diff comment", value: "diff-comment: " },
   { label: "block", value: "\n\n---\n\n" }
 ];

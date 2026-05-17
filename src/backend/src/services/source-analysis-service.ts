@@ -9,6 +9,8 @@ const ignoredDirectories = new Set([
   ".svelte-kit",
   ".turbo",
   ".work.history",
+  "ARCHITECT",
+  "DESIGN",
   "runs",
   "build",
   "coverage",

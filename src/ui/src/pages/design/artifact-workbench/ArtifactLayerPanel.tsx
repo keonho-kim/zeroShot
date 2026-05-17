@@ -18,7 +18,7 @@ export function ArtifactLayerPanel(props: {
     <aside className="design-layer-panel" aria-label="Artifact layers">
       <div className="design-artifact-chip-list">
         {props.trackedArtifacts.slice(0, 4).map((artifact) => (
-          <span key={artifact.path}>{artifact.path === "PRODUCT.html" ? "PRODUCT BLUEPRINT" : artifact.title}</span>
+          <span key={artifact.path}>{artifact.path === "DESIGN/index.html" ? "DESIGN ENTRY" : artifact.title}</span>
         ))}
       </div>
       <label className="design-layer-search">

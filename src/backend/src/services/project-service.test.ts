@@ -19,6 +19,18 @@ afterEach(async () => {
 });
 
 describe("readProjectState", () => {
+  test("uses ARCHITECT/PRODUCT.html as the product blueprint", async () => {
+    const root = await makeTempProject();
+    await mkdir(join(root, "ARCHITECT"), { recursive: true });
+    await writeFile(join(root, "ARCHITECT", "PRODUCT.html"), "<!doctype html><html><body>Product</body></html>");
+
+    const state = await readProjectState(root);
+
+    expect(state.hasProductHtml).toBe(true);
+    expect(state.buildEnabled).toBe(true);
+    expect(state.isDirectoryEmpty).toBe(true);
+  });
+
   test("requires both a build run and source code before UPDATE is enabled", async () => {
     const root = await makeTempProject();
     await writeFile(join(root, "PRODUCT.md"), "# Product\n");

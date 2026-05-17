@@ -18,7 +18,7 @@ describe("build request composition", () => {
     expect(content).toContain("src/backend/src");
   });
 
-  test("uses PRODUCT.html as canonical source and appends additional request", () => {
+  test("uses ARCHITECT/PRODUCT.html as canonical source and appends additional request", () => {
     const content = composeBuildProductContent({
       source: "product-html",
       productMarkdown: "",
@@ -26,7 +26,7 @@ describe("build request composition", () => {
       focus: "faithful"
     });
 
-    expect(content).toContain("Use PRODUCT.html in the project root as the canonical source");
+    expect(content).toContain("Use ARCHITECT/PRODUCT.html as the canonical source");
     expect(content).toContain("Make the primary action easier to reach.");
     expect(content).toContain("Correctness");
   });

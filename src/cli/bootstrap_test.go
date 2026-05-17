@@ -30,7 +30,8 @@ func TestBootstrapCreatesFullstackScaffoldWithoutInit(t *testing.T) {
 	assertPathExists(t, filepath.Join(root, "src", "ui", "src", "stores"))
 	assertPathExists(t, filepath.Join(root, "AGENTS.md"))
 	assertPathExists(t, filepath.Join(root, ".agents", "PROJECT_CONTEXT.md"))
-	assertPathExists(t, filepath.Join(root, "PRODUCT.html"))
+	assertPathExists(t, filepath.Join(root, "ARCHITECT", "PRODUCT.html"))
+	assertPathExists(t, filepath.Join(root, "DESIGN"))
 
 	agents, err := os.ReadFile(filepath.Join(root, "AGENTS.md"))
 	if err != nil {

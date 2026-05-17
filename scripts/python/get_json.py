@@ -5,7 +5,7 @@ scripts/python/get_json.py
 JSON 파일에서 값을 추출하는 작은 유틸리티입니다.
 shell 안의 python heredoc을 없애고, 별도 파일로 분리하기 위해 만들었습니다.
 
-사용 예:
+사용
   uv run python scripts/python/get_json.py path/to/file.json gate
   uv run python scripts/python/get_json.py path/to/file.json progress_made
   uv run python scripts/python/get_json.py path/to/file.json nested.key

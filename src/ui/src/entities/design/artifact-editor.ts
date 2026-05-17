@@ -361,6 +361,7 @@ html[data-od-edit-enabled='true'] [data-od-source-path],
 html[data-od-edit-enabled='true'] [data-od-runtime-id] { outline: 1px dashed rgb(217 72 15 / 42%) !important; outline-offset: 3px !important; }
 html[data-od-edit-enabled='true'] [data-od-selected='true'] { outline: 3px solid #d9480f !important; outline-offset: 3px !important; }
 html[data-od-edit-enabled='true'] [data-od-hover='true'] { outline: 2px dashed #1d1d1f !important; outline-offset: 2px !important; }
+[data-od-drag-ghost='true'] { position: fixed !important; z-index: 2147483647 !important; pointer-events: none !important; opacity: 0.42 !important; border: 2px dashed #d9480f !important; background: rgb(255 216 77 / 42%) !important; box-sizing: border-box !important; }
 </style>`;
 }
 
@@ -535,6 +536,7 @@ function artifactBridgeScript(initialMode: ArtifactEditorMode): string {
   let selectedId = "";
   let hoverId = "";
   let dragStart = null;
+  let dragGhost = null;
 
   const post = (payload) => window.parent.postMessage({ __zeroshotArtifact: marker, ...payload }, "*");
   const isHostNode = (element) => Boolean(element && element.matches && element.matches(hostNodeSelector));
@@ -649,6 +651,21 @@ function artifactBridgeScript(initialMode: ArtifactEditorMode): string {
     element.focus({ preventScroll: true });
     post({ type: "od-edit-select", target });
   };
+  const removeDragGhost = () => {
+    if (dragGhost && dragGhost.parentElement) dragGhost.parentElement.removeChild(dragGhost);
+    dragGhost = null;
+  };
+  const createDragGhost = (element) => {
+    removeDragGhost();
+    const rect = element.getBoundingClientRect();
+    dragGhost = document.createElement("div");
+    dragGhost.setAttribute("data-od-drag-ghost", "true");
+    dragGhost.style.left = rect.left + "px";
+    dragGhost.style.top = rect.top + "px";
+    dragGhost.style.width = rect.width + "px";
+    dragGhost.style.height = rect.height + "px";
+    document.body.appendChild(dragGhost);
+  };
 
   window.addEventListener("message", (event) => {
     const payload = event.data;
@@ -677,6 +694,9 @@ function artifactBridgeScript(initialMode: ArtifactEditorMode): string {
 
   document.addEventListener("mousemove", (event) => {
     if (!editMode) return;
+    if (dragStart && dragGhost) {
+      dragGhost.style.transform = "translate(" + (event.clientX - dragStart.x) + "px, " + (event.clientY - dragStart.y) + "px)";
+    }
     const element = closestTarget(event.target);
     const target = element ? targetFor(element, false) : null;
     const nextHoverId = target ? target.id : "";
@@ -692,6 +712,7 @@ function artifactBridgeScript(initialMode: ArtifactEditorMode): string {
     if (!element) return;
     select(element);
     dragStart = { x: event.clientX, y: event.clientY, target: targetFor(element, true) };
+    createDragGhost(element);
   }, true);
 
   document.addEventListener("mouseup", (event) => {
@@ -702,6 +723,7 @@ function artifactBridgeScript(initialMode: ArtifactEditorMode): string {
       post({ type: "od-edit-drag", target: dragStart.target, deltaX, deltaY });
     }
     dragStart = null;
+    removeDragGhost();
   }, true);
 
   document.addEventListener("keydown", (event) => {

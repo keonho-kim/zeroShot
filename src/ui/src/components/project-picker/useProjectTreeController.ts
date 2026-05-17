@@ -5,9 +5,14 @@ import { useAppStore } from "@/stores/app-store";
 import type { DirectoryEntry } from "@/types/api";
 import { getErrorMessage, mergeTreeChildren } from "./project-picker-utils";
 
+function hasLoadedChildren(path: string): boolean {
+  return Object.hasOwn(useAppStore.getState().treeChildrenByPath, path);
+}
+
 export function useProjectTreeController({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [loadErrors, setLoadErrors] = useState<Record<string, string>>({});
   const projectRoot = useAppStore((state) => state.projectRoot);
+  const candidateProjectPath = useAppStore((state) => state.candidateProjectPath);
   const bootstrapRoots = useAppStore((state) => state.bootstrapRoots);
   const browserPath = useAppStore((state) => state.projectBrowserPath);
   const selectedPath = useAppStore((state) => state.selectedBrowserEntryPath);
@@ -51,15 +56,22 @@ export function useProjectTreeController({ open, onClose }: { open: boolean; onC
     if (!browserPath && initialPath) {
       setProjectBrowserPath(initialPath);
       setCandidateProjectPath(initialPath);
-      setSelectedBrowserEntryPath(initialPath);
+      setSelectedBrowserEntryPath(candidateProjectPath || projectRoot || initialPath);
       setProjectPickerHistory([initialPath]);
       setProjectPickerHistoryIndex(0);
+      return;
+    }
+
+    if (!selectedPath && (candidateProjectPath || projectRoot)) {
+      setSelectedBrowserEntryPath(candidateProjectPath || projectRoot);
     }
   }, [
     open,
     settingsQuery.data,
     browserPath,
+    candidateProjectPath,
     projectRoot,
+    selectedPath,
     setBootstrapRoots,
     setProjectBrowserPath,
     setCandidateProjectPath,
@@ -158,7 +170,7 @@ export function useProjectTreeController({ open, onClose }: { open: boolean; onC
     }
 
     setTreeExpandedPaths([...currentExpandedPaths, entry.path]);
-    if (!useAppStore.getState().treeChildrenByPath[entry.path]) {
+    if (!hasLoadedChildren(entry.path)) {
       await loadChildren(entry.path);
     }
   };
@@ -175,7 +187,7 @@ export function useProjectTreeController({ open, onClose }: { open: boolean; onC
     }
 
     setTreeExpandedPaths([...currentExpandedPaths, entry.path]);
-    if (!useAppStore.getState().treeChildrenByPath[entry.path]) {
+    if (!hasLoadedChildren(entry.path)) {
       await loadChildren(entry.path);
     }
   };

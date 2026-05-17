@@ -12,18 +12,24 @@ func writeProjectContract(projectRoot string, plan []bootstrapTarget, flags *boo
 	if err := ensureDir(filepath.Join(projectRoot, ".agents", "assets")); err != nil {
 		return err
 	}
+	if err := ensureDir(filepath.Join(projectRoot, "ARCHITECT")); err != nil {
+		return err
+	}
+	if err := ensureDir(filepath.Join(projectRoot, "DESIGN")); err != nil {
+		return err
+	}
 	if err := writeFileIfMissing(filepath.Join(projectRoot, "AGENTS.md"), buildGeneratedAgentsMarkdown(plan, flags), flags.force); err != nil {
 		return err
 	}
 	if err := writeFileIfMissing(filepath.Join(projectRoot, ".agents", "PROJECT_CONTEXT.md"), buildProjectContextMarkdown(plan, flags), flags.force); err != nil {
 		return err
 	}
-	if !pathExists(filepath.Join(projectRoot, "PRODUCT.html")) {
-		if err := writeFileIfMissing(filepath.Join(projectRoot, "PRODUCT.html"), productPlaceholderHTML(), flags.force); err != nil {
+	if !pathExists(filepath.Join(projectRoot, "ARCHITECT", "PRODUCT.html")) {
+		if err := writeFileIfMissing(filepath.Join(projectRoot, "ARCHITECT", "PRODUCT.html"), productPlaceholderHTML(), flags.force); err != nil {
 			return err
 		}
 	}
-	return writeFileIfMissing(filepath.Join(projectRoot, "DESIGN.md"), "# DESIGN\n\nDesign decisions will be recorded here after the DESIGN session.\n", flags.force)
+	return nil
 }
 
 func buildGeneratedAgentsMarkdown(plan []bootstrapTarget, flags *bootstrapFlagSet) string {
@@ -31,9 +37,9 @@ func buildGeneratedAgentsMarkdown(plan []bootstrapTarget, flags *bootstrapFlagSe
 
 ## Product Source
 
-- Use ` + "`PRODUCT.html`" + ` as the canonical product blueprint.
+- Use ` + "`ARCHITECT/PRODUCT.html`" + ` as the canonical product blueprint.
 - Do not create or depend on ` + "`PRODUCT.md`" + `.
-- Use ` + "`DESIGN.md`" + ` as the visual and interaction design guide when present.
+- Use ` + "`DESIGN/index.html`" + ` as the visual and interaction design artifact when present.
 - Use ` + "`.agents/PROJECT_CONTEXT.md`" + ` as the project overview that ZeroShot includes in Codex task requests.
 - Keep user-facing Build and Update reports under ` + "`runs/`" + `.
 
@@ -99,9 +105,9 @@ This file is included as request context for ZeroShot Architect, Design, Build, 
 
 ## Canonical Product Artifact
 
-- PRODUCT.html is the only canonical product blueprint.
+- ARCHITECT/PRODUCT.html is the only canonical product blueprint.
 - PRODUCT.md should not be generated or used as a source of truth.
-- DESIGN.md records design decisions after the DESIGN session.
+- DESIGN/index.html is the canonical interactive design artifact after the DESIGN MAKEOVER session.
 
 ## Architect Conversation Rounds
 

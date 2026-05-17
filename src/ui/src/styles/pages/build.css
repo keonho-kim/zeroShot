@@ -6,6 +6,7 @@
 .project-tree-scroll {
   cursor: grab;
   overscroll-behavior: contain;
+  overflow-anchor: none;
   user-select: none;
 }
 

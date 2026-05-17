@@ -1,12 +1,22 @@
 import { RefreshCcw } from "lucide-react";
 import type { PointerEvent, ReactNode } from "react";
-import { Fragment, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import type { DirectoryEntry } from "@/types/api";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/utils/cn";
 import { CreateDirectoryRow } from "./CreateDirectoryRow";
 import { ProjectTreeRow } from "./ProjectTreeRow";
-import { getErrorMessage } from "./project-picker-utils";
+import { getErrorMessage, prioritizeSelectedDirectory } from "./project-picker-utils";
+
+function smoothEaseInOut(progress: number): number {
+  return progress < 0.5
+    ? 4 * progress * progress * progress
+    : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+}
+
+function scrollDuration(distance: number): number {
+  return Math.min(820, Math.max(420, 520 + Math.abs(distance) * 0.35));
+}
 
 export function ProjectTree({
   projectRoot,
@@ -56,6 +66,10 @@ export function ProjectTree({
   onLoadChildren: (path: string) => void | Promise<void>;
 }) {
   const [treeDragging, setTreeDragging] = useState(false);
+  const [focusedEntryPath, setFocusedEntryPath] = useState("");
+  const treeScrollRef = useRef<HTMLDivElement | null>(null);
+  const scrollAnimationRef = useRef<number | null>(null);
+  const scrollStartTopRef = useRef<number | null>(null);
   const treeDragRef = useRef<{
     pointerId: number;
     x: number;
@@ -65,6 +79,70 @@ export function ProjectTree({
     dragged: boolean;
   } | null>(null);
   const suppressTreeClickRef = useRef(false);
+
+  const focusEntry = (path: string) => {
+    scrollStartTopRef.current = treeScrollRef.current?.scrollTop ?? null;
+    setFocusedEntryPath(path);
+  };
+
+  const stopScrollAnimation = () => {
+    if (scrollAnimationRef.current !== null) {
+      window.cancelAnimationFrame(scrollAnimationRef.current);
+      scrollAnimationRef.current = null;
+    }
+  };
+
+  const animateTreeScroll = (container: HTMLDivElement, targetTop: number) => {
+    stopScrollAnimation();
+
+    const startTop = container.scrollTop;
+    const distance = targetTop - startTop;
+    if (Math.abs(distance) < 2) {
+      container.scrollTop = targetTop;
+      return;
+    }
+
+    const duration = scrollDuration(distance);
+    const startTime = performance.now();
+
+    const tick = (time: number) => {
+      const progress = Math.min(1, (time - startTime) / duration);
+      container.scrollTop = startTop + distance * smoothEaseInOut(progress);
+
+      if (progress < 1) {
+        scrollAnimationRef.current = window.requestAnimationFrame(tick);
+        return;
+      }
+
+      container.scrollTop = targetTop;
+      scrollAnimationRef.current = null;
+    };
+
+    scrollAnimationRef.current = window.requestAnimationFrame(tick);
+  };
+
+  useEffect(() => {
+    if (!focusedEntryPath || treeDragging) {
+      return;
+    }
+
+    const container = treeScrollRef.current;
+    const row = Array.from(container?.querySelectorAll<HTMLElement>("[data-tree-entry-path]") ?? [])
+      .find((element) => element.dataset.treeEntryPath === focusedEntryPath);
+    if (!container || !row) {
+      return;
+    }
+
+    const containerRect = container.getBoundingClientRect();
+    const rowRect = row.getBoundingClientRect();
+    const startTop = scrollStartTopRef.current;
+    if (startTop !== null) {
+      container.scrollTop = startTop;
+      scrollStartTopRef.current = null;
+    }
+    animateTreeScroll(container, Math.max(container.scrollTop + rowRect.top - containerRect.top - 8, 0));
+    return stopScrollAnimation;
+  }, [focusedEntryPath, treeDragging]);
 
   const startTreeDrag = (event: PointerEvent<HTMLDivElement>) => {
     if (event.button !== 0) {
@@ -127,12 +205,30 @@ export function ProjectTree({
     />
   );
 
-  const renderTree = (treeEntries: DirectoryEntry[], depth = 0): ReactNode[] =>
-    treeEntries.flatMap((entry) => {
+  const renderEmptyDirectoryPrompt = (path: string, depth: number) => (
+    <div
+      className="flex flex-wrap items-center gap-3 px-3 py-3 text-sm text-[var(--muted-foreground)]"
+      style={{ paddingLeft: `${depth * 18 + 12}px` }}
+    >
+      <span>폴더가 비어있어요. 폴더를 만들까요?</span>
+      <Button variant="outline" className="h-8 px-3 py-1 text-xs" onClick={() => onStartCreate(path)}>
+        폴더 만들기
+      </Button>
+    </div>
+  );
+
+  const renderTree = (treeEntries: DirectoryEntry[], depth = 0): ReactNode[] => {
+    const orderedEntries = depth === 0
+      ? prioritizeSelectedDirectory(treeEntries, focusedEntryPath || selectedPath)
+      : treeEntries;
+
+    return orderedEntries.flatMap((entry) => {
       const expanded = expandedPaths.includes(entry.path);
       const children = childrenByPath[entry.path] ?? [];
       const loadError = loadErrors[entry.path] ?? "";
+      const childrenLoaded = Object.hasOwn(childrenByPath, entry.path) || Boolean(loadError);
       const shouldRenderCreateRow = pendingCreateDir.parentPath === entry.path;
+      const shouldRenderEmptyPrompt = entry.isDirectory && expanded && childrenLoaded && !loadError && !children.length && !shouldRenderCreateRow;
 
       return [
         <Fragment key={entry.path}>
@@ -142,12 +238,18 @@ export function ProjectTree({
             selected={selectedPath === entry.path}
             current={projectRoot === entry.path}
             expanded={expanded}
-            childrenLoaded={Boolean(childrenByPath[entry.path]) || Boolean(loadError)}
+            childrenLoaded={childrenLoaded}
             loadError={loadError}
             onToggle={() => {
+              if (depth === 0) {
+                focusEntry(entry.path);
+              }
               void onToggle(entry);
             }}
             onOpen={() => {
+              if (depth === 0) {
+                focusEntry(entry.path);
+              }
               void onSelectAndExpand(entry);
             }}
             onCreateDirectory={() => onStartCreate(entry.path)}
@@ -169,12 +271,15 @@ export function ProjectTree({
             </div>
           ) : null}
           {entry.isDirectory && expanded ? renderTree(children, depth + 1) : null}
+          {shouldRenderEmptyPrompt ? renderEmptyDirectoryPrompt(entry.path, depth + 1) : null}
         </Fragment>
       ];
     });
+  };
 
   return (
     <div
+      ref={treeScrollRef}
       className={cn("project-tree-scroll min-h-0 flex-1 overflow-auto", treeDragging && "dragging")}
       onPointerDown={startTreeDrag}
       onPointerMove={moveTreeDrag}
@@ -192,9 +297,7 @@ export function ProjectTree({
       <div className="flex flex-col gap-1 p-2">
         {renderTree(entries)}
         {pendingCreateDir.parentPath === currentPath ? renderCreateDirectoryRow(0) : null}
-        {!entries.length && pendingCreateDir.parentPath !== currentPath ? (
-          <div className="px-4 py-10 text-center text-sm text-[var(--muted-foreground)]">표시할 디렉터리가 없습니다.</div>
-        ) : null}
+        {!entries.length && pendingCreateDir.parentPath !== currentPath ? renderEmptyDirectoryPrompt(currentPath, 0) : null}
         {createFailed ? (
           <div className="mx-3 my-3 rounded-md bg-[var(--danger-surface)] px-4 py-3 text-sm text-[var(--danger-foreground)]">
             {getErrorMessage(createError, "새 폴더를 만들지 못했습니다. 이름 충돌 또는 잘못된 이름인지 확인하세요.")}

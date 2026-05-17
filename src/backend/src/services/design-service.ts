@@ -1,8 +1,10 @@
+import { readdir, readFile, stat } from "node:fs/promises";
+import { join, relative } from "node:path";
 import { Codex, type ApprovalMode, type ModelReasoningEffort, type SandboxMode, type ThreadEvent } from "@openai/codex-sdk";
 import { z } from "zod";
 import { loadAppConfig } from "@backend/config/app-config.js";
 import { buildDesignPrompt, modeDisplayName } from "@backend/prompts/design/runtime-prompt.js";
-import { readProductHtml } from "@backend/services/file-service.js";
+import { architectProductPath, readProductHtml } from "@backend/services/file-service.js";
 import { buildResourcePromptContext } from "@backend/services/resource-service.js";
 import type {
   DesignProgressEvent,
@@ -60,9 +62,25 @@ const designRuntimeSchema = {
         required: ["path", "type", "title", "description"],
         additionalProperties: false
       }
+    },
+    files: {
+      type: "array",
+      minItems: 1,
+      maxItems: 6,
+      items: {
+        type: "object",
+        properties: {
+          path: { type: "string" },
+          type: { type: "string" },
+          title: { type: "string" },
+          content: { type: "string" }
+        },
+        required: ["path", "type", "title", "content"],
+        additionalProperties: false
+      }
     }
   },
-  required: ["title", "summary", "sections", "actions", "artifacts"],
+  required: ["title", "summary", "sections", "actions", "artifacts", "files"],
   additionalProperties: false
 };
 
@@ -84,7 +102,13 @@ const designRuntimeResponseSchema = z.object({
     type: z.string().trim().min(1),
     title: z.string().trim().min(1),
     description: z.string().trim().min(1)
-  })).min(2).max(6)
+  })).min(2).max(6),
+  files: z.array(z.object({
+    path: z.string().trim().min(1),
+    type: z.string().trim().min(1),
+    title: z.string().trim().min(1),
+    content: z.string().trim().min(1)
+  })).min(1).max(6)
 });
 
 function asReasoningEffort(value: string): ModelReasoningEffort {
@@ -119,7 +143,7 @@ function describeProgress(event: ThreadEvent, locale: string): DesignProgressEve
     return {
       id: "complete",
       title: progressText(locale, "디자인 런타임 결과 준비", "Design runtime output ready"),
-      detail: progressText(locale, "DESIGN.md로 저장할 작업 지시와 산출물 계약을 만들었습니다.", "Prepared the working brief and artifact contract for DESIGN.md."),
+      detail: progressText(locale, "DESIGN/index.html로 저장할 MAKEOVER 산출물을 준비했습니다.", "Prepared the MAKEOVER artifact for DESIGN/index.html."),
       status: "completed"
     };
   }
@@ -184,8 +208,47 @@ export function composeDesignMarkdown(response: DesignRuntimeResponse): string {
     "## Tracked Artifacts",
     "",
     ...response.artifacts.map((artifact) => `- \`${artifact.path}\` (${artifact.type}) - ${artifact.title}: ${artifact.description}`),
+    "",
+    "## Generated Files",
+    "",
+    ...response.files.map((file) => `- \`${file.path}\` (${file.type}) - ${file.title}`),
     ""
   ].join("\n");
+}
+
+async function readArchitectContext(projectRoot: string): Promise<string> {
+  const architectRoot = join(projectRoot, "ARCHITECT");
+  const files: Array<{ path: string; content: string }> = [];
+
+  async function visit(directory: string): Promise<void> {
+    const entries = await readdir(directory, { withFileTypes: true }).catch(() => []);
+    for (const entry of entries) {
+      const absolute = join(directory, entry.name);
+      const relativePath = relative(projectRoot, absolute).replace(/\\/g, "/");
+      if (entry.isDirectory()) {
+        if (entry.name !== "assets") {
+          await visit(absolute);
+        }
+        continue;
+      }
+      if (!entry.isFile() || !/\.(html|css|js|json|md)$/i.test(entry.name)) {
+        continue;
+      }
+      const info = await stat(absolute).catch(() => null);
+      if (!info || info.size > 100_000) {
+        continue;
+      }
+      files.push({
+        path: relativePath,
+        content: await readFile(absolute, "utf8")
+      });
+    }
+  }
+
+  await visit(architectRoot);
+  return files.length
+    ? files.map((file) => `--- ${file.path} ---\n${file.content}`).join("\n\n")
+    : `No ARCHITECT files were found. Expected ${architectProductPath}.`;
 }
 
 export async function buildDesignRuntime(params: {
@@ -200,6 +263,7 @@ export async function buildDesignRuntime(params: {
 }): Promise<DesignRuntimeResponse> {
   const appConfig = await loadAppConfig();
   const productHtml = await readProductHtml(params.projectRoot).catch(() => "");
+  const architectContext = await readArchitectContext(params.projectRoot).catch(() => "");
   const resourceContext = await buildResourcePromptContext({
     activeSkillId: params.activeSkillId,
     activeDesignTemplateId: params.activeDesignTemplateId
@@ -221,6 +285,7 @@ export async function buildDesignRuntime(params: {
     goal: params.goal,
     locale: params.locale,
     productHtml,
+    architectContext,
     resourceContext
   }), {
     outputSchema: designRuntimeSchema
@@ -248,6 +313,9 @@ export async function buildDesignRuntime(params: {
   }
 
   const parsed = designRuntimeResponseSchema.parse(JSON.parse(finalResponse));
+  if (!parsed.files.some((file) => file.path === "DESIGN/index.html")) {
+    throw new Error("Design runtime did not return DESIGN/index.html.");
+  }
   const response: DesignRuntimeResponse = {
     id: crypto.randomUUID(),
     projectRoot: params.projectRoot,

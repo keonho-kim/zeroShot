@@ -120,6 +120,6 @@ export function ensureDevelopmentLanguageDecision(response: ArchitectDecisionRes
       ...response.decisions.slice(0, insertIndex),
       languageDecision,
       ...response.decisions.slice(insertIndex).filter((decision) => decision.id !== languageDecision.id)
-    ].slice(0, 12)
+    ].slice(0, 7)
   };
 }

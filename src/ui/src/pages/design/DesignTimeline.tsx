@@ -1,4 +1,4 @@
-import { CheckCircle2, Clock, LoaderCircle } from "lucide-react";
+import { CheckCircle2, Clock } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/utils/cn";
 import type { DesignTimelineItem } from "@/pages/design/design-page-model";
@@ -12,13 +12,14 @@ export function DesignTimeline({ items }: { items: DesignTimelineItem[] }) {
     <Card className="architect-timeline" aria-label="Design runtime progress">
       <div className="timeline-heading">
         <p className="decision-kicker">Progress</p>
-        <h2>디자인 런타임을 실행하고 있습니다.</h2>
+        <h2>MAKEOVER를 실행하고 있습니다.</h2>
+        <div className="design-wave-heading" aria-hidden="true"><i /><i /><i /></div>
       </div>
       <div className="timeline-list">
         {items.map((item) => (
           <div className={cn("timeline-item", item.status)} key={item.id}>
             <div className="timeline-status" aria-hidden="true">
-              {item.status === "completed" ? <CheckCircle2 aria-hidden="true" /> : <LoaderCircle aria-hidden="true" className="animate-spin" />}
+              {item.status === "completed" ? <CheckCircle2 aria-hidden="true" /> : <span className="design-wave-loader" aria-hidden="true"><i /><i /><i /></span>}
             </div>
             <div className="timeline-summary">
               <span>

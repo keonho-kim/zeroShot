@@ -32,18 +32,21 @@ export function ArtifactToolbar(props: {
           </button>
         ))}
       </div>
-      <label className="design-zoom-control">
+      <div className="design-zoom-control">
+        <button type="button" onClick={() => props.setArtifactZoom(1)}>
+          Fit
+        </button>
         <span>Zoom</span>
         <input
           type="range"
           min="0.5"
-          max="1"
+          max="1.25"
           step="0.05"
           value={props.artifactZoom}
           onChange={(event) => props.setArtifactZoom(Number(event.target.value))}
         />
         <strong>{Math.round(props.artifactZoom * 100)}%</strong>
-      </label>
+      </div>
     </div>
   );
 }
