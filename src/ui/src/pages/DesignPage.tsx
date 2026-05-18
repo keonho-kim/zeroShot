@@ -31,7 +31,6 @@ import {
   type ArtifactSourcePatch
 } from "@/entities/design/artifact-editor";
 import { ArtifactWorkbench } from "@/pages/design/artifact-workbench/ArtifactWorkbench";
-import { ArtifactCommentModal } from "@/pages/design/artifact-workbench/ArtifactCommentModal";
 import type { ArtifactChatMessage, ArtifactCommentCapture } from "@/pages/design/artifact-workbench/types";
 import { DesignResult } from "@/pages/design/DesignResult";
 import { DesignRuntimeSetup } from "@/pages/design/DesignRuntimeSetup";
@@ -580,6 +579,7 @@ export function DesignPage() {
     ]);
     setAiInstruction("");
     setCommentCapture(null);
+    setCommentToolOpen(false);
     setRuntimeError("");
     designMutation.mutate({ goal: nextGoal, assistantMessageId });
   };
@@ -680,7 +680,13 @@ export function DesignPage() {
               void designArtifactQuery.refetch();
               artifactFrameRef.current?.contentWindow?.postMessage({ __zeroshotArtifact: true, type: "od-refresh-targets" }, "*");
             }}
-            onOpenCommentTool={() => setCommentToolOpen(true)}
+            commentToolOpen={commentToolOpen}
+            onOpenCommentTool={() => {
+              artifactFrameRef.current?.contentWindow?.postMessage({ __zeroshotArtifact: true, type: "od-refresh-targets" }, "*");
+              setCommentToolOpen(true);
+            }}
+            onCloseCommentTool={() => setCommentToolOpen(false)}
+            onCaptureComment={setCommentCapture}
             onRemoveCommentCapture={() => setCommentCapture(null)}
             onApplySelectedTargetAiInstruction={applySelectedTargetAiInstruction}
             onUndo={undoArtifactChange}
@@ -691,13 +697,6 @@ export function DesignPage() {
 
         {makeoverStep === "preview" && designResult ? <DesignResult design={designResult} artifactHtml={artifactSource} /> : null}
       </div>
-      <ArtifactCommentModal
-        open={commentToolOpen}
-        frameRef={artifactFrameRef}
-        selectedTargets={selectedTargets}
-        onClose={() => setCommentToolOpen(false)}
-        onCapture={setCommentCapture}
-      />
     </div>
   );
 }

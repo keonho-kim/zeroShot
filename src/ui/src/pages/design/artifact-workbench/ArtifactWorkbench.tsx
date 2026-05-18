@@ -47,9 +47,13 @@ export function ArtifactWorkbench(props: ArtifactWorkbenchProps) {
               artifactZoom={props.artifactZoom}
               artifactFrameRef={props.artifactFrameRef}
               artifactSrcDoc={props.artifactSrcDoc}
+              selectedTargets={props.selectedTargets}
+              commentToolOpen={props.commentToolOpen}
               sourceDraft={props.sourceDraft}
               setSourceDraft={props.setSourceDraft}
               onOpenCommentTool={props.onOpenCommentTool}
+              onCloseCommentTool={props.onCloseCommentTool}
+              onCaptureComment={props.onCaptureComment}
             />
           </div>
         </>

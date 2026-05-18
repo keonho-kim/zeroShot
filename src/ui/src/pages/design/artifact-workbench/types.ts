@@ -54,7 +54,10 @@ export interface ArtifactWorkbenchProps {
   redoHistory: ArtifactHistoryEntry[];
   isSaving: boolean;
   onReload: () => void;
+  commentToolOpen: boolean;
   onOpenCommentTool: () => void;
+  onCloseCommentTool: () => void;
+  onCaptureComment: (capture: ArtifactCommentCapture) => void;
   onRemoveCommentCapture: () => void;
   onApplySelectedTargetAiInstruction: () => void;
   onUndo: () => void;
