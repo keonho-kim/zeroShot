@@ -6,6 +6,7 @@ import { useAppStore } from "@/stores/app-store";
 import { useArchitectFlowStore } from "@/stores/architect-store";
 import { PageHeader } from "@/components/PageHeader";
 import { CodexLoadingLog } from "@/components/CodexLoadingLog";
+import { AgentLoadingStage } from "@/components/AgentLoadingStage";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -74,19 +75,6 @@ function bootstrapLanguageSummary(args: string[]): { summary: string; profile: s
     summary: `${typeLabel} · ${stackLabel}`,
     profile: profile === "llm" ? "LLM profile" : ""
   };
-}
-
-function AgentLoadingStage(props: { label: string }) {
-  return (
-    <div className="agent-loading-stage" role="status" aria-live="polite">
-      <span className="agent-dot-wave" aria-hidden="true">
-        <i />
-        <i />
-        <i />
-      </span>
-      <h2>{props.label}</h2>
-    </div>
-  );
 }
 
 export function ArchitectProgressPage() {

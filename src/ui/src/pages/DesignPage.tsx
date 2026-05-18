@@ -30,6 +30,7 @@ import type { ArtifactChatMessage, ArtifactCommentCapture } from "@/pages/design
 import { DesignResult } from "@/pages/design/DesignResult";
 import { DesignRuntimeSetup } from "@/pages/design/DesignRuntimeSetup";
 import { CodexLoadingLog } from "@/components/CodexLoadingLog";
+import { AgentLoadingStage } from "@/components/AgentLoadingStage";
 import { type DesignTimelineItem, upsertTimelineItem } from "@/pages/design/design-page-model";
 import { cn } from "@/utils/cn";
 
@@ -42,19 +43,6 @@ type DesignRunRequest = {
 };
 
 const defaultMakeoverGoal = "제품 기획서와 선택한 디자인 시스템/템플릿에 맞춰 가장 적합한 INTERACTIVE CANVAS를 만들어주세요.";
-
-function AgentLoadingStage(props: { label: string }) {
-  return (
-    <div className="agent-loading-stage" role="status" aria-live="polite">
-      <span className="agent-dot-wave" aria-hidden="true">
-        <i />
-        <i />
-        <i />
-      </span>
-      <h2>{props.label}</h2>
-    </div>
-  );
-}
 
 export function DesignPage() {
   const queryClient = useQueryClient();

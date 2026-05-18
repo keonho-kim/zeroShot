@@ -3,6 +3,13 @@
   gap: 1rem;
 }
 
+@media (min-width: 980px) {
+  .build-workspace {
+    grid-template-columns: minmax(0, 1.5fr) minmax(280px, 0.7fr);
+    align-items: start;
+  }
+}
+
 .project-tree-scroll {
   cursor: grab;
   overscroll-behavior: contain;
@@ -217,6 +224,18 @@
 .build-run-screen {
   display: grid;
   gap: 1rem;
+}
+
+.update-choice-board {
+  position: sticky;
+  top: 1rem;
+}
+
+.update-decision-card {
+  border: 2px solid var(--border);
+  border-radius: 2px;
+  background: var(--background);
+  padding: 1rem;
 }
 .build-run-heading {
   border: 1px solid var(--border);

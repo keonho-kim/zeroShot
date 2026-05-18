@@ -190,8 +190,8 @@ export async function runPipeline(mode: RunMode, projectRoot: string, defaults: 
 
     console.log("[build] 6단계: closeout을 수행합니다.");
     ctx.pipelineNote = pipelineFailed
-      ? `이 run은 하나 이상의 FAIL 게이트를 겪었습니다. HTML 보고서에 실제 실패 지점과 남은 작업을 정직하게 기록하세요. failure_reason=${failureReason || "unknown"}`
-      : "이 run은 주요 게이트를 PASS로 통과했습니다. HTML 보고서에 완료 범위와 남은 리스크를 정직하게 기록하세요.";
+      ? `이 run은 하나 이상의 FAIL 게이트를 겪었습니다. HTML 보고서에 실제 실패 지점, 테스트 실행 여부, PRODUCT.html 기능 명세와의 불일치, 남은 작업을 정직하게 기록하세요. failure_reason=${failureReason || "unknown"}`
+      : "이 run은 주요 게이트를 PASS로 통과했습니다. HTML 보고서에 완료 범위, 테스트 실행 결과, PRODUCT.html 기능 명세 교차확인 결과, 남은 리스크를 정직하게 기록하세요.";
 
     lastResult = await closeoutPhase(ctx, pipelineFailed, failureReason);
     if (lastResult.gate !== "PASS") {

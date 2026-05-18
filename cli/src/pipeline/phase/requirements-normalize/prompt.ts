@@ -5,13 +5,17 @@ export function createPrompt(ctx: PipelineContext): { goal: string; extra: strin
   if (ctx.mode === "build") {
     return {
       goal: `- Read PRODUCT.html carefully.
+- If DESIGN/index.html exists, read it as the current interactive canvas and use it as UI implementation guidance.
 - Interpret the product goal, constraints, likely implementation slices, and validation needs.
+- Include relevant test execution and PRODUCT.html feature-spec cross-checks in the implementation queue.
 - Create a compact implementation queue in your JSON response, not in workspace markdown files.
 - Do not modify PRODUCT.html in this phase.
+- Do not modify DESIGN/index.html in this phase.
 - Do not modify production code in this phase.
 - Return PASS only if the compact state is ready for implementation work.`,
       extra: `Read only as needed:
 - ${ctx.productFile}
+- ${ctx.projectRoot}/DESIGN/index.html
 
 Fill result_summary, next_steps, open_issues, and work_log_entries with concise user-facing content.`
     };
@@ -22,6 +26,7 @@ Fill result_summary, next_steps, open_issues, and work_log_entries with concise 
 - Treat PRODUCT.html as the base truth and UPDATE.md as the change request.
 - Incorporate the update delta into a compact implementation queue in your JSON response.
 - Include backend refactoring needs in the queue when the update touches oversized files, duplicated behavior, unclear utilities, weak domain boundaries, or architecture drift.
+- Include relevant test execution and PRODUCT.html feature-spec cross-checks in the implementation queue.
 - Do not modify PRODUCT.html in this phase.
 - Do not modify UPDATE.md in this phase.
 - Do not modify production code in this phase.

@@ -16,6 +16,7 @@ import { readRunDetail, listRuns } from "@backend/services/history-service.js";
 import { jobManager } from "@backend/services/job-manager.js";
 import { readProjectHistoryMeta, readProjectState } from "@backend/services/project-service.js";
 import { buildResourcePromptContext, listResourceCatalog } from "@backend/services/resource-service.js";
+import { buildUpdateDecisions, type UpdateProgressEvent } from "@backend/services/update-service.js";
 import type { BootstrapRequest, DesignProgressEvent, DesignRuntimeMode, PipelineOptions, RunMode } from "@backend/types.js";
 
 const router: Router = express.Router();
@@ -755,6 +756,71 @@ async function startPipeline(mode: RunMode, req: Request, res: Response) {
 }
 
 router.post("/build", asyncHandler(async (req: Request, res: Response) => startPipeline("build", req, res)));
+
+router.post("/update/decisions/stream", asyncHandler(async (req: Request, res: Response) => {
+  const auth = await readAuthStatus();
+  if (!auth.valid) {
+    res.status(412).json(auth);
+    return;
+  }
+
+  const body = req.body as {
+    projectRoot?: string;
+    updateRequest?: string;
+    locale?: string;
+    model?: string;
+  };
+  const projectRoot = await getValidatedProjectRoot(String(body.projectRoot ?? ""));
+  const projectState = await readProjectState(projectRoot);
+  if (!projectState.updateEnabled) {
+    res.status(409).json({ message: "UPDATE needs a completed build run and source code." });
+    return;
+  }
+  if (typeof body.updateRequest !== "string" || !body.updateRequest.trim()) {
+    res.status(400).json({ message: "Update request is required" });
+    return;
+  }
+
+  res.writeHead(200, {
+    "Content-Type": "text/event-stream",
+    "Cache-Control": "no-cache",
+    Connection: "keep-alive"
+  });
+
+  let seq = 0;
+  const writeEvent = (type: string, data: object) => {
+    seq += 1;
+    res.write(`id: ${seq}\n`);
+    res.write(`event: ${type}\n`);
+    res.write(`data: ${JSON.stringify(data)}\n\n`);
+  };
+
+  try {
+    const appConfig = await loadAppConfig();
+    const decisions = await buildUpdateDecisions({
+      projectRoot,
+      updateRequest: body.updateRequest.trim(),
+      locale: body.locale === "ko" ? "ko" : "en",
+      reasoning: appConfig.defaults.planReasoning,
+      model: typeof body.model === "string" && body.model.trim() ? body.model.trim() : undefined,
+      additionalDirectories: [appConfig.resourceRoots.skills, appConfig.resourceRoots.designTemplates, appConfig.resourceRoots.designSystems],
+      onProgress: (event: UpdateProgressEvent) => writeEvent("progress", event),
+      onMessage: (message) => writeEvent("message", { message })
+    });
+    await appendAppEvent("update_decisions_created", {
+      projectRoot,
+      title: decisions.title,
+      decisionsCount: decisions.decisions.length
+    });
+    writeEvent("complete", { decisions });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    writeEvent("error", { message: `Codex could not produce update decisions: ${message}` });
+  } finally {
+    res.end();
+  }
+}));
+
 router.post("/update", asyncHandler(async (req: Request, res: Response) => startPipeline("update", req, res)));
 
 router.get("/jobs/current", asyncHandler(async (_req: Request, res: Response) => {

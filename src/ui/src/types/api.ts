@@ -253,3 +253,8 @@ export interface ArchitectProgressEvent {
   detail: string;
   status: "running" | "completed" | "failed";
 }
+
+export type UpdateDecisionOption = ArchitectDecisionOption;
+export type UpdateDecision = ArchitectDecision;
+export type UpdateDecisionResponse = ArchitectDecisionResponse;
+export type UpdateProgressEvent = ArchitectProgressEvent;

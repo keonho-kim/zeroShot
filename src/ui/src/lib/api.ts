@@ -20,7 +20,9 @@ import type {
   ProjectState,
   ResourceManifest,
   RunDetail,
-  RunSummary
+  RunSummary,
+  UpdateDecisionResponse,
+  UpdateProgressEvent
 } from "@/types/api";
 
 const client = axios.create({
@@ -183,6 +185,69 @@ export async function requestArchitectDecisionsStream(
   throw new Error("Architect stream ended before decisions were returned.");
 }
 
+export async function requestUpdateDecisionsStream(
+  payload: {
+    projectRoot: string;
+    updateRequest: string;
+    locale: string;
+  },
+  onProgress: (event: UpdateProgressEvent) => void,
+  onMessage?: (message: string) => void
+) {
+  const response = await fetch("/api/update/decisions/stream", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || "Update decision request failed.");
+  }
+  if (!response.body) {
+    throw new Error("Update decision stream is unavailable.");
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  while (true) {
+    const { done, value } = await reader.read();
+    buffer += decoder.decode(value, { stream: !done });
+    const parts = buffer.split("\n\n");
+    buffer = parts.pop() ?? "";
+
+    for (const part of parts) {
+      const parsed = parseStreamEvent(part);
+      if (!parsed) {
+        continue;
+      }
+      if (parsed.event === "progress") {
+        onProgress(parsed.data as UpdateProgressEvent);
+      }
+      if (parsed.event === "message") {
+        const data = parsed.data as { message?: unknown };
+        if (typeof data.message === "string") {
+          onMessage?.(data.message);
+        }
+      }
+      if (parsed.event === "complete") {
+        return (parsed.data as { decisions: UpdateDecisionResponse }).decisions;
+      }
+      if (parsed.event === "error") {
+        throw new Error((parsed.data as { message: string }).message);
+      }
+    }
+
+    if (done) {
+      break;
+    }
+  }
+
+  throw new Error("Update decision stream ended before decisions were returned.");
+}
+
 export async function runArchitectBootstrap(payload: {
   projectRoot: string;
   answers: Record<string, string>;
@@ -330,7 +395,7 @@ export async function startBuild(payload: { projectRoot: string; productContent?
   return (await client.post<JobSnapshot>("/build", payload)).data;
 }
 
-export async function startUpdate(payload: { projectRoot: string; updateContent: string }) {
+export async function startUpdate(payload: { projectRoot: string; updateContent: string; options?: PipelineOptions }) {
   return (await client.post<JobSnapshot>("/update", payload)).data;
 }
 
