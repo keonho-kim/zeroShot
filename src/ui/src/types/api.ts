@@ -167,6 +167,7 @@ export interface DesignRuntimeResponse {
   id: string;
   projectRoot: string;
   mode: DesignRuntimeMode;
+  chatMessage: string;
   title: string;
   summary: string;
   generatedAt: string;

@@ -17,6 +17,7 @@ import type {
 const designRuntimeSchema = {
   type: "object",
   properties: {
+    chatMessage: { type: "string" },
     title: { type: "string" },
     summary: { type: "string" },
     sections: {
@@ -82,11 +83,12 @@ const designRuntimeSchema = {
       }
     }
   },
-  required: ["title", "summary", "sections", "actions", "artifacts", "files"],
+  required: ["chatMessage", "title", "summary", "sections", "actions", "artifacts", "files"],
   additionalProperties: false
 };
 
 const designRuntimeResponseSchema = z.object({
+  chatMessage: z.string().trim().min(1),
   title: z.string().trim().min(1),
   summary: z.string().trim().min(1),
   sections: z.array(z.object({
@@ -191,11 +193,60 @@ function designArtifactDisplayPath(path: string): string {
   return path === "DESIGN/index.html" ? "INTERACTIVE CANVAS" : path;
 }
 
+function decodeJsonStringContent(value: string): string {
+  return value
+    .replace(/\\\\/g, "\\")
+    .replace(/\\"/g, "\"")
+    .replace(/\\n/g, "\n")
+    .replace(/\\r/g, "\r")
+    .replace(/\\t/g, "\t");
+}
+
+export function extractDesignChatMessage(raw: string): string {
+  const fieldIndex = raw.indexOf("\"chatMessage\"");
+  if (fieldIndex < 0) {
+    return "";
+  }
+  const colonIndex = raw.indexOf(":", fieldIndex + "\"chatMessage\"".length);
+  if (colonIndex < 0) {
+    return "";
+  }
+  const quoteIndex = raw.indexOf("\"", colonIndex + 1);
+  if (quoteIndex < 0) {
+    return "";
+  }
+
+  let escaped = false;
+  let content = "";
+  for (let index = quoteIndex + 1; index < raw.length; index += 1) {
+    const char = raw[index];
+    if (escaped) {
+      content += `\\${char}`;
+      escaped = false;
+      continue;
+    }
+    if (char === "\\") {
+      escaped = true;
+      continue;
+    }
+    if (char === "\"") {
+      try {
+        return JSON.parse(`"${content}"`) as string;
+      } catch {
+        return decodeJsonStringContent(content);
+      }
+    }
+    content += char;
+  }
+
+  return decodeJsonStringContent(content);
+}
+
 function describeProgress(event: ThreadEvent, locale: string): DesignProgressEvent | null {
   if (event.type === "thread.started") {
     return {
       id: "session",
-      title: progressText(locale, "디자인 런타임 시작", "Design runtime started"),
+      title: progressText(locale, "분석 중", "Analyzing"),
       detail: progressText(locale, "제품 설계와 선택 리소스를 디자인 작업대로 넘겼습니다.", "Product direction and selected resources are entering the design workbench."),
       status: "completed"
     };
@@ -203,7 +254,7 @@ function describeProgress(event: ThreadEvent, locale: string): DesignProgressEve
   if (event.type === "turn.started") {
     return {
       id: "analysis",
-      title: progressText(locale, "디자인 자료 분석 중", "Analyzing design inputs"),
+      title: progressText(locale, "분석 중", "Analyzing"),
       detail: progressText(locale, "제품 블루프린트, 디자인 템플릿, 편집 모드를 정리하고 있습니다.", "Reading the product blueprint, design template, and editing mode."),
       status: "running"
     };
@@ -211,7 +262,7 @@ function describeProgress(event: ThreadEvent, locale: string): DesignProgressEve
   if (event.type === "turn.completed") {
     return {
       id: "complete",
-      title: progressText(locale, "디자인 런타임 결과 준비", "Design runtime output ready"),
+      title: progressText(locale, "완료", "Done"),
       detail: progressText(locale, "INTERACTIVE CANVAS로 저장할 MAKEOVER 산출물을 준비했습니다.", "Prepared the MAKEOVER artifact for INTERACTIVE CANVAS."),
       status: "completed"
     };
@@ -219,7 +270,7 @@ function describeProgress(event: ThreadEvent, locale: string): DesignProgressEve
   if (event.type === "turn.failed") {
     return {
       id: "failed",
-      title: progressText(locale, "디자인 런타임 실패", "Design runtime failed"),
+      title: progressText(locale, "실패", "Failed"),
       detail: event.error.message,
       status: "failed"
     };
@@ -227,7 +278,7 @@ function describeProgress(event: ThreadEvent, locale: string): DesignProgressEve
   if (event.type === "error") {
     return {
       id: "failed",
-      title: progressText(locale, "디자인 스트림 오류", "Design stream error"),
+      title: progressText(locale, "실패", "Failed"),
       detail: event.message,
       status: "failed"
     };
@@ -514,6 +565,7 @@ export async function buildDesignRuntime(params: {
   activeDesignSystemId?: string;
   model?: string;
   onProgress?: (event: DesignProgressEvent) => void;
+  onMessage?: (message: string) => void;
 }): Promise<DesignRuntimeResponse> {
   const appConfig = await loadAppConfig();
   const productHtml = await readProductHtml(params.projectRoot).catch(() => "");
@@ -547,11 +599,19 @@ export async function buildDesignRuntime(params: {
     outputSchema: designRuntimeSchema
   });
   let finalResponse = "";
+  let lastMessage = "";
 
   for await (const event of events) {
     const progress = describeProgress(event, params.locale);
     if (progress) {
       params.onProgress?.(progress);
+    }
+    if ((event.type === "item.updated" || event.type === "item.completed") && event.item.type === "agent_message") {
+      const nextMessage = extractDesignChatMessage(event.item.text).trim();
+      if (nextMessage && nextMessage !== lastMessage) {
+        lastMessage = nextMessage;
+        params.onMessage?.(nextMessage);
+      }
     }
     if (event.type === "item.completed" && event.item.type === "agent_message") {
       finalResponse = event.item.text;
@@ -580,6 +640,9 @@ export async function buildDesignRuntime(params: {
     designMarkdown: "",
     ...parsed
   };
+  if (response.chatMessage.trim() && response.chatMessage.trim() !== lastMessage) {
+    params.onMessage?.(response.chatMessage.trim());
+  }
   return {
     ...response,
     designMarkdown: composeDesignMarkdown(response)
