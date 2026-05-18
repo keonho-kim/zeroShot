@@ -104,6 +104,12 @@
   width: min(100%, 1200px);
 }
 
+.architect-existing-product-chat {
+  width: min(100%, 1180px);
+  grid-template-columns: minmax(320px, 0.9fr) minmax(420px, 1.1fr);
+  align-items: start;
+}
+
 .architect-thread {
   display: flex;
   min-height: 0;
@@ -469,6 +475,10 @@
   min-height: 120px;
 }
 
+.architect-existing-product-card textarea {
+  min-height: 148px;
+}
+
 .architect-error {
   margin: 0;
   color: var(--danger-foreground);
@@ -746,6 +756,14 @@
 .architect-design-preview {
   margin-top: 1.5rem;
   min-height: 448px;
+}
+
+.architect-existing-product-preview {
+  margin-top: 0;
+  border: 2px solid var(--border);
+  border-radius: 2px;
+  background: var(--panel);
+  box-shadow: var(--shadow-card);
 }
 
 .architect-design-preview iframe {

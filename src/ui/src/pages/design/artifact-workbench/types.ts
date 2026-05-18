@@ -1,7 +1,6 @@
 import type { Dispatch, RefObject, SetStateAction } from "react";
 import type {
   ArtifactEditorMode,
-  ArtifactEditTarget,
   ArtifactHistoryEntry,
 } from "@/entities/design/artifact-editor";
 import type { DesignTimelineItem } from "@/pages/design/design-page-model";
@@ -34,14 +33,10 @@ export interface ArtifactWorkbenchProps {
   artifactFrameRef: RefObject<HTMLIFrameElement | null>;
   artifactSrcDoc: string;
   artifactMode: ArtifactEditorMode;
-  setArtifactMode: Dispatch<SetStateAction<ArtifactEditorMode>>;
   artifactViewport: ArtifactViewport;
   setArtifactViewport: Dispatch<SetStateAction<ArtifactViewport>>;
   artifactZoom: number;
   setArtifactZoom: Dispatch<SetStateAction<number>>;
-  selectedTargets: ArtifactEditTarget[];
-  selectedTargetIds: string[];
-  onClearTargetSelection: () => void;
   sourceDraft: string;
   setSourceDraft: Dispatch<SetStateAction<string>>;
   aiInstruction: string;

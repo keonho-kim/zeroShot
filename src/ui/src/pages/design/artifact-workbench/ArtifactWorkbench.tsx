@@ -14,8 +14,6 @@ export function ArtifactWorkbench(props: ArtifactWorkbenchProps) {
         hasProductHtml={props.hasProductHtml}
         artifactEtag={props.artifactEtag}
         artifactUpdatedAt={props.artifactUpdatedAt}
-        artifactMode={props.artifactMode}
-        setArtifactMode={props.setArtifactMode}
         onReload={props.onReload}
       />
 
@@ -32,12 +30,10 @@ export function ArtifactWorkbench(props: ArtifactWorkbenchProps) {
             <ArtifactCodexPanel
               aiInstruction={props.aiInstruction}
               setAiInstruction={props.setAiInstruction}
-              selectedTargets={props.selectedTargets}
               commentCapture={props.commentCapture}
               chatMessages={props.chatMessages}
               isRunning={props.isRunning}
               onApplySelectedTargetAiInstruction={props.onApplySelectedTargetAiInstruction}
-              onClearTargetSelection={props.onClearTargetSelection}
               onRemoveCommentCapture={props.onRemoveCommentCapture}
             />
 
@@ -47,7 +43,6 @@ export function ArtifactWorkbench(props: ArtifactWorkbenchProps) {
               artifactZoom={props.artifactZoom}
               artifactFrameRef={props.artifactFrameRef}
               artifactSrcDoc={props.artifactSrcDoc}
-              selectedTargets={props.selectedTargets}
               commentToolOpen={props.commentToolOpen}
               sourceDraft={props.sourceDraft}
               setSourceDraft={props.setSourceDraft}

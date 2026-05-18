@@ -137,7 +137,6 @@ export function DesignRuntimeSetup(props: {
   onChangeDesignTemplate: (nextDesignTemplateId: string, mode: SelectionMode) => void;
   onChangeDesignSystem: (nextDesignSystemId: string, mode: SelectionMode) => void;
   onRetryRecommendations: () => void;
-  onAutoRun: () => void;
   onRun: () => void;
 }) {
   const [step, setStep] = useState<SetupStep>("system");
@@ -294,10 +293,7 @@ export function DesignRuntimeSetup(props: {
                   placeholder="예: 전체적으로 현대적인 디자인으로 진행하게 해주세요. 컬러감을 확장해주세요."
                 />
                 <div className="design-request-actions">
-                  <Button variant="outline" onClick={props.onAutoRun} disabled={props.isRunning}>
-                    알아서 해주세요
-                  </Button>
-                  <Button disabled={props.isRunning || !props.goal.trim()} onClick={props.onRun}>
+                  <Button disabled={props.isRunning} onClick={props.onRun}>
                     {props.isComplete ? <CheckCircle2 aria-hidden="true" /> : props.isRunning ? <span className="design-wave-loader" aria-hidden="true"><i /><i /><i /></span> : <ArrowRight aria-hidden="true" />}
                     {props.isComplete ? "MAKEOVER 완료" : props.isRunning ? "MAKEOVER 실행 중" : "MAKEOVER 실행"}
                   </Button>

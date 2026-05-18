@@ -1,18 +1,12 @@
-import { useEffect, useMemo, useRef, useState, type PointerEvent, type RefObject } from "react";
+import { useEffect, useRef, useState, type PointerEvent, type RefObject } from "react";
 import { Eraser, MousePointer2, Paperclip, Pencil, Type, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import type { ArtifactEditTarget } from "@/entities/design/artifact-editor";
 import type { ArtifactCommentCapture } from "@/pages/design/artifact-workbench/types";
 
 interface Point {
   x: number;
   y: number;
-}
-
-interface Rect extends Point {
-  width: number;
-  height: number;
 }
 
 interface TextNote extends Point {
@@ -38,35 +32,10 @@ function toSvgPoint(point: Point): string {
   return `${Math.round(point.x * CANVAS_SIZE)},${Math.round(point.y * CANVAS_SIZE)}`;
 }
 
-function normalizeRect(target: ArtifactEditTarget, width: number, height: number): Rect {
-  return {
-    x: clamp(target.rect.x / width),
-    y: clamp(target.rect.y / height),
-    width: clamp(target.rect.width / width),
-    height: clamp(target.rect.height / height)
-  };
-}
-
 function denormalizePoint(point: Point, width: number, height: number): Point {
   return {
     x: point.x * width,
     y: point.y * height
-  };
-}
-
-function denormalizeRect(rect: Rect, width: number, height: number): Rect {
-  return {
-    x: rect.x * width,
-    y: rect.y * height,
-    width: rect.width * width,
-    height: rect.height * height
-  };
-}
-
-function rectCenter(rect: Rect): Point {
-  return {
-    x: rect.x + rect.width / 2,
-    y: rect.y + rect.height / 2
   };
 }
 
@@ -121,7 +90,6 @@ async function captureIframe(frame: HTMLIFrameElement): Promise<CaptureState> {
 
 async function composeAnnotatedImage(params: {
   capture: CaptureState;
-  targets: Rect[];
   strokes: Point[][];
   notes: TextNote[];
 }): Promise<string> {
@@ -135,28 +103,6 @@ async function composeAnnotatedImage(params: {
   }
 
   context.drawImage(image, 0, 0, canvas.width, canvas.height);
-  context.strokeStyle = "#dc2626";
-  context.lineWidth = 4;
-
-  for (const target of params.targets) {
-    const rect = denormalizeRect(target, canvas.width, canvas.height);
-    context.strokeRect(rect.x, rect.y, rect.width, rect.height);
-  }
-
-  const firstNote = params.notes[0];
-  if (firstNote) {
-    const notePoint = denormalizePoint(firstNote, canvas.width, canvas.height);
-    context.strokeStyle = "#dc2626";
-    context.lineWidth = 3;
-    for (const target of params.targets) {
-      const center = denormalizePoint(rectCenter(target), canvas.width, canvas.height);
-      context.beginPath();
-      context.moveTo(center.x, center.y);
-      context.lineTo(notePoint.x, notePoint.y);
-      context.stroke();
-    }
-  }
-
   context.lineCap = "round";
   context.lineJoin = "round";
   context.strokeStyle = "#dc2626";
@@ -204,7 +150,6 @@ function relativePoint(event: PointerEvent<HTMLElement>): Point {
 export function ArtifactCommentOverlay(props: {
   open: boolean;
   frameRef: RefObject<HTMLIFrameElement | null>;
-  selectedTargets: ArtifactEditTarget[];
   onClose: () => void;
   onCapture: (capture: ArtifactCommentCapture) => void;
 }) {
@@ -225,16 +170,6 @@ export function ArtifactCommentOverlay(props: {
     setTextDraft("");
     setError("");
   }, [props.open]);
-
-  const frame = props.frameRef.current;
-  const frameWidth = Math.max(1, frame?.clientWidth ?? 1);
-  const frameHeight = Math.max(1, frame?.clientHeight ?? 1);
-  const selectedRects = useMemo(
-    () => props.selectedTargets.map((target) => normalizeRect(target, frameWidth, frameHeight)),
-    [frameHeight, frameWidth, props.selectedTargets]
-  );
-  const selectedIds = useMemo(() => props.selectedTargets.map((target) => target.id), [props.selectedTargets]);
-  const firstNote = notes[0];
 
   if (!props.open) {
     return null;
@@ -279,10 +214,8 @@ export function ArtifactCommentOverlay(props: {
     }
     try {
       const capture = await captureIframe(nextFrame);
-      const targets = props.selectedTargets.map((target) => normalizeRect(target, capture.width, capture.height));
       const annotatedImage = await composeAnnotatedImage({
         capture,
-        targets,
         strokes,
         notes
       });
@@ -290,7 +223,7 @@ export function ArtifactCommentOverlay(props: {
         cleanImage: capture.dataUrl,
         annotatedImage,
         note: notes.map((note) => note.text).join("\n") || textDraft.trim(),
-        targetIds: selectedIds,
+        targetIds: [],
         createdAt: Date.now()
       });
       props.onClose();
@@ -334,29 +267,7 @@ export function ArtifactCommentOverlay(props: {
         onPointerUp={finishDrawing}
         onPointerLeave={finishDrawing}
       >
-        {selectedRects.map((rect, index) => (
-          <div
-            className="artifact-comment-target"
-            key={selectedIds[index] ?? index}
-            style={{
-              left: `${rect.x * 100}%`,
-              top: `${rect.y * 100}%`,
-              width: `${rect.width * 100}%`,
-              height: `${rect.height * 100}%`
-            }}
-          />
-        ))}
         <svg className="artifact-comment-drawing" viewBox={`0 0 ${CANVAS_SIZE} ${CANVAS_SIZE}`} aria-hidden="true">
-          {firstNote ? selectedRects.map((rect, index) => (
-            <line
-              className="artifact-comment-connector"
-              key={selectedIds[index] ?? index}
-              x1={Math.round(rectCenter(rect).x * CANVAS_SIZE)}
-              y1={Math.round(rectCenter(rect).y * CANVAS_SIZE)}
-              x2={Math.round(firstNote.x * CANVAS_SIZE)}
-              y2={Math.round(firstNote.y * CANVAS_SIZE)}
-            />
-          )) : null}
           {strokes.map((stroke, index) => (
             <polyline key={index} points={stroke.map(toSvgPoint).join(" ")} />
           ))}

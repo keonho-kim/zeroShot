@@ -1,13 +1,10 @@
-import { Frame, MousePointer2, RefreshCcw } from "lucide-react";
+import { RefreshCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import type { ArtifactEditorMode } from "@/entities/design/artifact-editor";
 
 export function ArtifactWorkbenchHeader(props: {
   hasProductHtml: boolean;
   artifactEtag?: string;
   artifactUpdatedAt?: string;
-  artifactMode: ArtifactEditorMode;
-  setArtifactMode: (mode: ArtifactEditorMode) => void;
   onReload: () => void;
 }) {
   return (
@@ -20,24 +17,6 @@ export function ArtifactWorkbenchHeader(props: {
         ) : null}
       </div>
       <div className="design-artifact-actions">
-        <Button
-          data-testid="artifact-preview-mode"
-          variant={props.artifactMode === "preview" ? "default" : "outline"}
-          disabled={!props.hasProductHtml}
-          onClick={() => props.setArtifactMode("preview")}
-        >
-          <MousePointer2 aria-hidden="true" />
-          Preview
-        </Button>
-        <Button
-          data-testid="artifact-manual-mode"
-          variant={props.artifactMode === "manual-edit" ? "default" : "outline"}
-          disabled={!props.hasProductHtml}
-          onClick={() => props.setArtifactMode("manual-edit")}
-        >
-          <Frame aria-hidden="true" />
-          Edit
-        </Button>
         <Button variant="outline" disabled={!props.hasProductHtml} onClick={props.onReload}>
           <RefreshCcw aria-hidden="true" />
           Reload

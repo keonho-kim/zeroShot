@@ -34,6 +34,10 @@
 }
 
 @media (max-width: 980px) {
+  .architect-existing-product-chat {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   .design-page-workbench-wide {
     width: min(100%, calc(100vw - 2rem));
   }

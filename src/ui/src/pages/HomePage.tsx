@@ -181,7 +181,11 @@ export function HomePage() {
         <ActionCard
           title="ARCHITECT"
           eyebrow="BLUEPRINT QUEST"
-          description={architectDisabled ? "프로젝트를 먼저 선택하세요." : "대화를 통해 PRODUCT BLUEPRINT를 만듭니다."}
+          description={architectDisabled
+            ? "프로젝트를 먼저 선택하세요."
+            : projectState?.hasProductHtml
+              ? "기존 PRODUCT BLUEPRINT를 챗으로 이어서 조정합니다."
+              : "대화를 통해 PRODUCT BLUEPRINT를 만듭니다."}
           icon={<DraftingCompass aria-hidden="true" />}
           accent="cyan"
           disabled={architectDisabled}
@@ -190,7 +194,13 @@ export function HomePage() {
         <ActionCard
           title="DESIGN"
           eyebrow="OPEN DESIGN RUNTIME"
-          description={!projectRoot ? "프로젝트를 먼저 선택하세요." : designDisabled ? "PRODUCT BLUEPRINT를 먼저 만드세요." : "Codex 생성, 와이어 프레임 편집, 프레젠테이션 편집 흐름을 설계합니다."}
+          description={!projectRoot
+            ? "프로젝트를 먼저 선택하세요."
+            : designDisabled
+              ? "PRODUCT BLUEPRINT를 먼저 만드세요."
+              : projectState?.hasDesign
+                ? "기존 INTERACTIVE CANVAS를 챗으로 계속 편집합니다."
+                : "PRODUCT BLUEPRINT를 기반으로 새 INTERACTIVE CANVAS를 만듭니다."}
           icon={<Paintbrush aria-hidden="true" />}
           accent="amber"
           disabled={designDisabled}

@@ -2,7 +2,7 @@ import type { Dispatch, RefObject, SetStateAction } from "react";
 import { MessageSquarePlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import type { ArtifactEditorMode, ArtifactEditTarget } from "@/entities/design/artifact-editor";
+import type { ArtifactEditorMode } from "@/entities/design/artifact-editor";
 import { ArtifactCommentOverlay } from "@/pages/design/artifact-workbench/ArtifactCommentOverlay";
 import type { ArtifactCommentCapture, ArtifactViewport } from "@/pages/design/artifact-workbench/types";
 import { cn } from "@/utils/cn";
@@ -13,7 +13,6 @@ export function ArtifactStage(props: {
   artifactZoom: number;
   artifactFrameRef: RefObject<HTMLIFrameElement | null>;
   artifactSrcDoc: string;
-  selectedTargets: ArtifactEditTarget[];
   commentToolOpen: boolean;
   sourceDraft: string;
   setSourceDraft: Dispatch<SetStateAction<string>>;
@@ -45,7 +44,7 @@ export function ArtifactStage(props: {
           sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
         />
         {!props.commentToolOpen ? (
-          <Button type="button" className="artifact-comment-button" disabled={!props.selectedTargets.length} onClick={props.onOpenCommentTool}>
+          <Button type="button" className="artifact-comment-button" onClick={props.onOpenCommentTool}>
             <MessageSquarePlus aria-hidden="true" />
             코멘트하기
           </Button>
@@ -53,7 +52,6 @@ export function ArtifactStage(props: {
         <ArtifactCommentOverlay
           open={props.commentToolOpen}
           frameRef={props.artifactFrameRef}
-          selectedTargets={props.selectedTargets}
           onClose={props.onCloseCommentTool}
           onCapture={props.onCaptureComment}
         />
