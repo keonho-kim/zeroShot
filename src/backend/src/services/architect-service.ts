@@ -1,7 +1,8 @@
 import { Codex, type ApprovalMode, type ModelReasoningEffort, type SandboxMode, type ThreadEvent } from "@openai/codex-sdk";
 import { z } from "zod";
-import { buildArchitectPrompt } from "@backend/prompts/architect/decision-prompt.js";
-import { ensureDevelopmentLanguageDecision } from "@backend/prompts/architect/development-stack-decision.js";
+import { buildArchitectPrompt } from "@backend/llm/architect/prompt.js";
+import { buildArchitectProductHtmlPrompt } from "@backend/llm/architect/product-html-prompt.js";
+import { ensureDevelopmentLanguageDecision } from "@backend/llm/architect/development-stack-decision.js";
 import { textByLocale } from "@backend/i18n/locale.js";
 
 const architectDecisionSchema = {
@@ -132,7 +133,7 @@ function asReasoningEffort(value: string): ModelReasoningEffort {
   throw new Error(`Unsupported reasoning effort: ${value}`);
 }
 
-export { ensureDevelopmentLanguageDecision } from "@backend/prompts/architect/development-stack-decision.js";
+export { ensureDevelopmentLanguageDecision } from "@backend/llm/architect/development-stack-decision.js";
 
 function progressText(locale: string, ko: string, en: string): string {
   return textByLocale(locale, { ko, en, zh: en, ja: en, es: en, de: en });
@@ -333,16 +334,6 @@ export async function buildArchitectProductHtml(params: {
   resourceContext?: string;
   additionalDirectories?: string[];
 }): Promise<string> {
-  const selectedRequirements = params.decisionSet.decisions.map((decision) => {
-    const answerId = params.answers[decision.id];
-    const selected = decision.options.find((option) => option.id === answerId) ?? decision.options[0];
-    return [
-      `Question: ${decision.title}`,
-      `Selected: ${selected?.label ?? "Not selected"}`,
-      `Requirement: ${selected?.productRequirement ?? selected?.detail ?? ""}`
-    ].join("\n");
-  }).join("\n\n");
-
   const codex = new Codex();
   const thread = codex.startThread({
     workingDirectory: params.projectRoot,
@@ -354,27 +345,7 @@ export async function buildArchitectProductHtml(params: {
     ...(params.model ? { model: params.model } : {})
   });
 
-  const prompt = [
-    "Create ARCHITECT/PRODUCT.html for this ZeroShot project.",
-    "",
-    "Return only JSON matching the schema. The html field must contain a complete interactive HTML document.",
-    "Do not create files or run commands. Do not return Markdown.",
-    "The HTML must be a product planning document, not implementation code. It should be useful later for DESIGN, BUILD, and UPDATE.",
-    "Use self-contained CSS and lightweight JavaScript only when it improves interactive review.",
-    "Use compact 80% density in the generated planning document: smaller controls, tighter section spacing, shorter cards, and restrained heading scale while keeping the document readable.",
-    "Include product concept, target users, key workflows, core screens, data model, integrations, build constraints, and acceptance criteria.",
-    "Write user-facing content in the requested locale.",
-    "",
-    `Locale: ${params.locale}`,
-    "",
-    "Initial user brief:",
-    params.userBrief,
-    "",
-    "Selected architect decisions:",
-    selectedRequirements,
-    "",
-    params.resourceContext ? ["Active resources:", params.resourceContext].join("\n") : ""
-  ].filter(Boolean).join("\n");
+  const prompt = buildArchitectProductHtmlPrompt(params);
 
   const { events } = await thread.runStreamed(prompt, {
     outputSchema: architectProductHtmlSchema

@@ -1,4 +1,4 @@
-import { detectLocale, translate, type SupportedLocale } from "@/lib/i18n";
+import { detectLocale, translate, type SupportedLocale } from "@/lib/i18n-core";
 
 export type Locale = SupportedLocale;
 

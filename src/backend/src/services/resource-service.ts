@@ -1,7 +1,7 @@
 import { readdir, readFile, stat } from "node:fs/promises";
 import { join, relative } from "node:path";
 import { loadAppConfig } from "@backend/config/app-config.js";
-import { resourcePromptBlock } from "@backend/prompts/resources/resource-prompt.js";
+import { resourceCatalogSummary, resourcePromptBlock } from "@backend/llm/resources/prompt.js";
 import { ensureResourceStoreSeeded } from "@backend/services/resource-seed-service.js";
 import type { ResourceFileSummary, ResourceManifest } from "@backend/types.js";
 
@@ -182,28 +182,4 @@ export async function buildResourcePromptContext(selection: {
     resourcePromptBlock("Active Design System", designSystem),
     resourcePromptBlock("Active Design Template", designTemplate)
   ].filter(Boolean).join("\n\n");
-}
-
-function summarizeResources(title: string, resources: ResourceManifest[]): string {
-  if (!resources.length) {
-    return `### ${title}\n- none`;
-  }
-  return [
-    `### ${title}`,
-    ...resources.slice(0, 120).map((resource) => `- ${resource.id}: ${resource.name}${resource.description ? ` - ${resource.description.replace(/\s+/g, " ").slice(0, 180)}` : ""}`)
-  ].join("\n");
-}
-
-export function resourceCatalogSummary(catalog: {
-  skills: ResourceManifest[];
-  designTemplates: ResourceManifest[];
-  designSystems: ResourceManifest[];
-}): string {
-  return [
-    "## Available ZeroShot Resources",
-    "Treat these bundled resources as read-only guidance. Select only the resources that fit the product instead of exposing every option to the user.",
-    summarizeResources("Skills", catalog.skills),
-    summarizeResources("Design Systems", catalog.designSystems),
-    summarizeResources("Design Templates", catalog.designTemplates)
-  ].join("\n\n");
 }

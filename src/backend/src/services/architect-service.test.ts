@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { buildArchitectPrompt } from "@backend/prompts/architect/decision-prompt";
+import { buildArchitectPrompt } from "@backend/llm/architect/prompt";
 import { ensureDevelopmentLanguageDecision, extractArchitectChatMessage, type ArchitectDecisionResponse } from "@backend/services/architect-service";
 
 const baseDecision: ArchitectDecisionResponse["decisions"][number] = {
