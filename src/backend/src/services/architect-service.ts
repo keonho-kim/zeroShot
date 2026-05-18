@@ -6,6 +6,7 @@ import { ensureDevelopmentLanguageDecision } from "@backend/prompts/architect/de
 const architectDecisionSchema = {
   type: "object",
   properties: {
+    chatMessage: { type: "string" },
     title: { type: "string" },
     summary: { type: "string" },
     decisions: {
@@ -41,11 +42,12 @@ const architectDecisionSchema = {
       }
     }
   },
-  required: ["title", "summary", "decisions"],
+  required: ["chatMessage", "title", "summary", "decisions"],
   additionalProperties: false
 };
 
 const architectDecisionResponseSchema = z.object({
+  chatMessage: z.string().trim().min(1),
   title: z.string().trim().min(1),
   summary: z.string().trim().min(1),
   decisions: z.array(z.object({
@@ -126,6 +128,55 @@ export { ensureDevelopmentLanguageDecision } from "@backend/prompts/architect/de
 
 function progressText(locale: string, ko: string, en: string): string {
   return locale === "ko" ? ko : en;
+}
+
+function decodeJsonStringContent(value: string): string {
+  return value
+    .replace(/\\\\/g, "\\")
+    .replace(/\\"/g, "\"")
+    .replace(/\\n/g, "\n")
+    .replace(/\\r/g, "\r")
+    .replace(/\\t/g, "\t");
+}
+
+export function extractArchitectChatMessage(raw: string): string {
+  const fieldIndex = raw.indexOf("\"chatMessage\"");
+  if (fieldIndex < 0) {
+    return "";
+  }
+  const colonIndex = raw.indexOf(":", fieldIndex + "\"chatMessage\"".length);
+  if (colonIndex < 0) {
+    return "";
+  }
+  const quoteIndex = raw.indexOf("\"", colonIndex + 1);
+  if (quoteIndex < 0) {
+    return "";
+  }
+
+  let escaped = false;
+  let content = "";
+  for (let index = quoteIndex + 1; index < raw.length; index += 1) {
+    const char = raw[index];
+    if (escaped) {
+      content += `\\${char}`;
+      escaped = false;
+      continue;
+    }
+    if (char === "\\") {
+      escaped = true;
+      continue;
+    }
+    if (char === "\"") {
+      try {
+        return JSON.parse(`"${content}"`) as string;
+      } catch {
+        return decodeJsonStringContent(content);
+      }
+    }
+    content += char;
+  }
+
+  return decodeJsonStringContent(content);
 }
 
 function describeProgress(event: ThreadEvent, locale: string): ArchitectProgressEvent | null {
@@ -213,6 +264,7 @@ export async function buildArchitectDecisions(params: {
   resourceContext?: string;
   additionalDirectories?: string[];
   onProgress?: (event: ArchitectProgressEvent) => void;
+  onMessage?: (message: string) => void;
 }): Promise<ArchitectDecisionResponse> {
   const codex = new Codex();
   const thread = codex.startThread({
@@ -229,11 +281,19 @@ export async function buildArchitectDecisions(params: {
     outputSchema: architectDecisionSchema
   });
   let finalResponse = "";
+  let lastMessage = "";
 
   for await (const event of events) {
     const progress = describeProgress(event, params.locale);
     if (progress) {
       params.onProgress?.(progress);
+    }
+    if ((event.type === "item.updated" || event.type === "item.completed") && event.item.type === "agent_message") {
+      const nextMessage = extractArchitectChatMessage(event.item.text).trim();
+      if (nextMessage && nextMessage !== lastMessage) {
+        lastMessage = nextMessage;
+        params.onMessage?.(nextMessage);
+      }
     }
     if (event.type === "item.completed" && event.item.type === "agent_message") {
       finalResponse = event.item.text;

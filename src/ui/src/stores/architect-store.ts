@@ -40,11 +40,13 @@ interface ArchitectFlowState {
   architectPending: boolean;
   architectError: string;
   timelineItems: ArchitectTimelineItem[];
+  streamMessages: string[];
   expandedTimelineId: string | null;
   setUserBrief: (value: string) => void;
   prepareRequest: (params: { brief: string; requestKey: string; omakaseMode: boolean }) => void;
   markRequestStarted: (requestKey: string) => void;
   addProgress: (event: ArchitectProgressEvent) => void;
+  addStreamMessage: (message: string) => void;
   completeRequest: (decisionSet: ArchitectDecisionSet) => void;
   failRequest: (message: string) => void;
   chooseOption: (decisionId: string, optionId: string) => void;
@@ -74,6 +76,7 @@ export const useArchitectFlowStore = create<ArchitectFlowState>((set) => ({
   architectPending: false,
   architectError: "",
   timelineItems: [],
+  streamMessages: [],
   expandedTimelineId: null,
   setUserBrief: (value) => set({ userBrief: value }),
   prepareRequest: ({ brief, requestKey, omakaseMode }) => set({
@@ -93,6 +96,7 @@ export const useArchitectFlowStore = create<ArchitectFlowState>((set) => ({
     architectPending: false,
     architectError: "",
     timelineItems: [],
+    streamMessages: [],
     expandedTimelineId: null
   }),
   markRequestStarted: (requestKey) => set({
@@ -100,12 +104,22 @@ export const useArchitectFlowStore = create<ArchitectFlowState>((set) => ({
     architectPending: true,
     architectError: "",
     timelineItems: [],
+    streamMessages: [],
     expandedTimelineId: null
   }),
   addProgress: (event) => set((state) => ({
     timelineItems: upsertTimelineItem(state.timelineItems, event),
     expandedTimelineId: event.id
   })),
+  addStreamMessage: (message) => set((state) => {
+    const trimmed = message.trim();
+    if (!trimmed || state.streamMessages.at(-1) === trimmed) {
+      return state;
+    }
+    return {
+      streamMessages: [...state.streamMessages.slice(-24), trimmed]
+    };
+  }),
   completeRequest: (decisionSet) => set((state) => {
     const answers = state.omakaseMode
       ? Object.fromEntries(decisionSet.decisions.map((decision) => [decision.id, decision.options[0]?.id ?? ""]))
@@ -117,6 +131,7 @@ export const useArchitectFlowStore = create<ArchitectFlowState>((set) => ({
       answers,
       continuePromptOpen: state.omakaseMode,
       timelineItems: [],
+      streamMessages: [],
       expandedTimelineId: null,
       architectPending: false
     };

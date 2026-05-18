@@ -126,7 +126,8 @@ export async function requestArchitectDecisionsStream(
     activeDesignTemplateId?: string;
     activeDesignSystemId?: string;
   },
-  onProgress: (event: ArchitectProgressEvent) => void
+  onProgress: (event: ArchitectProgressEvent) => void,
+  onMessage?: (message: string) => void
 ) {
   const response = await fetch("/api/architect/decisions/stream", {
     method: "POST",
@@ -159,6 +160,12 @@ export async function requestArchitectDecisionsStream(
       }
       if (parsed.event === "progress") {
         onProgress(parsed.data as ArchitectProgressEvent);
+      }
+      if (parsed.event === "message") {
+        const data = parsed.data as { message?: unknown };
+        if (typeof data.message === "string") {
+          onMessage?.(data.message);
+        }
       }
       if (parsed.event === "complete") {
         return (parsed.data as { decisions: ArchitectDecisionResponse }).decisions;

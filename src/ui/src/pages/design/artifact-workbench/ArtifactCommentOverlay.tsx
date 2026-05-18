@@ -150,6 +150,7 @@ function relativePoint(event: PointerEvent<HTMLElement>): Point {
 export function ArtifactCommentOverlay(props: {
   open: boolean;
   frameRef: RefObject<HTMLIFrameElement | null>;
+  targetIds: string[];
   onClose: () => void;
   onCapture: (capture: ArtifactCommentCapture) => void;
 }) {
@@ -223,7 +224,7 @@ export function ArtifactCommentOverlay(props: {
         cleanImage: capture.dataUrl,
         annotatedImage,
         note: notes.map((note) => note.text).join("\n") || textDraft.trim(),
-        targetIds: [],
+        targetIds: props.targetIds,
         createdAt: Date.now()
       });
       props.onClose();

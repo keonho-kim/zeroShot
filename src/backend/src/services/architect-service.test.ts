@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { buildArchitectPrompt } from "@backend/prompts/architect/decision-prompt";
-import { ensureDevelopmentLanguageDecision, type ArchitectDecisionResponse } from "@backend/services/architect-service";
+import { ensureDevelopmentLanguageDecision, extractArchitectChatMessage, type ArchitectDecisionResponse } from "@backend/services/architect-service";
 
 const baseDecision: ArchitectDecisionResponse["decisions"][number] = {
   id: "workflow",
@@ -26,6 +26,7 @@ const baseDecision: ArchitectDecisionResponse["decisions"][number] = {
 describe("architect service", () => {
   test("adds a development language decision when the brief omits implementation language", () => {
     const response = ensureDevelopmentLanguageDecision({
+      chatMessage: "제품 방향을 정리했습니다.",
       title: "Planner",
       summary: "A focused planning product.",
       decisions: [baseDecision]
@@ -39,6 +40,7 @@ describe("architect service", () => {
 
   test("does not add a development language decision when the brief already names a stack", () => {
     const response = ensureDevelopmentLanguageDecision({
+      chatMessage: "제품 방향을 정리했습니다.",
       title: "Planner",
       summary: "A focused planning product.",
       decisions: [baseDecision]
@@ -52,8 +54,14 @@ describe("architect service", () => {
     const prompt = buildArchitectPrompt("Build a planning app.", "en", "");
 
     expect(prompt).toContain("Final bootstrap instruction:");
+    expect(prompt).toContain("chatMessage");
     expect(prompt).toContain("zeroshot bootstrap");
     expect(prompt).toContain("--type <backend|frontend|fullstack|library|script>");
     expect(prompt).toContain("typescript, javascript, python, go, rust, java, ruby, zig");
+  });
+
+  test("extracts partial architect chat messages from runtime JSON", () => {
+    expect(extractArchitectChatMessage('{"chatMessage":"제품 선택지를 정리하고 있습니다.')).toBe("제품 선택지를 정리하고 있습니다.");
+    expect(extractArchitectChatMessage('{"title":"Planner"}')).toBe("");
   });
 });

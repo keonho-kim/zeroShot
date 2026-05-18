@@ -390,7 +390,8 @@ router.post("/architect/decisions/stream", asyncHandler(async (req: Request, res
         activeDesignSystemId: body.activeDesignSystemId,
         includeCatalogSummary: true
       }),
-      onProgress: (event: ArchitectProgressEvent) => writeEvent("progress", event)
+      onProgress: (event: ArchitectProgressEvent) => writeEvent("progress", event),
+      onMessage: (message) => writeEvent("message", { message })
     });
     await recordArchitectSession({
       projectRoot,

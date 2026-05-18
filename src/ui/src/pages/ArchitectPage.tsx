@@ -36,7 +36,7 @@ export function ArchitectPage() {
   const continueFromExistingProduct = () => {
     const trimmed = existingProductRequest.trim();
     if (!trimmed) {
-      navigate("/design");
+      navigate("/makeover");
       return;
     }
 
@@ -85,10 +85,10 @@ export function ArchitectPage() {
               <div>
                 <p className="decision-kicker">Product blueprint</p>
                 <h2>챗 UI</h2>
-                <p>기존 PRODUCT BLUEPRINT가 준비되어 있습니다. 바꾸고 싶은 방향을 입력하면 ARCHITECT가 다시 정리하고, 빈칸으로 보내면 현재 PRODUCT를 유지하고 DESIGN으로 이어갑니다.</p>
+                <p>기존 PRODUCT BLUEPRINT가 준비되어 있습니다. 바꾸고 싶은 방향을 입력하면 ARCHITECT가 다시 정리하고, 빈칸으로 보내면 현재 PRODUCT를 유지하고 MAKEOVER로 이어갑니다.</p>
               </div>
               <div className="chat-bubble assistant">
-                기존 PRODUCT를 기준으로 다음 작업을 이어갈 수 있습니다. 새 요구사항을 적거나 빈칸으로 전송해 DESIGN으로 이동하세요.
+                기존 PRODUCT를 기준으로 다음 작업을 이어갈 수 있습니다. 새 요구사항을 적거나 빈칸으로 전송해 MAKEOVER로 이동하세요.
               </div>
               <Textarea
                 value={existingProductRequest}

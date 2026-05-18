@@ -16,6 +16,7 @@ export interface ArchitectDecision {
 }
 
 export interface ArchitectDecisionSet {
+  chatMessage: string;
   title: string;
   summary: string;
   decisions: ArchitectDecision[];

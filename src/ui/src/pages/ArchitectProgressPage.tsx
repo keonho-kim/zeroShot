@@ -5,6 +5,7 @@ import { Navigate, useNavigate } from "react-router-dom";
 import { useAppStore } from "@/stores/app-store";
 import { useArchitectFlowStore } from "@/stores/architect-store";
 import { PageHeader } from "@/components/PageHeader";
+import { CodexLoadingLog } from "@/components/CodexLoadingLog";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -112,8 +113,11 @@ export function ArchitectProgressPage() {
   const tutorialOpen = useArchitectFlowStore((state) => state.tutorialOpen);
   const continuePromptOpen = useArchitectFlowStore((state) => state.continuePromptOpen);
   const architectError = useArchitectFlowStore((state) => state.architectError);
+  const timelineItems = useArchitectFlowStore((state) => state.timelineItems);
+  const streamMessages = useArchitectFlowStore((state) => state.streamMessages);
   const markRequestStarted = useArchitectFlowStore((state) => state.markRequestStarted);
   const addProgress = useArchitectFlowStore((state) => state.addProgress);
+  const addStreamMessage = useArchitectFlowStore((state) => state.addStreamMessage);
   const completeRequest = useArchitectFlowStore((state) => state.completeRequest);
   const failRequest = useArchitectFlowStore((state) => state.failRequest);
   const chooseOption = useArchitectFlowStore((state) => state.chooseOption);
@@ -294,7 +298,8 @@ export function ArchitectProgressPage() {
         activeDesignTemplateId: activeDesignTemplateId || undefined,
         activeDesignSystemId: activeDesignSystemId || undefined
       },
-      addProgress
+      addProgress,
+      addStreamMessage
     ).then((nextDecisionSet) => {
       completeRequest(nextDecisionSet);
     }).catch((error: unknown) => {
@@ -305,6 +310,7 @@ export function ArchitectProgressPage() {
     activeDesignSystemId,
     activeSkillId,
     addProgress,
+    addStreamMessage,
     completeRequest,
     decisionSet,
     failRequest,
@@ -353,6 +359,11 @@ export function ArchitectProgressPage() {
           {!decisionSet ? (
             <Card className="architect-loading-card" aria-label="Architect progress">
               <AgentLoadingStage label={locale === "ko" ? "요구사항 분석 중" : "Analyzing requirements"} />
+              <CodexLoadingLog
+                progressItems={timelineItems}
+                messages={streamMessages}
+                emptyMessage={locale === "ko" ? "제품 방향과 선택지를 정리하고 있습니다." : "Codex is organizing product direction and choices."}
+              />
               {architectError ? (
                 <p className="architect-error">{architectError}</p>
               ) : null}
@@ -406,7 +417,7 @@ export function ArchitectProgressPage() {
                         <>
                           <div className="decision-kicker">{locale === "ko" ? "PRODUCT.html ready" : "PRODUCT.html ready"}</div>
                           <h2>{locale === "ko" ? "설계 도면 작성 완료" : "Product blueprint ready"}</h2>
-                          <p>{locale === "ko" ? "Codex가 작성한 제품 기획서를 확인한 뒤 DESIGN으로 이어갈 수 있습니다." : "Review the Codex-written product blueprint, then continue into DESIGN."}</p>
+                          <p>{locale === "ko" ? "Codex가 작성한 제품 기획서를 확인한 뒤 MAKEOVER로 이어갈 수 있습니다." : "Review the Codex-written product blueprint, then continue into MAKEOVER."}</p>
                         </>
                       )}
                       {blueprintHtml ? (
@@ -547,9 +558,9 @@ export function ArchitectProgressPage() {
               <Button
                 variant="outline"
                 disabled={createBlueprintMutation.isPending}
-                onClick={() => navigate("/design", { state: { fromArchitect: true } })}
+                onClick={() => navigate("/makeover", { state: { fromArchitect: true } })}
               >
-                DESIGN
+                MAKEOVER
               </Button>
               <Button variant="outline" onClick={() => setContinuePromptOpen(false)}>CANCEL</Button>
             </div>

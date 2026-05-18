@@ -10,6 +10,7 @@ import {
 } from "@/entities/architect/architect-core";
 
 const decisionSet: ArchitectDecisionSet = {
+  chatMessage: "Product decisions are ready.",
   title: "Bakery planner",
   summary: "Codex converted the brief into product decisions.",
   decisions: [

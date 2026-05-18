@@ -234,6 +234,7 @@ export interface ArchitectDecision {
 }
 
 export interface ArchitectDecisionResponse {
+  chatMessage: string;
   title: string;
   summary: string;
   decisions: ArchitectDecision[];

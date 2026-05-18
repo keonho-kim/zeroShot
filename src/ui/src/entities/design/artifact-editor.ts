@@ -355,6 +355,10 @@ function injectBeforeBodyEnd(source: string, injection: string): string {
 
 function buildBridgeStyle(): string {
   return `<style data-od-edit-bridge-style>
+html [data-od-id],
+html [data-od-source-path],
+html [data-od-runtime-id] { outline: 1px dashed rgb(0 0 0 / 58%) !important; outline-offset: 3px !important; }
+html [data-od-selected='true'] { outline: 3px solid #dc2626 !important; outline-offset: 3px !important; }
 </style>`;
 }
 
@@ -615,6 +619,32 @@ function artifactBridgeScript(initialMode: ArtifactEditorMode): string {
   const postTargets = () => {
     post({ type: "od-edit-targets", targets: allTargets() });
   };
+  const closestTarget = (node) => {
+    let element = node instanceof Element ? node : null;
+    let fallback = null;
+    while (element && element !== document.documentElement) {
+      if (element !== document.body && !isHostNode(element) && element.matches(selector) && isMappable(element)) {
+        if (element.hasAttribute("data-od-id") || element.hasAttribute("data-od-edit")) return element;
+        if (!fallback) fallback = element;
+      }
+      element = element.parentElement;
+    }
+    return fallback;
+  };
+  const markSelectedIds = (ids) => {
+    const selected = new Set(Array.isArray(ids) ? ids : []);
+    document.querySelectorAll("[data-od-selected='true']").forEach((node) => node.removeAttribute("data-od-selected"));
+    selected.forEach((id) => {
+      const target = document.querySelector("[data-od-id='" + id + "'],[data-od-runtime-id='" + id + "'],[" + sourcePathAttr + "='" + id + "']");
+      if (target && !isHostNode(target)) target.setAttribute("data-od-selected", "true");
+    });
+  };
+  const select = (element, event) => {
+    const target = targetFor(element, true);
+    if (!element.hasAttribute("tabindex")) element.setAttribute("tabindex", "-1");
+    element.focus({ preventScroll: true });
+    post({ type: "od-edit-select", target, additive: Boolean(event && (event.ctrlKey || event.metaKey)) });
+  };
 
   window.addEventListener("message", (event) => {
     const payload = event.data;
@@ -625,7 +655,25 @@ function artifactBridgeScript(initialMode: ArtifactEditorMode): string {
       setTimeout(postTargets, 0);
     }
     if (payload.type === "od-refresh-targets") setTimeout(postTargets, 0);
+    if (payload.type === "od-highlight-targets") markSelectedIds(payload.ids);
   });
+
+  document.addEventListener("click", (event) => {
+    const element = closestTarget(event.target);
+    if (!element) return;
+    event.preventDefault();
+    event.stopPropagation();
+    select(element, event);
+  }, true);
+
+  document.addEventListener("contextmenu", (event) => {
+    if (!event.ctrlKey && !event.metaKey) return;
+    const element = closestTarget(event.target);
+    if (!element) return;
+    event.preventDefault();
+    event.stopPropagation();
+    select(element, event);
+  }, true);
 
   window.addEventListener("resize", postTargets);
   document.documentElement.setAttribute("data-od-edit-enabled", String(editMode));

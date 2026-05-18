@@ -19,6 +19,7 @@ export function ArtifactStage(props: {
   onOpenCommentTool: () => void;
   onCloseCommentTool: () => void;
   onCaptureComment: (capture: ArtifactCommentCapture) => void;
+  targetIds: string[];
 }) {
   if (props.artifactMode === "source") {
     return (
@@ -52,6 +53,7 @@ export function ArtifactStage(props: {
         <ArtifactCommentOverlay
           open={props.commentToolOpen}
           frameRef={props.artifactFrameRef}
+          targetIds={props.targetIds}
           onClose={props.onCloseCommentTool}
           onCapture={props.onCaptureComment}
         />

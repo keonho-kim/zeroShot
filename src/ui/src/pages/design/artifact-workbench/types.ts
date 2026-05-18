@@ -1,6 +1,7 @@
 import type { Dispatch, RefObject, SetStateAction } from "react";
 import type {
   ArtifactEditorMode,
+  ArtifactEditTarget,
   ArtifactHistoryEntry,
 } from "@/entities/design/artifact-editor";
 import type { DesignTimelineItem } from "@/pages/design/design-page-model";
@@ -41,6 +42,7 @@ export interface ArtifactWorkbenchProps {
   setSourceDraft: Dispatch<SetStateAction<string>>;
   aiInstruction: string;
   setAiInstruction: Dispatch<SetStateAction<string>>;
+  selectedTargets: ArtifactEditTarget[];
   commentCapture: ArtifactCommentCapture | null;
   chatMessages: ArtifactChatMessage[];
   isRunning: boolean;
@@ -54,6 +56,7 @@ export interface ArtifactWorkbenchProps {
   onCloseCommentTool: () => void;
   onCaptureComment: (capture: ArtifactCommentCapture) => void;
   onRemoveCommentCapture: () => void;
+  onClearTargetSelection: () => void;
   onApplySelectedTargetAiInstruction: () => void;
   onUndo: () => void;
   onRedo: () => void;

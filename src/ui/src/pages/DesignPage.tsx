@@ -19,13 +19,17 @@ import {
 import type { DesignRecommendationResponse, DesignRuntimeMode, DesignRuntimeResponse } from "@/types/api";
 import {
   buildArtifactSrcDoc,
+  isArtifactBridgeMessage,
+  type ArtifactBridgeMessage,
   type ArtifactEditorMode,
+  type ArtifactEditTarget,
   type ArtifactHistoryEntry
 } from "@/entities/design/artifact-editor";
 import { ArtifactWorkbench } from "@/pages/design/artifact-workbench/ArtifactWorkbench";
 import type { ArtifactChatMessage, ArtifactCommentCapture } from "@/pages/design/artifact-workbench/types";
 import { DesignResult } from "@/pages/design/DesignResult";
 import { DesignRuntimeSetup } from "@/pages/design/DesignRuntimeSetup";
+import { CodexLoadingLog } from "@/components/CodexLoadingLog";
 import { type DesignTimelineItem, upsertTimelineItem } from "@/pages/design/design-page-model";
 import { cn } from "@/utils/cn";
 
@@ -67,6 +71,7 @@ export function DesignPage() {
   const [recommendationTimelineItems, setRecommendationTimelineItems] = useState<DesignTimelineItem[]>([]);
   const [recommendationError, setRecommendationError] = useState("");
   const [timelineItems, setTimelineItems] = useState<DesignTimelineItem[]>([]);
+  const [runtimeMessages, setRuntimeMessages] = useState<string[]>([]);
   const [runtimeError, setRuntimeError] = useState("");
   const [designResult, setDesignResult] = useState<DesignRuntimeResponse | null>(null);
   const [makeoverStep, setMakeoverStep] = useState<MakeoverStep>("brief");
@@ -78,6 +83,8 @@ export function DesignPage() {
   const [aiInstruction, setAiInstruction] = useState("");
   const [artifactChatMessages, setArtifactChatMessages] = useState<ArtifactChatMessage[]>([]);
   const [artifactSource, setArtifactSource] = useState("");
+  const [artifactTargets, setArtifactTargets] = useState<ArtifactEditTarget[]>([]);
+  const [selectedTargetIds, setSelectedTargetIds] = useState<string[]>([]);
   const [artifactError, setArtifactError] = useState("");
   const [artifactEtag, setArtifactEtag] = useState("");
   const [sourceHistory, setSourceHistory] = useState<ArtifactHistoryEntry[]>([]);
@@ -129,6 +136,8 @@ export function DesignPage() {
   useEffect(() => {
     setArtifactSource(designArtifactQuery.data?.content.trim() ? designArtifactQuery.data.content : "");
     setArtifactEtag(designArtifactQuery.data?.etag ?? "");
+    setArtifactTargets([]);
+    setSelectedTargetIds([]);
     setSourceHistory([]);
     setRedoHistory([]);
     setArtifactError("");
@@ -140,6 +149,7 @@ export function DesignPage() {
     setMakeoverComplete(false);
     setRecommendations(null);
     setRecommendationTimelineItems([]);
+    setRuntimeMessages([]);
     setRecommendationError("");
     setActiveDesignTemplateSelectionMode("manual");
     setActiveDesignSystemSelectionMode("manual");
@@ -203,6 +213,7 @@ export function DesignPage() {
       const nextGoal = request.goal.trim() || defaultMakeoverGoal;
       setRuntimeError("");
       setTimelineItems([]);
+      setRuntimeMessages([]);
       return requestDesignRuntimeStream({
         projectRoot,
         mode,
@@ -218,6 +229,7 @@ export function DesignPage() {
             : message));
         }
       }, (message) => {
+        setRuntimeMessages((items) => items.at(-1) === message ? items : [...items.slice(-24), message]);
         if (!request.assistantMessageId) {
           return;
         }
@@ -295,6 +307,7 @@ export function DesignPage() {
     setSourceHistory((items) => items.slice(0, -1));
     setArtifactSource(entry.beforeSource);
     setSourceDraft(entry.beforeSource);
+    setSelectedTargetIds([]);
   };
 
   const redoArtifactChange = () => {
@@ -306,7 +319,54 @@ export function DesignPage() {
     setRedoHistory((items) => items.slice(1));
     setArtifactSource(entry.afterSource);
     setSourceDraft(entry.afterSource);
+    setSelectedTargetIds([]);
   };
+
+  const selectedTargets = useMemo(() => {
+    const ids = new Set(selectedTargetIds);
+    return artifactTargets.filter((target) => ids.has(target.id));
+  }, [artifactTargets, selectedTargetIds]);
+
+  useEffect(() => {
+    artifactFrameRef.current?.contentWindow?.postMessage({
+      __zeroshotArtifact: true,
+      type: "od-highlight-targets",
+      ids: selectedTargetIds
+    }, "*");
+  }, [selectedTargetIds]);
+
+  useEffect(() => {
+    if (!artifactTargets.length || !selectedTargetIds.length) {
+      return;
+    }
+    const availableIds = new Set(artifactTargets.map((target) => target.id));
+    setSelectedTargetIds((ids) => ids.filter((id) => availableIds.has(id)));
+  }, [artifactTargets, selectedTargetIds.length]);
+
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent<unknown>) => {
+      if (event.source !== artifactFrameRef.current?.contentWindow || !isArtifactBridgeMessage(event.data)) {
+        return;
+      }
+      const message = event.data as ArtifactBridgeMessage;
+      if (message.type === "od-edit-targets") {
+        setArtifactTargets(message.targets);
+      }
+      if (message.type === "od-edit-select") {
+        setSelectedTargetIds((ids) => {
+          if (message.additive) {
+            return ids.includes(message.target.id)
+              ? ids.filter((id) => id !== message.target.id)
+              : [...ids, message.target.id];
+          }
+          return [message.target.id];
+        });
+      }
+    };
+
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
+  }, []);
 
   const resources = resourcesQuery.data ?? { skills: [], designTemplates: [], designSystems: [] };
   const hasProductHtml = Boolean(productArtifactQuery.data?.content.trim());
@@ -347,11 +407,26 @@ export function DesignPage() {
     setMode("codex");
     setArtifactError("");
     setRuntimeError("");
+    setRuntimeMessages([]);
     setMakeoverStep("loading");
     designMutation.mutate({ goal: nextGoal, source: "request" });
   };
 
   const applySelectedTargetAiInstruction = () => {
+    const targetContext = selectedTargets.length
+      ? [
+        "Selected canvas targets:",
+        ...selectedTargets.map((target, index) => [
+          `Target ${index + 1}:`,
+          `- id: ${target.id}`,
+          `- label: ${target.label}`,
+          `- kind: ${target.kind}`,
+          `- text: ${target.text}`,
+          `- rect: x ${target.rect.x}, y ${target.rect.y}, width ${target.rect.width}, height ${target.rect.height}`,
+          `- outerHtml: ${target.outerHtml.slice(0, 1200)}`
+        ].join("\n"))
+      ].join("\n")
+      : "";
     const commentContext = commentCapture
       ? [
         "Canvas comment capture:",
@@ -370,6 +445,7 @@ export function DesignPage() {
       "Do not wait for a selected element. Interpret the user's request against the full current canvas.",
       "Active resource instruction:",
       "Load and apply the active skill, design template, and design system context already configured for this project before making the change.",
+      targetContext,
       commentContext,
       "Requested design change:",
       aiInstruction.trim(),
@@ -388,7 +464,7 @@ export function DesignPage() {
         role: "user",
         content: userMessage,
         createdAt: Date.now(),
-        mentions: [],
+        mentions: selectedTargets.map((target) => target.label),
         hasCommentCapture: Boolean(commentCapture),
         progress: []
       },
@@ -407,6 +483,7 @@ export function DesignPage() {
     setCommentCapture(null);
     setCommentToolOpen(false);
     setRuntimeError("");
+    setRuntimeMessages([]);
     designMutation.mutate({ goal: nextGoal, assistantMessageId, source: "workbench" });
   };
 
@@ -457,11 +534,11 @@ export function DesignPage() {
         {makeoverStep === "loading" ? (
           <Card className="makeover-loading-card">
             <AgentLoadingStage label="MAKING OVER" />
-            <div className="design-inline-log design-loading-note" aria-label="Makeover progress">
-              <div>
-                <span>제품 블루프린트, 디자인 템플릿, 편집 모드를 정리하고 있습니다.</span>
-              </div>
-            </div>
+            <CodexLoadingLog
+              progressItems={timelineItems}
+              messages={runtimeMessages}
+              emptyMessage="제품 블루프린트, 디자인 템플릿, 편집 모드를 정리하고 있습니다."
+            />
           </Card>
         ) : null}
 
@@ -481,6 +558,7 @@ export function DesignPage() {
             setSourceDraft={setSourceDraft}
             aiInstruction={aiInstruction}
             setAiInstruction={setAiInstruction}
+            selectedTargets={selectedTargets}
             commentCapture={commentCapture}
             chatMessages={artifactChatMessages}
             isRunning={designMutation.isPending}
@@ -496,6 +574,7 @@ export function DesignPage() {
             onCloseCommentTool={() => setCommentToolOpen(false)}
             onCaptureComment={setCommentCapture}
             onRemoveCommentCapture={() => setCommentCapture(null)}
+            onClearTargetSelection={() => setSelectedTargetIds([])}
             onApplySelectedTargetAiInstruction={applySelectedTargetAiInstruction}
             onUndo={undoArtifactChange}
             onRedo={redoArtifactChange}

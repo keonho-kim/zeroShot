@@ -50,7 +50,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
               <Route path="/update" element={<UpdatePage />} />
               <Route path="/architect" element={<ArchitectPage />} />
               <Route path="/architect/progress" element={<ArchitectProgressPage />} />
-              <Route path="/design" element={<DesignPage />} />
+              <Route path="/makeover" element={<DesignPage />} />
               <Route path="/logs" element={<LogsPage />} />
               <Route path="/history" element={<Navigate to="/logs" replace />} />
               <Route path="/settings" element={<SettingsPage />} />

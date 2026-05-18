@@ -204,7 +204,7 @@ export function HomePage() {
           icon={<Paintbrush aria-hidden="true" />}
           accent="amber"
           disabled={designDisabled}
-          onClick={() => navigate("/design")}
+          onClick={() => navigate("/makeover")}
         />
         <ActionCard
           title="BUILD"

@@ -30,10 +30,12 @@ export function ArtifactWorkbench(props: ArtifactWorkbenchProps) {
             <ArtifactCodexPanel
               aiInstruction={props.aiInstruction}
               setAiInstruction={props.setAiInstruction}
+              selectedTargets={props.selectedTargets}
               commentCapture={props.commentCapture}
               chatMessages={props.chatMessages}
               isRunning={props.isRunning}
               onApplySelectedTargetAiInstruction={props.onApplySelectedTargetAiInstruction}
+              onClearTargetSelection={props.onClearTargetSelection}
               onRemoveCommentCapture={props.onRemoveCommentCapture}
             />
 
@@ -49,6 +51,7 @@ export function ArtifactWorkbench(props: ArtifactWorkbenchProps) {
               onOpenCommentTool={props.onOpenCommentTool}
               onCloseCommentTool={props.onCloseCommentTool}
               onCaptureComment={props.onCaptureComment}
+              targetIds={props.selectedTargets.map((target) => target.id)}
             />
           </div>
         </>

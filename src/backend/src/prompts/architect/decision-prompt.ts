@@ -11,6 +11,7 @@ export function buildArchitectPrompt(goal: string, locale: string, resourceConte
 
 ${architectDecisionRulesPrompt}
 - Use ${language} for all user-facing text.
+- Return JSON with chatMessage as the first field. chatMessage must be a concise user-facing progress/summary sentence that can be streamed while ARCHITECT is working.
 
 Active resource context:
 ${resourceContext || "none"}
