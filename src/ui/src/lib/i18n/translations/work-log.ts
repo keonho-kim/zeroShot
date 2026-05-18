@@ -1,0 +1,80 @@
+import { defineTranslations } from "@/lib/i18n/define-translations";
+
+export const workLogTranslations = defineTranslations({
+  en: {
+    "log.building": "Building",
+    "log.updating": "Updating",
+    "log.streamTitle": "Codex work stream",
+    "log.streamDetail": "Work stages and log messages appear here as one flow.",
+    "log.waiting": "Waiting for work logs.",
+    "log.notStarted": "Start a run to see the work log here.",
+    "log.runList": "Run list",
+    "log.noRuns": "No runs to show.",
+    "log.chooseRun": "Choose a run.",
+    "log.buildStarted": "Build session started",
+    "log.updateStarted": "Update session started",
+    "log.buildCompleted": "Build session completed",
+    "log.updateCompleted": "Update session completed",
+    "log.buildFailed": "Build session failed",
+    "log.updateFailed": "Update session failed",
+    "log.pipelineSetup": "Pipeline setup",
+    "log.prepare": "Prepare run",
+    "log.environment": "Check environment",
+    "log.session": "Create work session",
+    "log.schema": "Define output contract",
+    "log.codex": "Ask Codex to work",
+    "log.implement": "Implement task",
+    "log.replan": "Replan work",
+    "log.validate": "Validate result",
+    "log.syncProduct": "Update product brief",
+    "log.closeout": "Write final report",
+    "runArtifacts.title": "Run artifacts",
+    "runArtifacts.detail": "Preview the completed {mode} HTML artifacts.",
+    "runArtifacts.loading": "Loading artifacts.",
+    "runArtifacts.empty": "No HTML artifacts to show."
+  },
+  ko: {
+    "log.building": "BUILDING",
+    "log.updating": "UPDATING",
+    "log.streamTitle": "Codex 작업 흐름",
+    "log.streamDetail": "실행 단계와 작업 로그를 한 흐름으로 표시합니다.",
+    "log.waiting": "작업 로그를 기다리고 있습니다.",
+    "log.notStarted": "START 버튼을 누르면 작업 내역이 여기에 표시됩니다.",
+    "log.runList": "Run 목록",
+    "log.noRuns": "표시할 run이 없습니다.",
+    "log.chooseRun": "run을 선택하세요.",
+    "log.buildStarted": "Build 세션 시작",
+    "log.updateStarted": "Update 세션 시작",
+    "log.buildCompleted": "Build 세션 완료",
+    "log.updateCompleted": "Update 세션 완료",
+    "log.buildFailed": "Build 세션 실패",
+    "log.updateFailed": "Update 세션 실패",
+    "log.pipelineSetup": "파이프라인 준비",
+    "log.prepare": "실행 준비",
+    "log.environment": "환경 확인",
+    "log.session": "작업 세션 생성",
+    "log.schema": "출력 계약 정의",
+    "log.codex": "Codex 작업 요청",
+    "log.implement": "작업 구현",
+    "log.replan": "계획 조정",
+    "log.validate": "결과 검증",
+    "log.syncProduct": "제품 문서 갱신",
+    "log.closeout": "최종 보고 작성",
+    "runArtifacts.title": "실행 산출물",
+    "runArtifacts.detail": "완료된 {mode} 산출물을 HTML 프리뷰로 확인합니다.",
+    "runArtifacts.loading": "산출물을 불러오는 중입니다.",
+    "runArtifacts.empty": "표시할 HTML 산출물이 없습니다."
+  },
+  zh: {
+    "log.streamDetail": "工作阶段和日志会按同一条流程显示。"
+  },
+  ja: {
+    "log.streamDetail": "作業ステージとログをひとつの流れで表示します。"
+  },
+  es: {
+    "log.streamDetail": "Las etapas de trabajo y los registros aparecen en un solo flujo."
+  },
+  de: {
+    "log.streamDetail": "Arbeitsschritte und Logs erscheinen in einem gemeinsamen Verlauf."
+  }
+});
