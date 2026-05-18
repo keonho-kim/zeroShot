@@ -359,9 +359,10 @@ html[data-od-edit-enabled='true'] body * { cursor: crosshair !important; }
 html[data-od-edit-enabled='true'] [data-od-id],
 html[data-od-edit-enabled='true'] [data-od-source-path],
 html[data-od-edit-enabled='true'] [data-od-runtime-id] { outline: 1px dashed rgb(217 72 15 / 42%) !important; outline-offset: 3px !important; }
-html[data-od-edit-enabled='true'] [data-od-selected='true'] { outline: 3px solid #d9480f !important; outline-offset: 3px !important; }
+html [data-od-selected='true'] { outline: 3px solid #d9480f !important; outline-offset: 3px !important; }
 html[data-od-edit-enabled='true'] [data-od-hover='true'] { outline: 2px dashed #1d1d1f !important; outline-offset: 2px !important; }
 [data-od-drag-ghost='true'] { position: fixed !important; z-index: 2147483647 !important; pointer-events: none !important; opacity: 0.42 !important; border: 2px dashed #d9480f !important; background: rgb(255 216 77 / 42%) !important; box-sizing: border-box !important; }
+[data-od-add-hint='true'] { position: fixed !important; z-index: 2147483647 !important; display: grid !important; width: 22px !important; height: 22px !important; place-items: center !important; border: 2px solid #1d4ed8 !important; border-radius: 999px !important; background: #dbeafe !important; color: #1d4ed8 !important; font: 900 16px/1 system-ui, sans-serif !important; pointer-events: none !important; box-shadow: 2px 2px 0 rgb(29 78 216 / 28%) !important; }
 </style>`;
 }
 
@@ -537,6 +538,8 @@ function artifactBridgeScript(initialMode: ArtifactEditorMode): string {
   let hoverId = "";
   let dragStart = null;
   let dragGhost = null;
+  let addHint = null;
+  let lastPointer = { x: 16, y: 16 };
 
   const post = (payload) => window.parent.postMessage({ __zeroshotArtifact: marker, ...payload }, "*");
   const isHostNode = (element) => Boolean(element && element.matches && element.matches(hostNodeSelector));
@@ -673,6 +676,24 @@ function artifactBridgeScript(initialMode: ArtifactEditorMode): string {
     dragGhost.style.height = rect.height + "px";
     document.body.appendChild(dragGhost);
   };
+  const showAddHint = (event) => {
+    if (!event || (!event.ctrlKey && !event.metaKey)) {
+      if (addHint && addHint.parentElement) addHint.parentElement.removeChild(addHint);
+      addHint = null;
+      return;
+    }
+    if (typeof event.clientX === "number" && typeof event.clientY === "number") {
+      lastPointer = { x: event.clientX, y: event.clientY };
+    }
+    if (!addHint) {
+      addHint = document.createElement("div");
+      addHint.setAttribute("data-od-add-hint", "true");
+      addHint.textContent = "+";
+      document.body.appendChild(addHint);
+    }
+    addHint.style.left = lastPointer.x + 12 + "px";
+    addHint.style.top = lastPointer.y + 12 + "px";
+  };
 
   window.addEventListener("message", (event) => {
     const payload = event.data;
@@ -692,7 +713,6 @@ function artifactBridgeScript(initialMode: ArtifactEditorMode): string {
   });
 
   document.addEventListener("click", (event) => {
-    if (!editMode && !event.ctrlKey && !event.metaKey) return;
     const element = closestTarget(event.target);
     if (!element) return;
     event.preventDefault();
@@ -710,6 +730,7 @@ function artifactBridgeScript(initialMode: ArtifactEditorMode): string {
   }, true);
 
   document.addEventListener("mousemove", (event) => {
+    showAddHint(event);
     if (!editMode) return;
     if (dragStart && dragGhost) {
       dragGhost.style.transform = "translate(" + (event.clientX - dragStart.x) + "px, " + (event.clientY - dragStart.y) + "px)";
@@ -732,6 +753,15 @@ function artifactBridgeScript(initialMode: ArtifactEditorMode): string {
     dragStart = { x: event.clientX, y: event.clientY, target: targetFor(element, true) };
     createDragGhost(element);
   }, true);
+
+  document.addEventListener("keydown", (event) => {
+    if (event.ctrlKey || event.metaKey) {
+      showAddHint(event);
+    }
+  }, true);
+
+  document.addEventListener("keyup", showAddHint, true);
+  window.addEventListener("blur", () => showAddHint(null));
 
   document.addEventListener("mouseup", (event) => {
     if (!editMode || !dragStart) return;

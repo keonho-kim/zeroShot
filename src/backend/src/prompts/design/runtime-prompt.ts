@@ -6,6 +6,7 @@ Create a production-grade design workbench brief from the current product direct
 
 export const designRuntimeRulesPrompt = `Rules:
 - Return only JSON matching the provided schema.
+- Put a concise user-facing assistant reply in chatMessage as the first JSON property. It should explain the design work in a streaming-chat style without exposing raw JSON or internal schema details.
 - Do not run commands or edit files.
 - Keep the design direction consistent with ZeroShot's light grid workbench: flat white panels, hard black borders, editorial serif labels, and monospace operational controls.
 - Make the output concrete enough for a designer or Codex agent to execute without guessing.

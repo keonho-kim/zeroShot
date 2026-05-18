@@ -1,6 +1,5 @@
 import { Card } from "@/components/ui/card";
 import { ArtifactCodexPanel } from "@/pages/design/artifact-workbench/ArtifactCodexPanel";
-import { ArtifactLayerPanel } from "@/pages/design/artifact-workbench/ArtifactLayerPanel";
 import { ArtifactRequiredState } from "@/pages/design/artifact-workbench/ArtifactRequiredState";
 import { ArtifactStage } from "@/pages/design/artifact-workbench/ArtifactStage";
 import { ArtifactToolbar } from "@/pages/design/artifact-workbench/ArtifactToolbar";
@@ -35,7 +34,8 @@ export function ArtifactWorkbench(props: ArtifactWorkbenchProps) {
               setAiInstruction={props.setAiInstruction}
               selectedTargets={props.selectedTargets}
               commentCapture={props.commentCapture}
-              timelineItems={props.timelineItems}
+              chatMessages={props.chatMessages}
+              isRunning={props.isRunning}
               onApplySelectedTargetAiInstruction={props.onApplySelectedTargetAiInstruction}
               onClearTargetSelection={props.onClearTargetSelection}
               onRemoveCommentCapture={props.onRemoveCommentCapture}
@@ -51,21 +51,6 @@ export function ArtifactWorkbench(props: ArtifactWorkbenchProps) {
               setSourceDraft={props.setSourceDraft}
               onOpenCommentTool={props.onOpenCommentTool}
             />
-
-            <div className="design-right-panel">
-              <ArtifactLayerPanel
-                trackedArtifacts={props.trackedArtifacts}
-                layerSearch={props.layerSearch}
-                setLayerSearch={props.setLayerSearch}
-                filteredTargets={props.filteredTargets}
-                selectedTarget={props.selectedTarget}
-                selectedTargetIds={props.selectedTargetIds}
-                setSelectedTarget={props.setSelectedTarget}
-                setArtifactMode={props.setArtifactMode}
-                onToggleTargetSelection={props.onToggleTargetSelection}
-                onHighlightTarget={props.onHighlightTarget}
-              />
-            </div>
           </div>
         </>
       ) : (

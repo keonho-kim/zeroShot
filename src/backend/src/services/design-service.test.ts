@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { composeDesignMarkdown, validateDesignRecommendations } from "@backend/services/design-service";
+import { composeDesignMarkdown, extractDesignChatMessage, validateDesignRecommendations } from "@backend/services/design-service";
 import type { DesignRuntimeResponse, ResourceManifest } from "@backend/types";
 
 function resource(id: string): ResourceManifest {
@@ -21,6 +21,7 @@ describe("design service", () => {
       id: "design-1",
       projectRoot: "/tmp/project",
       mode: "figma",
+      chatMessage: "I tightened the dashboard design and prepared the interactive canvas.",
       title: "Dashboard design pass",
       summary: "Create a dense operational dashboard.",
       generatedAt: "2026-05-13T00:00:00.000Z",
@@ -51,6 +52,12 @@ describe("design service", () => {
     expect(markdown).toContain("**Create frames**");
     expect(markdown).toContain("`INTERACTIVE CANVAS`");
     expect(markdown).toContain("## Generated Files");
+  });
+
+  test("extracts chatMessage from complete and partial runtime JSON", () => {
+    expect(extractDesignChatMessage('{"chatMessage":"Drafting the canvas now","title":"Design"}')).toBe("Drafting the canvas now");
+    expect(extractDesignChatMessage('{"title":"Design","chatMessage":"Line one\\nLine two","files":[]')).toBe("Line one\nLine two");
+    expect(extractDesignChatMessage('{"title":"Design"}')).toBe("");
   });
 
   test("validates design recommendation resource ids against the catalog", () => {

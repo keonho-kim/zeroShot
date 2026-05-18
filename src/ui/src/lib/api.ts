@@ -102,7 +102,7 @@ export async function requestArchitectDecisions(payload: {
   return (await client.post<ArchitectDecisionResponse>("/architect/decisions", payload)).data;
 }
 
-function parseStreamEvent(raw: string): { event: string; data: unknown } | null {
+export function parseStreamEvent(raw: string): { event: string; data: unknown } | null {
   const event = raw.split("\n").find((line) => line.startsWith("event: "))?.slice(7).trim();
   const data = raw
     .split("\n")
@@ -207,7 +207,8 @@ export async function requestDesignRuntimeStream(
     activeDesignTemplateId?: string;
     activeDesignSystemId?: string;
   },
-  onProgress: (event: DesignProgressEvent) => void
+  onProgress: (event: DesignProgressEvent) => void,
+  onMessage?: (message: string) => void
 ) {
   const response = await fetch("/api/design/runtime/stream", {
     method: "POST",
@@ -240,6 +241,12 @@ export async function requestDesignRuntimeStream(
       }
       if (parsed.event === "progress") {
         onProgress(parsed.data as DesignProgressEvent);
+      }
+      if (parsed.event === "message") {
+        const data = parsed.data as { message?: unknown };
+        if (typeof data.message === "string") {
+          onMessage?.(data.message);
+        }
       }
       if (parsed.event === "complete") {
         return (parsed.data as { design: DesignRuntimeResponse }).design;

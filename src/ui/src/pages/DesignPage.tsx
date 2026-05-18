@@ -19,12 +19,10 @@ import {
 import type { DesignRecommendationResponse, DesignRuntimeMode, DesignRuntimeResponse } from "@/types/api";
 import {
   applyArtifactSourcePatch,
-  type ArtifactEditorTab,
   buildArtifactSrcDoc,
   isArtifactBridgeMessage,
   nextTextFromKey,
   patchLabel,
-  readTargetAttributesAsJson,
   translatedStyle,
   type ArtifactBridgeMessage,
   type ArtifactEditorMode,
@@ -34,7 +32,7 @@ import {
 } from "@/entities/design/artifact-editor";
 import { ArtifactWorkbench } from "@/pages/design/artifact-workbench/ArtifactWorkbench";
 import { ArtifactCommentModal } from "@/pages/design/artifact-workbench/ArtifactCommentModal";
-import type { ArtifactCommentCapture } from "@/pages/design/artifact-workbench/types";
+import type { ArtifactChatMessage, ArtifactCommentCapture } from "@/pages/design/artifact-workbench/types";
 import { DesignResult } from "@/pages/design/DesignResult";
 import { DesignRuntimeSetup } from "@/pages/design/DesignRuntimeSetup";
 import { type DesignTimelineItem, upsertTimelineItem } from "@/pages/design/design-page-model";
@@ -42,6 +40,10 @@ import { cn } from "@/utils/cn";
 
 type MakeoverStep = "brief" | "loading" | "workbench" | "preview";
 type DesignResourceSelectionMode = "manual" | "omakase";
+type DesignRunRequest = {
+  goal: string;
+  assistantMessageId?: string;
+};
 
 function AgentLoadingStage(props: { label: string }) {
   return (
@@ -76,14 +78,11 @@ export function DesignPage() {
   const [makeoverStep, setMakeoverStep] = useState<MakeoverStep>("brief");
   const [makeoverComplete, setMakeoverComplete] = useState(false);
   const [artifactMode, setArtifactMode] = useState<ArtifactEditorMode>("preview");
-  const [artifactTab, setArtifactTab] = useState<ArtifactEditorTab>("content");
   const [artifactViewport, setArtifactViewport] = useState<"desktop" | "tablet" | "mobile">("desktop");
   const [artifactZoom, setArtifactZoom] = useState(1);
-  const [layerSearch, setLayerSearch] = useState("");
-  const [attributeDraft, setAttributeDraft] = useState("{}");
-  const [outerHtmlDraft, setOuterHtmlDraft] = useState("");
   const [sourceDraft, setSourceDraft] = useState("");
   const [aiInstruction, setAiInstruction] = useState("");
+  const [artifactChatMessages, setArtifactChatMessages] = useState<ArtifactChatMessage[]>([]);
   const [artifactSource, setArtifactSource] = useState("");
   const [artifactTargets, setArtifactTargets] = useState<ArtifactEditTarget[]>([]);
   const [selectedTarget, setSelectedTarget] = useState<ArtifactEditTarget | null>(null);
@@ -166,11 +165,6 @@ export function DesignPage() {
   }, [designArtifactQuery.data]);
 
   useEffect(() => {
-    setAttributeDraft(readTargetAttributesAsJson(selectedTarget));
-    setOuterHtmlDraft(selectedTarget?.outerHtml ?? "");
-  }, [selectedTarget]);
-
-  useEffect(() => {
     artifactFrameRef.current?.contentWindow?.postMessage({
       __zeroshotArtifact: true,
       type: "od-edit-mode",
@@ -214,11 +208,11 @@ export function DesignPage() {
   });
 
   const designMutation = useMutation({
-    mutationFn: async (requestedGoal: string) => {
+    mutationFn: async (request: DesignRunRequest) => {
       if (!productArtifactQuery.data?.content.trim()) {
         throw new Error("PRODUCT BLUEPRINT를 먼저 만들어야 DESIGN을 실행할 수 있습니다.");
       }
-      const nextGoal = requestedGoal.trim();
+      const nextGoal = request.goal.trim();
       if (!nextGoal) {
         throw new Error("MAKEOVER 요청을 입력하거나 알아서 해주세요를 선택해야 합니다.");
       }
@@ -233,10 +227,37 @@ export function DesignPage() {
         activeDesignSystemId: activeDesignSystemId || undefined
       }, (event) => {
         setTimelineItems((items) => upsertTimelineItem(items, event));
+        if (request.assistantMessageId) {
+          setArtifactChatMessages((messages) => messages.map((message) => message.id === request.assistantMessageId
+            ? { ...message, progress: upsertTimelineItem(message.progress, event) }
+            : message));
+        }
+      }, (message) => {
+        if (!request.assistantMessageId) {
+          return;
+        }
+        setArtifactChatMessages((messages) => messages.map((item) => item.id === request.assistantMessageId
+          ? { ...item, content: message, isStreaming: true }
+          : item));
       });
     },
     onSuccess: (design) => {
       setDesignResult(design);
+      setArtifactChatMessages((messages) => {
+        const updated = messages.map((message) => message.isStreaming
+          ? { ...message, content: design.chatMessage, isStreaming: false }
+          : message);
+        return updated.length ? updated : [{
+          id: crypto.randomUUID(),
+          role: "assistant",
+          content: design.chatMessage,
+          createdAt: Date.now(),
+          mentions: [],
+          hasCommentCapture: false,
+          progress: [],
+          isStreaming: false
+        }];
+      });
       setTimelineItems([]);
       setMakeoverComplete(true);
       setMakeoverStep("workbench");
@@ -272,38 +293,10 @@ export function DesignPage() {
   });
 
   const artifactSrcDoc = useMemo(() => buildArtifactSrcDoc(artifactSource, artifactMode), [artifactSource, artifactMode]);
-  const filteredTargets = useMemo(() => {
-    const query = layerSearch.trim().toLowerCase();
-    if (!query) {
-      return artifactTargets;
-    }
-    return artifactTargets.filter((target) => [
-      target.id,
-      target.label,
-      target.tagName,
-      target.text,
-      target.kind
-    ].some((value) => value.toLowerCase().includes(query)));
-  }, [artifactTargets, layerSearch]);
   const selectedTargets = useMemo(() => {
     const ids = new Set(selectedTargetIds);
     return artifactTargets.filter((target) => ids.has(target.id));
   }, [artifactTargets, selectedTargetIds]);
-  const trackedArtifacts = useMemo(() => {
-    const resultArtifacts = designResult?.artifacts ?? [];
-    if (resultArtifacts.some((artifact) => artifact.path === "DESIGN/index.html")) {
-      return resultArtifacts;
-    }
-    return [
-      {
-        path: "DESIGN/index.html",
-        type: "text/html",
-        title: "Editable design artifact",
-        description: "Iframe bridge source edited by DESIGN runtime."
-      },
-      ...resultArtifacts
-    ];
-  }, [designResult]);
 
   const commitArtifactPatch = (patch: ArtifactSourcePatch, target: ArtifactEditTarget | null = selectedTarget) => {
     try {
@@ -401,21 +394,6 @@ export function DesignPage() {
     setSelectedTargetIds([]);
   };
 
-  const highlightTarget = (target: ArtifactEditTarget) => {
-    artifactFrameRef.current?.contentWindow?.postMessage({
-      __zeroshotArtifact: true,
-      type: "od-highlight-target",
-      id: target.id
-    }, "*");
-  };
-
-  const toggleTargetSelection = useCallback((target: ArtifactEditTarget) => {
-    setSelectedTarget(target);
-    setSelectedTargetIds((ids) => ids.includes(target.id)
-      ? ids.filter((id) => id !== target.id)
-      : [...ids, target.id]);
-  }, []);
-
   const clearTargetSelection = useCallback(() => {
     setSelectedTarget(null);
     setSelectedTargetIds([]);
@@ -457,9 +435,6 @@ export function DesignPage() {
           return [message.target.id];
         });
         setArtifactMode((currentMode) => currentMode === "preview" ? "manual-edit" : currentMode);
-      }
-      if (message.type === "od-edit-hover" && message.target) {
-        highlightTarget(message.target);
       }
       if (message.type === "od-edit-drag") {
         commitArtifactPatch({
@@ -526,22 +501,7 @@ export function DesignPage() {
     setArtifactError("");
     setRuntimeError("");
     setMakeoverStep("loading");
-    designMutation.mutate(nextGoal);
-  };
-
-  const applyAttributeDraft = () => {
-    if (!selectedTarget) {
-      return;
-    }
-    try {
-      const parsed = JSON.parse(attributeDraft) as Record<string, unknown>;
-      const attributes = Object.fromEntries(
-        Object.entries(parsed).map(([key, value]) => [key, value === null ? "" : String(value)])
-      );
-      commitArtifactPatch({ kind: "set-attributes", id: selectedTarget.id, attributes }, selectedTarget);
-    } catch {
-      setArtifactError("Attributes must be valid JSON.");
-    }
+    designMutation.mutate({ goal: nextGoal });
   };
 
   const applySelectedTargetAiInstruction = () => {
@@ -593,7 +553,35 @@ export function DesignPage() {
     setGoal(nextGoal);
     setMode("codex");
     setArtifactError("");
-    runMakeover(nextGoal);
+    const userMessage = aiInstruction.trim() || "Annotated canvas comment";
+    const mentions = selectedTargets.map((target) => target.label);
+    const assistantMessageId = crypto.randomUUID();
+    setArtifactChatMessages((messages) => [
+      ...messages,
+      {
+        id: crypto.randomUUID(),
+        role: "user",
+        content: userMessage,
+        createdAt: Date.now(),
+        mentions,
+        hasCommentCapture: Boolean(commentCapture),
+        progress: []
+      },
+      {
+        id: assistantMessageId,
+        role: "assistant",
+        content: "",
+        createdAt: Date.now(),
+        mentions: [],
+        hasCommentCapture: false,
+        progress: [],
+        isStreaming: true
+      }
+    ]);
+    setAiInstruction("");
+    setCommentCapture(null);
+    setRuntimeError("");
+    designMutation.mutate({ goal: nextGoal, assistantMessageId });
   };
 
   return (
@@ -670,33 +658,21 @@ export function DesignPage() {
             artifactSrcDoc={artifactSrcDoc}
             artifactMode={artifactMode}
             setArtifactMode={setArtifactMode}
-            artifactTab={artifactTab}
-            setArtifactTab={setArtifactTab}
             artifactViewport={artifactViewport}
             setArtifactViewport={setArtifactViewport}
             artifactZoom={artifactZoom}
             setArtifactZoom={setArtifactZoom}
-            trackedArtifacts={trackedArtifacts}
-            layerSearch={layerSearch}
-            setLayerSearch={setLayerSearch}
-            filteredTargets={filteredTargets}
-            selectedTarget={selectedTarget}
-            setSelectedTarget={setSelectedTarget}
             selectedTargets={selectedTargets}
             selectedTargetIds={selectedTargetIds}
-            onToggleTargetSelection={toggleTargetSelection}
             onClearTargetSelection={clearTargetSelection}
-            attributeDraft={attributeDraft}
-            setAttributeDraft={setAttributeDraft}
-            outerHtmlDraft={outerHtmlDraft}
-            setOuterHtmlDraft={setOuterHtmlDraft}
             sourceDraft={sourceDraft}
             setSourceDraft={setSourceDraft}
             aiInstruction={aiInstruction}
             setAiInstruction={setAiInstruction}
             commentCapture={commentCapture}
+            chatMessages={artifactChatMessages}
+            isRunning={designMutation.isPending}
             artifactError={artifactError}
-            timelineItems={timelineItems}
             sourceHistory={sourceHistory}
             redoHistory={redoHistory}
             isSaving={saveArtifactMutation.isPending}
@@ -704,11 +680,8 @@ export function DesignPage() {
               void designArtifactQuery.refetch();
               artifactFrameRef.current?.contentWindow?.postMessage({ __zeroshotArtifact: true, type: "od-refresh-targets" }, "*");
             }}
-            onHighlightTarget={highlightTarget}
             onOpenCommentTool={() => setCommentToolOpen(true)}
             onRemoveCommentCapture={() => setCommentCapture(null)}
-            onCommitPatch={commitArtifactPatch}
-            onApplyAttributeDraft={applyAttributeDraft}
             onApplySelectedTargetAiInstruction={applySelectedTargetAiInstruction}
             onUndo={undoArtifactChange}
             onRedo={redoArtifactChange}

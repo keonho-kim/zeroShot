@@ -670,7 +670,8 @@ router.post("/design/runtime/stream", asyncHandler(async (req: Request, res: Res
       activeDesignTemplateId: body.activeDesignTemplateId,
       activeDesignSystemId: body.activeDesignSystemId,
       model: typeof body.model === "string" && body.model.trim() ? body.model.trim() : undefined,
-      onProgress: (event: DesignProgressEvent) => writeEvent("progress", event)
+      onProgress: (event: DesignProgressEvent) => writeEvent("progress", event),
+      onMessage: (message) => writeEvent("message", { message })
     });
     for (const file of design.files) {
       if (!file.path.startsWith("DESIGN/")) {
