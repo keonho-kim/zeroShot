@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type PointerEvent, type RefObject } from "
 import { Eraser, MousePointer2, Paperclip, Pencil, Type, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useI18n } from "@/lib/i18n";
 import type { ArtifactCommentCapture } from "@/pages/design/artifact-workbench/types";
 
 interface Point {
@@ -154,6 +155,7 @@ export function ArtifactCommentOverlay(props: {
   onClose: () => void;
   onCapture: (capture: ArtifactCommentCapture) => void;
 }) {
+  const { t } = useI18n();
   const [mode, setMode] = useState<CommentMode>("draw");
   const [strokes, setStrokes] = useState<Point[][]>([]);
   const [notes, setNotes] = useState<TextNote[]>([]);
@@ -238,23 +240,23 @@ export function ArtifactCommentOverlay(props: {
       <div className="artifact-comment-overlay-tools">
         <Button type="button" variant={mode === "draw" ? "default" : "outline"} onClick={() => setMode("draw")}>
           <Pencil aria-hidden="true" />
-          자유 그리기
+          {t("artifact.freeDraw")}
         </Button>
         <Button type="button" variant={mode === "text" ? "default" : "outline"} onClick={() => setMode("text")}>
           <Type aria-hidden="true" />
-          텍스트 넣기
+          {t("artifact.addText")}
         </Button>
         <Button type="button" variant="outline" onClick={() => {
           setStrokes([]);
           setNotes([]);
         }}>
           <Eraser aria-hidden="true" />
-          지우기
+          {t("artifact.clear")}
         </Button>
-        <Input value={textDraft} onChange={(event) => setTextDraft(event.target.value)} placeholder="텍스트 코멘트" />
+        <Input value={textDraft} onChange={(event) => setTextDraft(event.target.value)} placeholder={t("artifact.textComment")} />
         <Button type="button" onClick={saveCapture}>
           <Paperclip aria-hidden="true" />
-          첨부
+          {t("artifact.attach")}
         </Button>
         <Button type="button" variant="ghost" onClick={props.onClose} aria-label="Close comment overlay">
           <X aria-hidden="true" />

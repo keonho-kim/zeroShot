@@ -4,6 +4,7 @@ import { Codex, type ApprovalMode, type ModelReasoningEffort, type SandboxMode, 
 import { z } from "zod";
 import { loadAppConfig } from "@backend/config/app-config.js";
 import { buildDesignPrompt, modeDisplayName } from "@backend/prompts/design/runtime-prompt.js";
+import { languageName, textByLocale } from "@backend/i18n/locale.js";
 import { architectProductPath, readProductHtml } from "@backend/services/file-service.js";
 import { buildResourcePromptContext, listResourceCatalog, resourceCatalogSummary } from "@backend/services/resource-service.js";
 import type {
@@ -186,7 +187,7 @@ function asReasoningEffort(value: string): ModelReasoningEffort {
 }
 
 function progressText(locale: string, ko: string, en: string): string {
-  return locale === "ko" ? ko : en;
+  return textByLocale(locale, { ko, en, zh: en, ja: en, es: en, de: en });
 }
 
 function designArtifactDisplayPath(path: string): string {
@@ -384,7 +385,7 @@ function buildRecommendationPrompt(params: {
   architectContext: string;
   catalog: { skills: ResourceManifest[]; designTemplates: ResourceManifest[]; designSystems: ResourceManifest[] };
 }): string {
-  const language = params.locale === "ko" ? "Korean" : "English";
+  const language = languageName(params.locale);
   return [
     "You are ZeroShot DESIGN recommendation agent.",
     "",

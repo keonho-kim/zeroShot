@@ -31,6 +31,7 @@ import { DesignResult } from "@/pages/design/DesignResult";
 import { DesignRuntimeSetup } from "@/pages/design/DesignRuntimeSetup";
 import { CodexLoadingLog } from "@/components/CodexLoadingLog";
 import { AgentLoadingStage } from "@/components/AgentLoadingStage";
+import { useI18n } from "@/lib/i18n";
 import { type DesignTimelineItem, upsertTimelineItem } from "@/pages/design/design-page-model";
 import { cn } from "@/utils/cn";
 
@@ -42,13 +43,11 @@ type DesignRunRequest = {
   source: "request" | "workbench";
 };
 
-const defaultMakeoverGoal = "제품 기획서와 선택한 디자인 시스템/템플릿에 맞춰 가장 적합한 INTERACTIVE CANVAS를 만들어주세요.";
-
 export function DesignPage() {
+  const { locale, t } = useI18n();
   const queryClient = useQueryClient();
   const artifactFrameRef = useRef<HTMLIFrameElement>(null);
   const projectRoot = useAppStore((state) => state.projectRoot);
-  const locale = useMemo(() => navigator.language.toLowerCase().startsWith("ko") ? "ko" : "en", []);
   const [mode, setMode] = useState<DesignRuntimeMode>("codex");
   const [goal, setGoal] = useState("");
   const [activeDesignTemplateId, setActiveDesignTemplateId] = useState("");
@@ -196,9 +195,9 @@ export function DesignPage() {
   const designMutation = useMutation({
     mutationFn: async (request: DesignRunRequest) => {
       if (!productArtifactQuery.data?.content.trim()) {
-        throw new Error("PRODUCT BLUEPRINT를 먼저 만들어야 DESIGN을 실행할 수 있습니다.");
+        throw new Error(t("makeover.requiresProduct"));
       }
-      const nextGoal = request.goal.trim() || defaultMakeoverGoal;
+      const nextGoal = request.goal.trim() || t("makeover.defaultGoal");
       setRuntimeError("");
       setTimelineItems([]);
       setRuntimeMessages([]);
@@ -391,7 +390,7 @@ export function DesignPage() {
   };
 
   const runMakeover = (requestedGoal: string) => {
-    const nextGoal = requestedGoal.trim() || defaultMakeoverGoal;
+    const nextGoal = requestedGoal.trim() || t("makeover.defaultGoal");
     setMode("codex");
     setArtifactError("");
     setRuntimeError("");
@@ -525,7 +524,7 @@ export function DesignPage() {
             <CodexLoadingLog
               progressItems={timelineItems}
               messages={runtimeMessages}
-              emptyMessage="제품 블루프린트, 디자인 템플릿, 편집 모드를 정리하고 있습니다."
+              emptyMessage={t("makeover.loadingMessage")}
             />
           </Card>
         ) : null}

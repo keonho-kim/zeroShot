@@ -5,23 +5,24 @@ import { Card } from "@/components/ui/card";
 import { AgentLoadingStage } from "@/components/AgentLoadingStage";
 import { CodexLoadingLog } from "@/components/CodexLoadingLog";
 import { RunArtifactsPreview } from "@/components/RunArtifactsPreview";
+import { useI18n } from "@/lib/i18n";
 
 interface Props {
   job: JobSnapshot | null;
 }
 
-const phaseTitles: Record<string, string> = {
-  build: "Pipeline setup",
-  prepare: "Prepare run",
-  env: "Check environment",
-  run: "Create work session",
-  schema: "Define output contract",
-  codex: "Ask Codex to work",
-  iter: "Implement task",
-  replan: "Replan work",
-  validate: "Validate result",
-  "sync-product": "Update product brief",
-  closeout: "Write final report"
+const phaseTitleKeys: Record<string, Parameters<ReturnType<typeof useI18n>["t"]>[0]> = {
+  build: "log.pipelineSetup",
+  prepare: "log.prepare",
+  env: "log.environment",
+  run: "log.session",
+  schema: "log.schema",
+  codex: "log.codex",
+  iter: "log.implement",
+  replan: "log.replan",
+  validate: "log.validate",
+  "sync-product": "log.syncProduct",
+  closeout: "log.closeout"
 };
 
 function phaseFromLine(line: LogLine): string {
@@ -32,25 +33,25 @@ function phaseFromLine(line: LogLine): string {
   return match?.groups?.phase ?? line.type;
 }
 
-function titleForPhase(phase: string, job: JobSnapshot | null): string {
-  const label = job?.mode === "update" ? "Update" : "Build";
+function titleForPhase(phase: string, job: JobSnapshot | null, t: ReturnType<typeof useI18n>["t"]): string {
   if (phase === "job_started") {
-    return `${label} session started`;
+    return job?.mode === "update" ? t("log.updateStarted") : t("log.buildStarted");
   }
   if (phase === "job_finished") {
-    return `${label} session completed`;
+    return job?.mode === "update" ? t("log.updateCompleted") : t("log.buildCompleted");
   }
   if (phase === "job_failed") {
-    return `${label} session failed`;
+    return job?.mode === "update" ? t("log.updateFailed") : t("log.buildFailed");
   }
-  return phaseTitles[phase] ?? phase;
+  const key = phaseTitleKeys[phase];
+  return key ? t(key) : phase;
 }
 
 function lineDetail(line: LogLine): string {
   return line.text.replace(/^\[[^\]]+\]\s*/, "").trim();
 }
 
-function toProgressItems(job: JobSnapshot | null, logs: LogLine[]) {
+function toProgressItems(job: JobSnapshot | null, logs: LogLine[], t: ReturnType<typeof useI18n>["t"]) {
   const grouped = new Map<string, LogLine[]>();
   for (const line of logs) {
     const phase = phaseFromLine(line);
@@ -68,7 +69,7 @@ function toProgressItems(job: JobSnapshot | null, logs: LogLine[]) {
 
     return {
       id: phase,
-      title: titleForPhase(phase, job),
+      title: titleForPhase(phase, job, t),
       detail: lineDetail(lines.at(-1) ?? { type: "stdout", text: "" }),
       status
     };
@@ -84,11 +85,12 @@ function toMessages(logs: LogLine[]): string[] {
 }
 
 export function LogViewer({ job }: Props) {
+  const { t } = useI18n();
   const logs = useAppStore((state) => state.logs);
   const appendLog = useAppStore((state) => state.appendLog);
   const setCurrentJob = useAppStore((state) => state.setCurrentJob);
   const visibleLogs = job ? logs : [];
-  const progressItems = useMemo(() => toProgressItems(job, visibleLogs), [job, visibleLogs]);
+  const progressItems = useMemo(() => toProgressItems(job, visibleLogs, t), [job, t, visibleLogs]);
   const messages = useMemo(() => toMessages(visibleLogs), [visibleLogs]);
 
   useEffect(() => {
@@ -126,15 +128,15 @@ export function LogViewer({ job }: Props) {
   return (
     <div className="flex flex-col gap-4">
       <Card className="flex flex-col gap-4 bg-[var(--panel)]">
-        <AgentLoadingStage label={job?.mode === "update" ? "UPDATING" : "BUILDING"} />
+        <AgentLoadingStage label={job?.mode === "update" ? t("log.updating") : t("log.building")} />
         <div>
-          <p className="text-sm font-semibold">Codex work stream</p>
-          <p className="text-xs text-[var(--muted-foreground)]">실행 단계와 작업 로그를 한 흐름으로 표시합니다.</p>
+          <p className="text-sm font-semibold">{t("log.streamTitle")}</p>
+          <p className="text-xs text-[var(--muted-foreground)]">{t("log.streamDetail")}</p>
         </div>
         <CodexLoadingLog
           progressItems={progressItems}
           messages={messages}
-          emptyMessage={job ? "작업 로그를 기다리고 있습니다." : "START 버튼을 누르면 작업 내역이 여기에 표시됩니다."}
+          emptyMessage={job ? t("log.waiting") : t("log.notStarted")}
         />
       </Card>
       <RunArtifactsPreview job={job} />

@@ -7,8 +7,10 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/PageHeader";
 import { DocumentPreview, titleFromFilename } from "@/components/DocumentPreview";
+import { useI18n } from "@/lib/i18n";
 
 export function LogsPage() {
+  const { t } = useI18n();
   const projectRoot = useAppStore((state) => state.projectRoot);
   const [selectedRun, setSelectedRun] = useState<string>("");
   const [selectedDoc, setSelectedDoc] = useState<string>("work-log.html");
@@ -36,14 +38,14 @@ export function LogsPage() {
       <PageHeader title="LOGS" projectRoot={projectRoot} />
       <div className="grid gap-6 xl:grid-cols-[320px_1fr]">
         <Card className="flex flex-col gap-3 bg-[var(--panel)]">
-          <p className="text-lg font-semibold">Run List</p>
+          <p className="text-lg font-semibold">{t("log.runList")}</p>
           <div className="grid gap-2">
             {runsQuery.data?.map((run) => (
               <Button key={run.name} variant={selectedRun === run.name ? "default" : "outline"} onClick={() => setSelectedRun(run.name)}>
                 {run.name}
               </Button>
             ))}
-            {!runsQuery.data?.length ? <p className="text-sm text-[var(--muted-foreground)]">표시할 run이 없습니다.</p> : null}
+            {!runsQuery.data?.length ? <p className="text-sm text-[var(--muted-foreground)]">{t("log.noRuns")}</p> : null}
           </div>
         </Card>
         <Card className="flex flex-col gap-4 bg-[var(--panel)]">
@@ -62,7 +64,7 @@ export function LogsPage() {
             />
           ) : (
             <pre className="min-h-[256px] rounded-md border border-[var(--border)] bg-[var(--muted)] p-3 text-xs text-[var(--muted-foreground)]">
-              run을 선택하세요.
+              {t("log.chooseRun")}
             </pre>
           )}
         </Card>

@@ -6,9 +6,10 @@ import { ProjectPickerModal } from "@/components/ProjectPickerModal";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { fetchProjectState } from "@/lib/api";
+import { useI18n } from "@/lib/i18n";
 import { useAppStore } from "@/stores/app-store";
 import { useBodyClass } from "@/hooks/useBodyClass";
-import { buildDisabledReason, canStartBuild, canStartDesign, canStartUpdate, updateDisabledReason } from "@/entities/project/project-core";
+import { canStartBuild, canStartDesign, canStartUpdate } from "@/entities/project/project-core";
 import { clearMissingProjectSelection, isMissingSelectedProjectError } from "@/entities/project/stale-project";
 import { cn } from "@/utils/cn";
 
@@ -55,6 +56,7 @@ function ActionCard({
 }
 
 export function HomePage() {
+  const { t } = useI18n();
   const navigate = useNavigate();
   const projectRoot = useAppStore((state) => state.projectRoot);
   const isProjectPickerOpen = useAppStore((state) => state.isProjectPickerOpen);
@@ -110,8 +112,12 @@ export function HomePage() {
   const buildDisabled = !buildEnabled;
   const updateEnabled = Boolean(projectRoot && projectState && canStartUpdate(projectState));
   const updateDisabled = !updateEnabled;
-  const buildReason = projectState ? buildDisabledReason(projectState) : "프로젝트를 먼저 선택하세요.";
-  const updateReason = projectState ? updateDisabledReason(projectState) : "프로젝트를 먼저 선택하세요.";
+  const buildReason = projectState ? t("build.disabled") : t("home.architectNoProject");
+  const updateReason = projectState
+    ? projectState.runsCount < 1
+      ? t("update.needsBuild")
+      : t("update.noSourceToUpdate")
+    : t("home.architectNoProject");
   const openProjectPicker = () => {
     const initialPath = projectRoot || candidateProjectPath;
     setProjectBrowserPath("");
@@ -123,26 +129,26 @@ export function HomePage() {
   return (
     <div className="home-shell mx-auto flex max-w-[1180px] flex-col gap-6 md:gap-8">
       <PageHeader title="ZERO SHOT" rightAction="settings" />
-      <section className="home-console" aria-label="Selected project">
+      <section className="home-console" aria-label={t("settings.selectedProject")}>
         <div className="home-console-topline">
-          <span>PROJECT SLOT</span>
-          <span>{projectRoot ? "READY" : "EMPTY"}</span>
+          <span>{t("home.projectSlot")}</span>
+          <span>{projectRoot ? t("common.ready") : t("common.empty")}</span>
         </div>
 
         <div className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-end">
           <div className="min-w-0">
-            <p className="home-console-title">{projectRoot ? formatProjectName(projectRoot) : "No project selected"}</p>
-            <p className="home-console-path" title={projectRoot || "Select a workspace to continue"}>
-              {projectRoot || "워크스페이스를 선택하면 ARCHITECT, DESIGN, BUILD가 활성화됩니다."}
+            <p className="home-console-title">{projectRoot ? formatProjectName(projectRoot) : t("home.noProject")}</p>
+            <p className="home-console-path" title={projectRoot || t("home.selectWorkspace")}>
+              {projectRoot || t("home.selectWorkspace")}
             </p>
           </div>
           <div className="flex flex-wrap gap-3">
             <Button onClick={openProjectPicker}>
               <FolderOpen aria-hidden="true" />
-              {projectRoot ? "Change Project" : "Select Project"}
+              {projectRoot ? t("home.changeProject") : t("home.selectProject")}
             </Button>
             {projectRoot ? (
-              <Button variant="outline" onClick={() => setProjectRoot("")} aria-label="Clear selected project" title="Clear selected project">
+              <Button variant="outline" onClick={() => setProjectRoot("")} aria-label={t("home.clearProject")} title={t("home.clearProject")}>
                 <RotateCcw aria-hidden="true" />
               </Button>
             ) : null}
@@ -151,27 +157,27 @@ export function HomePage() {
 
         <div className="home-status-grid">
           <div>
-            <span>PRODUCT BLUEPRINT</span>
-            <strong>{projectState?.hasProductHtml ? "READY" : "WAIT"}</strong>
+            <span>{t("home.productBlueprint")}</span>
+            <strong>{projectState?.hasProductHtml ? t("common.ready") : t("common.wait")}</strong>
           </div>
           <div>
-            <span>WORKSPACE</span>
-            <strong>{projectState ? (projectState.isDirectoryEmpty ? "EMPTY" : "FILES") : "WAIT"}</strong>
+            <span>{t("home.workspace")}</span>
+            <strong>{projectState ? (projectState.isDirectoryEmpty ? t("common.empty") : t("common.files")) : t("common.wait")}</strong>
           </div>
           <div>
-            <span>DESIGN BRIEF</span>
-            <strong>{projectState?.hasDesign ? "READY" : "WAIT"}</strong>
+            <span>{t("home.designBrief")}</span>
+            <strong>{projectState?.hasDesign ? t("common.ready") : t("common.wait")}</strong>
           </div>
           <div>
-            <span>UPDATE REQUEST</span>
-            <strong>{projectState?.hasUpdate ? "READY" : "NONE"}</strong>
+            <span>{t("home.updateRequest")}</span>
+            <strong>{projectState?.hasUpdate ? t("common.ready") : t("common.none")}</strong>
           </div>
           <div>
-            <span>SOURCE</span>
-            <strong>{projectState?.hasSourceCode ? `${projectState.sourceFileCount} FILES` : "NONE"}</strong>
+            <span>{t("home.source")}</span>
+            <strong>{projectState?.hasSourceCode ? t("home.filesCount", { count: projectState.sourceFileCount }) : t("common.none")}</strong>
           </div>
           <div>
-            <span>RUNS</span>
+            <span>{t("home.runs")}</span>
             <strong>{projectState?.runsCount ?? 0}</strong>
           </div>
         </div>
@@ -180,27 +186,27 @@ export function HomePage() {
       <div className="home-action-stack">
         <ActionCard
           title="ARCHITECT"
-          eyebrow="BLUEPRINT QUEST"
+          eyebrow={t("home.blueprintQuest")}
           description={architectDisabled
-            ? "프로젝트를 먼저 선택하세요."
+            ? t("home.architectNoProject")
             : projectState?.hasProductHtml
-              ? "기존 PRODUCT BLUEPRINT를 챗으로 이어서 조정합니다."
-              : "대화를 통해 PRODUCT BLUEPRINT를 만듭니다."}
+              ? t("home.architectExisting")
+              : t("home.architectNew")}
           icon={<DraftingCompass aria-hidden="true" />}
           accent="cyan"
           disabled={architectDisabled}
           onClick={() => navigate("/architect")}
         />
         <ActionCard
-          title="DESIGN"
-          eyebrow="OPEN DESIGN RUNTIME"
+          title="MAKEOVER"
+          eyebrow={t("home.designRuntime")}
           description={!projectRoot
-            ? "프로젝트를 먼저 선택하세요."
+            ? t("home.architectNoProject")
             : designDisabled
-              ? "PRODUCT BLUEPRINT를 먼저 만드세요."
+              ? t("home.designNoProduct")
               : projectState?.hasDesign
-                ? "기존 INTERACTIVE CANVAS를 챗으로 계속 편집합니다."
-                : "PRODUCT BLUEPRINT를 기반으로 새 INTERACTIVE CANVAS를 만듭니다."}
+                ? t("home.designExisting")
+                : t("home.designNew")}
           icon={<Paintbrush aria-hidden="true" />}
           accent="amber"
           disabled={designDisabled}
@@ -208,8 +214,8 @@ export function HomePage() {
         />
         <ActionCard
           title="BUILD"
-          eyebrow="CODEX AGENT RUN"
-          description={buildDisabled ? buildReason : "제품 블루프린트 또는 기존 프로젝트 파일을 바탕으로 빌드를 시작합니다."}
+          eyebrow={t("home.codexRun")}
+          description={buildDisabled ? buildReason : t("home.buildReady")}
           icon={buildDisabled ? <Boxes aria-hidden="true" /> : <Bot aria-hidden="true" />}
           accent="mint"
           disabled={buildDisabled}
@@ -217,8 +223,8 @@ export function HomePage() {
         />
         <ActionCard
           title="UPDATE"
-          eyebrow="AFTER BUILD"
-          description={updateDisabled ? updateReason : "BUILD 이후 생성된 소스코드를 바탕으로 변경 요청을 적용합니다."}
+          eyebrow={t("home.afterBuild")}
+          description={updateDisabled ? updateReason : t("home.updateReady")}
           icon={<GitBranch aria-hidden="true" />}
           accent="cyan"
           disabled={updateDisabled}

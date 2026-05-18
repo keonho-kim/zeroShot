@@ -5,8 +5,8 @@ import type { DesignRuntimeResponse } from "@/types/api";
 describe("design runtime core", () => {
   test("labels supported editing modes", () => {
     expect(designModeLabel("codex")).toBe("Codex Canvas");
-    expect(designModeLabel("figma")).toBe("와이어 프레임");
-    expect(designModeLabel("powerpoint")).toBe("프레젠테이션");
+    expect(designModeLabel("figma")).toBe("Wireframe");
+    expect(designModeLabel("powerpoint")).toBe("Presentation");
   });
 
   test("reports latest design runtime status", () => {
@@ -15,6 +15,6 @@ describe("design runtime core", () => {
     } as DesignRuntimeResponse;
 
     expect(designResultStatus(null)).toBe("WAIT");
-    expect(designResultStatus(design)).toBe("와이어 프레임");
+    expect(designResultStatus(design)).toBe("Wireframe");
   });
 });

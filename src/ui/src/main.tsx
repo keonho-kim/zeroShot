@@ -8,6 +8,7 @@ import "@fontsource/noto-sans-kr/korean-400.css";
 import "@fontsource/noto-sans-kr/korean-700.css";
 import { AppLayout } from "@/app/layout";
 import { initClientObservability } from "@/observability/sentry";
+import { translate, detectLocale } from "@/lib/i18n";
 import "@/styles/globals.css";
 
 const HomePage = lazy(() => import("@/pages/HomePage").then((module) => ({ default: module.HomePage })));
@@ -33,7 +34,7 @@ const queryClient = new QueryClient({
 initClientObservability();
 
 function RouteFallback() {
-  return <div className="builder-shell">Loading...</div>;
+  return <div className="builder-shell">{translate(detectLocale(), "route.loading")}</div>;
 }
 
 ReactDOM.createRoot(document.getElementById("root")!).render(

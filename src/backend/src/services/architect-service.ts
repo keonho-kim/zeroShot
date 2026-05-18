@@ -2,6 +2,7 @@ import { Codex, type ApprovalMode, type ModelReasoningEffort, type SandboxMode, 
 import { z } from "zod";
 import { buildArchitectPrompt } from "@backend/prompts/architect/decision-prompt.js";
 import { ensureDevelopmentLanguageDecision } from "@backend/prompts/architect/development-stack-decision.js";
+import { textByLocale } from "@backend/i18n/locale.js";
 
 const architectDecisionSchema = {
   type: "object",
@@ -80,19 +81,26 @@ const architectProductHtmlResponseSchema = z.object({
 });
 
 function omakaseOption(locale: string): ArchitectDecisionResponse["decisions"][number]["options"][number] {
-  return locale === "ko"
-    ? {
-      id: "omakase",
-      label: "알아서 해주세요",
-      detail: "Codex 추천안을 그대로 사용합니다.",
-      productRequirement: "Use the recommended first option for this decision."
-    }
-    : {
-      id: "omakase",
-      label: "Let Codex choose",
-      detail: "Use the recommended option as-is.",
-      productRequirement: "Use the recommended first option for this decision."
-    };
+  return {
+    id: "omakase",
+    label: textByLocale(locale, {
+      ko: "알아서 해주세요",
+      en: "Let Codex choose",
+      zh: "让 Codex 决定",
+      ja: "Codex に任せる",
+      es: "Que Codex elija",
+      de: "Codex entscheiden lassen"
+    }),
+    detail: textByLocale(locale, {
+      ko: "Codex 추천안을 그대로 사용합니다.",
+      en: "Use the recommended option as-is.",
+      zh: "直接使用推荐方案。",
+      ja: "おすすめの案をそのまま使います。",
+      es: "Usar la opción recomendada tal cual.",
+      de: "Die empfohlene Option unverändert verwenden."
+    }),
+    productRequirement: "Use the recommended first option for this decision."
+  };
 }
 
 function normalizeArchitectDecisions(response: ArchitectDecisionResponse, locale: string): ArchitectDecisionResponse {
@@ -127,7 +135,7 @@ function asReasoningEffort(value: string): ModelReasoningEffort {
 export { ensureDevelopmentLanguageDecision } from "@backend/prompts/architect/development-stack-decision.js";
 
 function progressText(locale: string, ko: string, en: string): string {
-  return locale === "ko" ? ko : en;
+  return textByLocale(locale, { ko, en, zh: en, ja: en, es: en, de: en });
 }
 
 function decodeJsonStringContent(value: string): string {

@@ -1,4 +1,6 @@
-export type Locale = "en" | "ko";
+import { detectLocale, translate, type SupportedLocale } from "@/lib/i18n";
+
+export type Locale = SupportedLocale;
 
 export interface ArchitectDecisionOption {
   id: string;
@@ -36,9 +38,7 @@ export function resolvedAnswerId(decision: ArchitectDecision, answerId: string |
   return answerId;
 }
 
-export function detectLocale(language: string): Locale {
-  return language.toLowerCase().startsWith("ko") ? "ko" : "en";
-}
+export { detectLocale };
 
 export function selectedOption(answers: ArchitectAnswers, decision: ArchitectDecision): ArchitectDecisionOption | undefined {
   const selectedId = resolvedAnswerId(decision, answers[decision.id]);
@@ -96,6 +96,8 @@ export function buildBlueprintHtml(params: {
     params.resources?.skillName ? `Skill: ${params.resources.skillName}` : "",
     params.resources?.designTemplateName ? `Design template: ${params.resources.designTemplateName}` : ""
   ].filter(Boolean);
+  const userBriefLabel = translate(params.locale, "architect.productBrief");
+  const designMaterialsLabel = translate(params.locale, "home.designBrief");
 
   const body = selectedSections.map((section, index) => `
     <section class="card" data-od-id="decision-section-${index + 1}" data-od-edit="container" data-od-label="${escapeHtml(section.title)}">
@@ -147,16 +149,16 @@ window.addEventListener("scroll",()=>{const nearEnd=window.innerHeight+window.sc
     <p class="sub" data-od-id="blueprint-summary" data-od-edit="text" data-od-label="Summary">${escapeHtml(params.decisionSet.summary)}</p>
     <p class="sub" data-od-id="blueprint-workspace" data-od-edit="text" data-od-label="Workspace">Workspace: ${escapeHtml(params.projectRoot || "Not selected")}</p>
   </header>
-  <section class="card" data-od-id="user-brief-section" data-od-edit="container" data-od-label="${params.locale === "ko" ? "사용자 설명" : "User brief"}">
-    <h2 data-od-id="user-brief-title" data-od-edit="text">${params.locale === "ko" ? "사용자 설명" : "User brief"}</h2>
+  <section class="card" data-od-id="user-brief-section" data-od-edit="container" data-od-label="${escapeHtml(userBriefLabel)}">
+    <h2 data-od-id="user-brief-title" data-od-edit="text">${escapeHtml(userBriefLabel)}</h2>
     <article class="decision" data-od-id="user-brief-card" data-od-edit="container">
       <p data-od-id="user-brief-body" data-od-edit="text">${escapeHtml(params.userBrief)}</p>
     </article>
   </section>
   ${body}
   ${resourceItems.length ? `
-  <section class="card" data-od-id="design-materials-section" data-od-edit="container" data-od-label="${params.locale === "ko" ? "디자인 자료" : "Design materials"}">
-    <h2 data-od-id="design-materials-title" data-od-edit="text">${params.locale === "ko" ? "디자인 자료" : "Design materials"}</h2>
+  <section class="card" data-od-id="design-materials-section" data-od-edit="container" data-od-label="${escapeHtml(designMaterialsLabel)}">
+    <h2 data-od-id="design-materials-title" data-od-edit="text">${escapeHtml(designMaterialsLabel)}</h2>
     <article class="decision" data-od-id="design-materials-card" data-od-edit="container">
       ${resourceItems.map((item, index) => `<p data-od-id="design-material-${index + 1}" data-od-edit="text">${escapeHtml(item)}</p>`).join("")}
     </article>

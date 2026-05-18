@@ -1,11 +1,12 @@
 import { bootstrapCliContractPrompt } from "@backend/prompts/architect/bootstrap-contract.js";
 import { architectDecisionRulesPrompt, architectRolePrompt } from "@backend/prompts/architect/rules.js";
+import { languageName } from "@backend/i18n/locale.js";
 
 export { bootstrapCliContractPrompt } from "@backend/prompts/architect/bootstrap-contract.js";
 export { architectDecisionRulesPrompt, architectRolePrompt } from "@backend/prompts/architect/rules.js";
 
 export function buildArchitectPrompt(goal: string, locale: string, resourceContext: string): string {
-  const language = locale === "ko" ? "Korean" : "English";
+  const language = languageName(locale);
 
   return `${architectRolePrompt}
 

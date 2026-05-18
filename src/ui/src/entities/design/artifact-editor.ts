@@ -164,7 +164,7 @@ h1{margin:0;font-size:43px;line-height:.95;letter-spacing:0}
     <header class="hero" data-od-id="artifact-hero" data-od-edit="container" data-od-label="Hero">
       <p class="eyebrow" data-od-id="artifact-eyebrow" data-od-edit="text" data-od-label="Eyebrow">OPEN DESIGN ARTIFACT</p>
       <h1 data-od-id="artifact-title" data-od-edit="text" data-od-label="Title">${safeTitle}</h1>
-      <p class="sub" data-od-id="artifact-summary" data-od-edit="text" data-od-label="Summary">제품 블루프린트가 아직 없어서 DESIGN 편집을 시작할 기본 artifact를 만들었습니다. 요소를 클릭하고 드래그하거나 바로 타이핑해 편집하세요.</p>
+      <p class="sub" data-od-id="artifact-summary" data-od-edit="text" data-od-label="Summary">No product blueprint is available yet, so this starter artifact is ready for design editing. Click elements, drag them, or type directly to edit.</p>
     </header>
     <section class="panel" data-od-id="artifact-panel" data-od-edit="container" data-od-label="Feature panel">
       <div class="grid" data-od-id="artifact-grid" data-od-edit="container" data-od-label="Feature grid">

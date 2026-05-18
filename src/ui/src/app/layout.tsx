@@ -2,9 +2,11 @@ import { useQuery } from "@tanstack/react-query";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useEffect } from "react";
 import { fetchAuthStatus, fetchCurrentJob } from "@/lib/api";
+import { useI18n } from "@/lib/i18n";
 import { useAppStore } from "@/stores/app-store";
 
 export function AppLayout() {
+  const { t } = useI18n();
   const location = useLocation();
   const setAuthStatus = useAppStore((state) => state.setAuthStatus);
   const setCurrentJob = useAppStore((state) => state.setCurrentJob);
@@ -31,7 +33,7 @@ export function AppLayout() {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="rounded-md bg-[var(--surface)] px-6 py-4 text-sm text-[var(--muted-foreground)]">
-          auth 상태 확인 중...
+          {t("app.loadingAuth")}
         </div>
       </div>
     );

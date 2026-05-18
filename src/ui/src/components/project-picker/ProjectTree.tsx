@@ -3,6 +3,7 @@ import type { PointerEvent, ReactNode } from "react";
 import { Fragment, useEffect, useRef, useState } from "react";
 import type { DirectoryEntry } from "@/types/api";
 import { Button } from "@/components/ui/button";
+import { useI18n } from "@/lib/i18n";
 import { cn } from "@/utils/cn";
 import { CreateDirectoryRow } from "./CreateDirectoryRow";
 import { ProjectTreeRow } from "./ProjectTreeRow";
@@ -65,6 +66,7 @@ export function ProjectTree({
   onSelectProject: (path: string) => void;
   onLoadChildren: (path: string) => void | Promise<void>;
 }) {
+  const { t } = useI18n();
   const [treeDragging, setTreeDragging] = useState(false);
   const [focusedEntryPath, setFocusedEntryPath] = useState("");
   const treeScrollRef = useRef<HTMLDivElement | null>(null);
@@ -210,9 +212,9 @@ export function ProjectTree({
       className="flex flex-wrap items-center gap-3 px-3 py-3 text-sm text-[var(--muted-foreground)]"
       style={{ paddingLeft: `${depth * 18 + 12}px` }}
     >
-      <span>폴더가 비어있어요. 폴더를 만들까요?</span>
+      <span>{t("projectPicker.emptyFolder")}</span>
       <Button variant="outline" className="h-8 px-3 py-1 text-xs" onClick={() => onStartCreate(path)}>
-        폴더 만들기
+        {t("projectPicker.newFolder")}
       </Button>
     </div>
   );
@@ -266,7 +268,7 @@ export function ProjectTree({
               <span className="min-w-0 flex-1 truncate">{loadError}</span>
               <Button variant="outline" className="h-8 px-3 py-1 text-xs" onClick={() => void onLoadChildren(entry.path)}>
                 <RefreshCcw className="size-3.5" />
-                다시 시도
+                {t("common.retry")}
               </Button>
             </div>
           ) : null}
@@ -300,12 +302,12 @@ export function ProjectTree({
         {!entries.length && pendingCreateDir.parentPath !== currentPath ? renderEmptyDirectoryPrompt(currentPath, 0) : null}
         {createFailed ? (
           <div className="mx-3 my-3 rounded-md bg-[var(--danger-surface)] px-4 py-3 text-sm text-[var(--danger-foreground)]">
-            {getErrorMessage(createError, "새 폴더를 만들지 못했습니다. 이름 충돌 또는 잘못된 이름인지 확인하세요.")}
+            {getErrorMessage(createError, t("projectPicker.createError"))}
           </div>
         ) : null}
         {selectionFailed ? (
           <div className="mx-3 my-3 rounded-md bg-[var(--danger-surface)] px-4 py-3 text-sm text-[var(--danger-foreground)]">
-            {getErrorMessage(selectionError, "프로젝트를 선택하지 못했습니다. 경로 권한을 확인하세요.")}
+            {getErrorMessage(selectionError, t("projectPicker.selectionError"))}
           </div>
         ) : null}
       </div>

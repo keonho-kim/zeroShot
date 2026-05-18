@@ -1,6 +1,7 @@
 import { House, SlidersHorizontal } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { useI18n } from "@/lib/i18n";
 
 interface Props {
   title: string;
@@ -15,6 +16,7 @@ function formatProjectLabel(projectRoot: string): string {
 
 export function PageHeader({ title, projectRoot, rightAction }: Props) {
   const navigate = useNavigate();
+  const { t } = useI18n();
 
   return (
     <div className="page-header mb-8">
@@ -23,11 +25,11 @@ export function PageHeader({ title, projectRoot, rightAction }: Props) {
           variant="ghost"
           onClick={() => navigate("/home")}
           className="nav-tile"
-          aria-label="Home"
-          title="Home"
+          aria-label={t("common.home")}
+          title={t("common.home")}
         >
           <House aria-hidden="true" />
-          <span>HOME</span>
+          <span>{t("common.home")}</span>
         </Button>
         <div className="page-title-block">
           <h1 className="page-title">{title}</h1>
@@ -38,10 +40,10 @@ export function PageHeader({ title, projectRoot, rightAction }: Props) {
           ) : null}
         </div>
         {rightAction === "settings" ? (
-          <Button variant="outline" asChild className="nav-tile" aria-label="Config" title="Config">
+          <Button variant="outline" asChild className="nav-tile" aria-label={t("common.config")} title={t("common.config")}>
             <Link to="/settings">
               <SlidersHorizontal aria-hidden="true" />
-              <span>CONFIG</span>
+              <span>{t("common.config")}</span>
             </Link>
           </Button>
         ) : (

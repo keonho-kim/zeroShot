@@ -17,6 +17,7 @@ import { jobManager } from "@backend/services/job-manager.js";
 import { readProjectHistoryMeta, readProjectState } from "@backend/services/project-service.js";
 import { buildResourcePromptContext, listResourceCatalog } from "@backend/services/resource-service.js";
 import { buildUpdateDecisions, type UpdateProgressEvent } from "@backend/services/update-service.js";
+import { normalizeLocale } from "@backend/i18n/locale.js";
 import type { BootstrapRequest, DesignProgressEvent, DesignRuntimeMode, PipelineOptions, RunMode } from "@backend/types.js";
 
 const router: Router = express.Router();
@@ -310,7 +311,7 @@ router.post("/architect/decisions", asyncHandler(async (req: Request, res: Respo
     const decisions = await buildArchitectDecisions({
       projectRoot,
       goal: body.goal.trim(),
-      locale: body.locale === "ko" ? "ko" : "en",
+      locale: normalizeLocale(body.locale),
       reasoning: appConfig.defaults.planReasoning,
       model: typeof body.model === "string" && body.model.trim() ? body.model.trim() : undefined,
       additionalDirectories: [appConfig.resourceRoots.skills, appConfig.resourceRoots.designTemplates, appConfig.resourceRoots.designSystems],
@@ -381,7 +382,7 @@ router.post("/architect/decisions/stream", asyncHandler(async (req: Request, res
     const decisions = await buildArchitectDecisions({
       projectRoot,
       goal: body.goal.trim(),
-      locale: body.locale === "ko" ? "ko" : "en",
+      locale: normalizeLocale(body.locale),
       reasoning: appConfig.defaults.planReasoning,
       model: typeof body.model === "string" && body.model.trim() ? body.model.trim() : undefined,
       additionalDirectories: [appConfig.resourceRoots.skills, appConfig.resourceRoots.designTemplates, appConfig.resourceRoots.designSystems],
@@ -464,7 +465,7 @@ router.post("/architect/product-html", asyncHandler(async (req: Request, res: Re
       userBrief: body.userBrief.trim(),
       decisionSet: body.decisionSet as Parameters<typeof buildArchitectProductHtml>[0]["decisionSet"],
       answers: body.answers ?? {},
-      locale: body.locale === "ko" ? "ko" : "en",
+      locale: normalizeLocale(body.locale),
       reasoning: appConfig.defaults.planReasoning,
       model: typeof body.model === "string" && body.model.trim() ? body.model.trim() : undefined,
       additionalDirectories: [appConfig.resourceRoots.skills, appConfig.resourceRoots.designTemplates, appConfig.resourceRoots.designSystems],
@@ -610,7 +611,7 @@ router.post("/design/recommendations/stream", asyncHandler(async (req: Request, 
   try {
     const recommendations = await recommendDesignResources({
       projectRoot,
-      locale: body.locale === "ko" ? "ko" : "en",
+      locale: normalizeLocale(body.locale),
       model: typeof body.model === "string" && body.model.trim() ? body.model.trim() : undefined,
       onProgress: (event: DesignProgressEvent) => writeEvent("progress", event)
     });
@@ -667,7 +668,7 @@ router.post("/design/runtime/stream", asyncHandler(async (req: Request, res: Res
       projectRoot,
       mode,
       goal: typeof body.goal === "string" ? body.goal.trim() : "",
-      locale: body.locale === "ko" ? "ko" : "en",
+      locale: normalizeLocale(body.locale),
       activeSkillId: body.activeSkillId,
       activeDesignTemplateId: body.activeDesignTemplateId,
       activeDesignSystemId: body.activeDesignSystemId,
@@ -800,7 +801,7 @@ router.post("/update/decisions/stream", asyncHandler(async (req: Request, res: R
     const decisions = await buildUpdateDecisions({
       projectRoot,
       updateRequest: body.updateRequest.trim(),
-      locale: body.locale === "ko" ? "ko" : "en",
+      locale: normalizeLocale(body.locale),
       reasoning: appConfig.defaults.planReasoning,
       model: typeof body.model === "string" && body.model.trim() ? body.model.trim() : undefined,
       additionalDirectories: [appConfig.resourceRoots.skills, appConfig.resourceRoots.designTemplates, appConfig.resourceRoots.designSystems],

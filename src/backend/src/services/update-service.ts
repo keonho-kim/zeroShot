@@ -1,6 +1,7 @@
 import { Codex, type ApprovalMode, type ModelReasoningEffort, type SandboxMode, type ThreadEvent } from "@openai/codex-sdk";
 import { z } from "zod";
 import { extractArchitectChatMessage, type ArchitectDecisionResponse } from "@backend/services/architect-service.js";
+import { languageName, textByLocale } from "@backend/i18n/locale.js";
 
 const updateDecisionSchema = {
   type: "object",
@@ -80,23 +81,30 @@ function asReasoningEffort(value: string): ModelReasoningEffort {
 }
 
 function progressText(locale: string, ko: string, en: string): string {
-  return locale === "ko" ? ko : en;
+  return textByLocale(locale, { ko, en, zh: en, ja: en, es: en, de: en });
 }
 
 function omakaseOption(locale: string): ArchitectDecisionResponse["decisions"][number]["options"][number] {
-  return locale === "ko"
-    ? {
-      id: "omakase",
-      label: "알아서 해주세요",
-      detail: "Codex 추천안을 그대로 사용합니다.",
-      productRequirement: "Use the recommended first option for this update decision."
-    }
-    : {
-      id: "omakase",
-      label: "Let Codex choose",
-      detail: "Use the recommended option as-is.",
-      productRequirement: "Use the recommended first option for this update decision."
-    };
+  return {
+    id: "omakase",
+    label: textByLocale(locale, {
+      ko: "알아서 해주세요",
+      en: "Let Codex choose",
+      zh: "让 Codex 决定",
+      ja: "Codex に任せる",
+      es: "Que Codex elija",
+      de: "Codex entscheiden lassen"
+    }),
+    detail: textByLocale(locale, {
+      ko: "Codex 추천안을 그대로 사용합니다.",
+      en: "Use the recommended option as-is.",
+      zh: "直接使用推荐方案。",
+      ja: "おすすめの案をそのまま使います。",
+      es: "Usar la opción recomendada tal cual.",
+      de: "Die empfohlene Option unverändert verwenden."
+    }),
+    productRequirement: "Use the recommended first option for this update decision."
+  };
 }
 
 function normalizeUpdateDecisions(response: UpdateDecisionResponse, locale: string): UpdateDecisionResponse {
@@ -171,7 +179,7 @@ function describeProgress(event: ThreadEvent, locale: string): UpdateProgressEve
 }
 
 function buildUpdatePrompt(updateRequest: string, locale: string): string {
-  const language = locale === "ko" ? "Korean" : "English";
+  const language = languageName(locale);
   return `You are ZeroShot UPDATE.
 
 The user wants to modify an existing built product. Convert the request into concrete update decisions the user should answer before implementation starts.

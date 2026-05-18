@@ -58,8 +58,12 @@ const decisionSet: ArchitectDecisionSet = {
 };
 
 describe("architect core", () => {
-  test("detects Korean environment language", () => {
+  test("detects supported environment languages", () => {
     expect(detectLocale("ko-KR")).toBe("ko");
+    expect(detectLocale("zh-CN")).toBe("zh");
+    expect(detectLocale("ja-JP")).toBe("ja");
+    expect(detectLocale("es-ES")).toBe("es");
+    expect(detectLocale("de-DE")).toBe("de");
     expect(detectLocale("en-US")).toBe("en");
   });
 

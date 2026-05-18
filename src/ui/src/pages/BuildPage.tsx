@@ -3,6 +3,7 @@ import { Bot, FileCode2, Play } from "lucide-react";
 import { useEffect } from "react";
 import { Navigate } from "react-router-dom";
 import { fetchProjectState, startBuild } from "@/lib/api";
+import { useI18n } from "@/lib/i18n";
 import { useAppStore } from "@/stores/app-store";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -14,12 +15,12 @@ function projectName(projectRoot: string): string {
 }
 
 export function BuildPage() {
+  const { t, responseLanguage } = useI18n();
   const projectRoot = useAppStore((state) => state.projectRoot);
   const setProjectState = useAppStore((state) => state.setProjectState);
   const currentJob = useAppStore((state) => state.currentJob);
   const setCurrentJob = useAppStore((state) => state.setCurrentJob);
   const clearLogs = useAppStore((state) => state.clearLogs);
-  const responseLanguage = navigator.language.toLowerCase().startsWith("ko") ? "ko" : "en";
 
   const stateQuery = useQuery({
     queryKey: ["project-state", projectRoot],
@@ -64,9 +65,9 @@ export function BuildPage() {
                 <Bot aria-hidden="true" />
               </div>
               <div className="min-w-0">
-                <p className="agent-panel-kicker">CODEX AGENT</p>
-                <h2>{buildJob?.status === "completed" ? "Build completed" : buildJob?.status === "failed" ? "Build failed" : "Build is running"}</h2>
-                <p>PRODUCT 명세와 DESIGN 캔버스를 기준으로 구현 작업을 진행합니다.</p>
+                <p className="agent-panel-kicker">{t("build.agent")}</p>
+                <h2>{buildJob?.status === "completed" ? t("build.completed") : buildJob?.status === "failed" ? t("build.failed") : t("build.running")}</h2>
+                <p>{t("build.runningDetail")}</p>
               </div>
             </div>
           </Card>
@@ -79,42 +80,42 @@ export function BuildPage() {
               <FileCode2 aria-hidden="true" />
             </div>
             <div className="min-w-0">
-              <p className="agent-panel-kicker">BUILD PIPELINE</p>
-              <h2>START BUILD</h2>
-              <p>현재 PRODUCT 명세와 DESIGN 캔버스를 참고해 구현 작업을 시작합니다.</p>
+              <p className="agent-panel-kicker">{t("build.pipeline")}</p>
+              <h2>{t("build.startTitle")}</h2>
+              <p>{t("build.startDescription")}</p>
             </div>
           </div>
 
           <div className="agent-status-grid">
             <div>
-              <span>PROJECT</span>
+              <span>{t("common.project")}</span>
               <strong title={projectRoot}>{projectName(projectRoot)}</strong>
             </div>
             <div>
-              <span>PRODUCT</span>
-              <strong>{projectState?.hasProductHtml ? "READY" : "MISSING"}</strong>
+              <span>{t("common.product")}</span>
+              <strong>{projectState?.hasProductHtml ? t("common.ready") : t("common.missing")}</strong>
             </div>
             <div>
-              <span>DESIGN</span>
-              <strong>{projectState?.hasDesign ? "READY" : "OPTIONAL"}</strong>
+              <span>{t("common.design")}</span>
+              <strong>{projectState?.hasDesign ? t("common.ready") : t("common.optional")}</strong>
             </div>
             <div>
-              <span>GOAL</span>
-              <strong>TEST + SPEC CHECK</strong>
+              <span>{t("common.goal")}</span>
+              <strong>{t("build.testSpec")}</strong>
             </div>
           </div>
 
           {projectState?.buildEnabled ? null : (
-            <p className="architect-error">BUILD에는 PRODUCT 명세 또는 비어 있지 않은 워크스페이스가 필요합니다.</p>
+            <p className="architect-error">{t("build.disabled")}</p>
           )}
           {mutation.isError ? (
-            <p className="architect-error">{mutation.error instanceof Error ? mutation.error.message : "BUILD를 시작하지 못했습니다."}</p>
+            <p className="architect-error">{mutation.error instanceof Error ? mutation.error.message : t("build.disabled")}</p>
           ) : null}
 
           <div className="build-setup-actions">
             <Button disabled={disabled} onClick={() => mutation.mutate()}>
               <Play aria-hidden="true" className="size-4" />
-              {mutation.isPending ? "BUILD 시작 중..." : "START BUILD"}
+              {mutation.isPending ? t("build.starting") : t("build.startTitle")}
             </Button>
           </div>
         </Card>

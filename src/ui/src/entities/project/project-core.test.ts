@@ -23,9 +23,9 @@ describe("project core", () => {
 
   test("allows UPDATE only after a build run and source code exist", () => {
     expect(canStartUpdate({ runsCount: 0, hasSourceCode: true })).toBe(false);
-    expect(updateDisabledReason({ runsCount: 0, hasSourceCode: true })).toBe("BUILD를 먼저 실행하세요.");
+    expect(updateDisabledReason({ runsCount: 0, hasSourceCode: true })).toBe("Run BUILD first.");
     expect(canStartUpdate({ runsCount: 1, hasSourceCode: false })).toBe(false);
-    expect(updateDisabledReason({ runsCount: 1, hasSourceCode: false })).toBe("업데이트할 소스코드가 없습니다.");
+    expect(updateDisabledReason({ runsCount: 1, hasSourceCode: false })).toBe("No source code is available to update.");
     expect(canStartUpdate({ runsCount: 1, hasSourceCode: true })).toBe(true);
   });
 });

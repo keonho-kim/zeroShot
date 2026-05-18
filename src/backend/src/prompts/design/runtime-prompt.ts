@@ -1,4 +1,5 @@
 import type { DesignRuntimeMode } from "@backend/types.js";
+import { languageName } from "@backend/i18n/locale.js";
 
 export const designRuntimeRolePrompt = `You are ZeroShot DESIGN runtime.
 
@@ -59,7 +60,7 @@ export function buildDesignPrompt(params: {
   architectContext: string;
   resourceContext: string;
 }): string {
-  const language = params.locale === "ko" ? "Korean" : "English";
+  const language = languageName(params.locale);
 
   return `${designRuntimeRolePrompt}
 

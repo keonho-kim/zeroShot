@@ -10,19 +10,19 @@ export const buildFocusOptions: Array<{
   {
     id: "faithful",
     title: "Blueprint Faithful",
-    detail: "PRODUCT 내용을 우선으로 기능을 정확히 구현합니다.",
+    detail: "Implement the PRODUCT behavior as faithfully as possible.",
     requirement: "Prioritize faithful implementation of the selected PRODUCT source."
   },
   {
     id: "polish",
     title: "Arcade Polish",
-    detail: "UI 밀도, 버튼 크기, 인터랙션 완성도를 강하게 봅니다.",
+    detail: "Tighten UI density, button scale, and interaction polish.",
     requirement: "Pay special attention to polished arcade-scale UI, interaction quality, and visual hierarchy."
   },
   {
     id: "stability",
     title: "Agent Hardening",
-    detail: "검증, 에러 처리, 실행 안정성을 우선합니다.",
+    detail: "Prioritize validation, error handling, and runtime stability.",
     requirement: "Prioritize validation, explicit failures, and stable build behavior."
   }
 ];

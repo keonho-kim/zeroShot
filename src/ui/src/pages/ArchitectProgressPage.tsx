@@ -9,9 +9,9 @@ import { CodexLoadingLog } from "@/components/CodexLoadingLog";
 import { AgentLoadingStage } from "@/components/AgentLoadingStage";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { useI18n } from "@/lib/i18n";
 import {
   allDecisionsAnswered,
-  detectLocale,
   firstRoundEndIndex,
   selectedOption
 } from "@/entities/architect/architect-core";
@@ -78,6 +78,7 @@ function bootstrapLanguageSummary(args: string[]): { summary: string; profile: s
 }
 
 export function ArchitectProgressPage() {
+  const { locale, t } = useI18n();
   const navigate = useNavigate();
   const projectRoot = useAppStore((state) => state.projectRoot);
   const setProjectRoot = useAppStore((state) => state.setProjectRoot);
@@ -86,7 +87,6 @@ export function ArchitectProgressPage() {
   const setSelectedBrowserEntryPath = useAppStore((state) => state.setSelectedBrowserEntryPath);
   const setProjectPickerOpen = useAppStore((state) => state.setProjectPickerOpen);
   const setArchitectProductContent = useAppStore((state) => state.setArchitectProductContent);
-  const locale = useMemo(() => detectLocale(navigator.language), []);
   const requestKey = useArchitectFlowStore((state) => state.requestKey);
   const startedRequestKey = useArchitectFlowStore((state) => state.startedRequestKey);
   const userBrief = useArchitectFlowStore((state) => state.userBrief);
@@ -338,7 +338,7 @@ export function ArchitectProgressPage() {
           setBlueprintOpen(true);
         }}>
           <Eye className="size-4" />
-          {locale === "ko" ? "제품 미리보기" : "VIEW PRODUCT"}
+          {t("architect.viewProduct")}
         </Button>
       ) : null}
       <PageHeader title="ARCHITECT" projectRoot={projectRoot} />
@@ -346,11 +346,11 @@ export function ArchitectProgressPage() {
         <section className={cn("architect-thread", decisionSet && "architect-decision-workspace")} aria-label="Architect conversation">
           {!decisionSet ? (
             <Card className="architect-loading-card" aria-label="Architect progress">
-              <AgentLoadingStage label={locale === "ko" ? "요구사항 분석 중" : "Analyzing requirements"} />
+              <AgentLoadingStage label={t("architect.analyzing")} />
               <CodexLoadingLog
                 progressItems={timelineItems}
                 messages={streamMessages}
-                emptyMessage={locale === "ko" ? "제품 방향과 선택지를 정리하고 있습니다." : "Codex is organizing product direction and choices."}
+                emptyMessage={t("architect.organizing")}
               />
               {architectError ? (
                 <p className="architect-error">{architectError}</p>
@@ -362,25 +362,25 @@ export function ArchitectProgressPage() {
             <>
               {isComplete ? (
                 <div className="architect-blueprint-workspace">
-                  <section className="architect-choice-board architect-blueprint-board" aria-label={locale === "ko" ? "설계 선택 보드" : "Blueprint choice board"}>
+                  <section className="architect-choice-board architect-blueprint-board" aria-label={t("architect.choiceBoard")}>
                     <div className="choice-board-heading">
-                      <strong>{locale === "ko" ? "설계 보드" : "Blueprint board"}</strong>
+                      <strong>{t("architect.choiceBoard")}</strong>
                       <span>{pinnedChoices.length} / {decisions.length}</span>
                     </div>
                     <div className="pinned-choice-list">
                       <article className="pinned-choice-note architect-blueprint-note idea" style={{ ["--pin-index" as string]: 0 }}>
-                        <span>{locale === "ko" ? "아이디어" : "Your idea"}</span>
+                        <span>{t("architect.idea")}</span>
                         <strong>{submittedBrief || userBrief}</strong>
                       </article>
                       {(bootstrapMutation.isPending || bootstrapMutation.isSuccess || bootstrapMutation.isError) ? (
                         <article className={cn("pinned-choice-note", "architect-blueprint-note", "bootstrap", bootstrapMutation.isError && "failed")} style={{ ["--pin-index" as string]: 1 }}>
-                          <span>{locale === "ko" ? "부트스트랩" : "Bootstrap"}</span>
+                          <span>{t("architect.bootstrap")}</span>
                           <strong>
                             {bootstrapMutation.isPending
-                              ? (locale === "ko" ? "초기 구조 준비 중" : "Preparing structure")
+                              ? t("architect.preparingStructure")
                               : bootstrapMutation.isSuccess
-                                ? (locale === "ko" ? "실행 컨텍스트 준비 완료" : "Execution context ready")
-                                : (locale === "ko" ? "초기 구조 준비 실패" : "Bootstrap failed")}
+                                ? t("architect.contextReady")
+                                : t("architect.structureFailed")}
                           </strong>
                           {bootstrapMutation.isSuccess && bootstrapSummary ? (
                             <p>{[bootstrapSummary.summary, bootstrapSummary.profile].filter(Boolean).join(" · ")}</p>
@@ -400,12 +400,12 @@ export function ArchitectProgressPage() {
                   <div className="architect-stage-panel">
                     <Card className="decision-card complete architect-blueprint-status">
                       {createBlueprintMutation.isPending ? (
-                        <AgentLoadingStage label={locale === "ko" ? "설계 도면 작성 중" : "Writing the product blueprint"} />
+                        <AgentLoadingStage label={t("architect.writingBlueprint")} />
                       ) : (
                         <>
-                          <div className="decision-kicker">{locale === "ko" ? "PRODUCT.html ready" : "PRODUCT.html ready"}</div>
-                          <h2>{locale === "ko" ? "설계 도면 작성 완료" : "Product blueprint ready"}</h2>
-                          <p>{locale === "ko" ? "Codex가 작성한 제품 기획서를 확인한 뒤 MAKEOVER로 이어갈 수 있습니다." : "Review the Codex-written product blueprint, then continue into MAKEOVER."}</p>
+                          <div className="decision-kicker">{t("architect.blueprintReady")}</div>
+                          <h2>{t("architect.blueprintReady")}</h2>
+                          <p>{t("architect.blueprintReadyDetail")}</p>
                         </>
                       )}
                       {blueprintHtml ? (
@@ -416,27 +416,27 @@ export function ArchitectProgressPage() {
                       {bootstrapMutation.isError ? (
                         <p className="architect-error">{bootstrapMutation.error instanceof Error ? bootstrapMutation.error.message : String(bootstrapMutation.error)}</p>
                       ) : null}
-                      {createBlueprintMutation.isError ? <p className="architect-error">{locale === "ko" ? "PRODUCT.html을 생성하지 못했습니다." : "PRODUCT.html could not be created."}</p> : null}
+                      {createBlueprintMutation.isError ? <p className="architect-error">{t("architect.blueprintError")}</p> : null}
                     </Card>
                   </div>
                 </div>
               ) : (
                 <>
-                  <aside className="architect-left-notes" aria-label={locale === "ko" ? "초기 입력과 부트스트랩 상태" : "Initial brief and bootstrap status"}>
+                  <aside className="architect-left-notes" aria-label={t("architect.initialState")}>
                     <div className="architect-brief-note">
-                      <span>{locale === "ko" ? "아이디어" : "Your IDEA"}</span>
+                      <span>{t("architect.idea")}</span>
                       <p>{submittedBrief || userBrief}</p>
                     </div>
 
                     {(bootstrapMutation.isPending || bootstrapMutation.isSuccess || bootstrapMutation.isError) ? (
                       <div className={cn("architect-brief-note", "architect-bootstrap-note", bootstrapMutation.isError && "failed")}>
-                        <span>{locale === "ko" ? "부트스트랩" : "Bootstrap"}</span>
+                        <span>{t("architect.bootstrap")}</span>
                         <p>
                           {bootstrapMutation.isPending
-                            ? (locale === "ko" ? "프로젝트 초기 구조를 준비하고 있어요." : "Preparing the initial project structure.")
+                            ? t("architect.preparingProject")
                             : bootstrapMutation.isSuccess
-                              ? (locale === "ko" ? "초기 프로젝트 구조와 Codex 실행 컨텍스트를 준비했습니다." : "Initial project structure and Codex execution context are ready.")
-                              : (locale === "ko" ? "프로젝트 초기 구조 준비에 실패했습니다." : "Project bootstrap failed.")}
+                              ? t("architect.projectReady")
+                              : t("architect.projectFailed")}
                         </p>
                         {bootstrapMutation.isSuccess && bootstrapSummary ? (
                           <div className="architect-bootstrap-summary">
@@ -472,7 +472,7 @@ export function ArchitectProgressPage() {
                                 onClick={() => selectDecisionOption(option.id)}
                               >
                                 <span className="choice-check">{selected ? <Check className="size-4" /> : null}</span>
-                                <strong>{option.label}{index === 0 ? (locale === "ko" ? " · 추천" : " · Recommended") : ""}</strong>
+                                <strong>{option.label}{index === 0 ? ` · ${t("common.recommended")}` : ""}</strong>
                                 <span>{option.detail}</span>
                               </button>
                             );
@@ -481,12 +481,12 @@ export function ArchitectProgressPage() {
                         <div className="decision-actions">
                           <Button variant="outline" disabled={stepIndex === 0} onClick={() => setStepIndex((value) => Math.max(0, value - 1))}>
                             <ArrowLeft className="size-4" />
-                            {locale === "ko" ? "이전" : "Back"}
+                            {t("common.previous")}
                           </Button>
                           <Button disabled={!currentSelection || bootstrapMutation.isPending || createBlueprintMutation.isPending || !canCreateBlueprint && stepIndex + 1 >= decisions.length} onClick={goNext}>
                             {stepIndex + 1 >= decisions.length
-                              ? (locale === "ko" ? "PRODUCT.html 만들기" : "Create PRODUCT.html")
-                              : (locale === "ko" ? "다음" : "Next")}
+                              ? t("architect.createProduct")
+                              : t("common.next")}
                             <ArrowRight className="size-4" />
                           </Button>
                         </div>
@@ -494,9 +494,9 @@ export function ArchitectProgressPage() {
                     ) : null}
                   </div>
 
-                  <aside className="architect-choice-board" aria-label={locale === "ko" ? "선택 히스토리" : "Choice history"}>
+                  <aside className="architect-choice-board" aria-label={t("architect.choiceHistory")}>
                     <div className="choice-board-heading">
-                      <strong>{locale === "ko" ? "선택 보드" : "Choice board"}</strong>
+                      <strong>{t("architect.choiceBoard")}</strong>
                       <span>{pinnedChoices.length} / {decisions.length}</span>
                     </div>
                     {pinnedChoices.length ? (
@@ -510,7 +510,7 @@ export function ArchitectProgressPage() {
                         ))}
                       </div>
                     ) : (
-                      <p className="choice-board-empty">{locale === "ko" ? "선택지가 여기에 정리됩니다." : "Choices will be pinned here."}</p>
+                      <p className="choice-board-empty">{t("architect.choicesPinned")}</p>
                     )}
                   </aside>
                 </>
@@ -522,7 +522,7 @@ export function ArchitectProgressPage() {
       {tutorialOpen ? (
         <div className="blueprint-tutorial" role="dialog" aria-modal="true" aria-label="Blueprint tutorial">
           <div className="tutorial-callout">
-            <p>{locale === "ko" ? "여기를 눌러 방금 만든 제품 미리보기를 확인하세요." : "Tap here to view the product preview you just created."}</p>
+            <p>{t("architect.previewHint")}</p>
           </div>
         </div>
       ) : null}
@@ -540,8 +540,8 @@ export function ArchitectProgressPage() {
         <div className="app-modal-backdrop" role="dialog" aria-modal="true" aria-label="Continue destination">
           <Card className="app-modal">
             <p className="modal-eyebrow">CONTINUE TO?</p>
-            <h2>{locale === "ko" ? "다음 단계 선택" : "Choose the next step"}</h2>
-            <p>{locale === "ko" ? "현재 설계를 바탕으로 디자인 검토를 시작합니다." : "Use the current blueprint to continue into design review."}</p>
+            <h2>{t("architect.nextStep")}</h2>
+            <p>{t("architect.nextStepDetail")}</p>
             <div className="modal-actions">
               <Button
                 variant="outline"
@@ -550,7 +550,7 @@ export function ArchitectProgressPage() {
               >
                 MAKEOVER
               </Button>
-              <Button variant="outline" onClick={() => setContinuePromptOpen(false)}>CANCEL</Button>
+              <Button variant="outline" onClick={() => setContinuePromptOpen(false)}>{t("common.cancel")}</Button>
             </div>
           </Card>
         </div>
