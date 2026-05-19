@@ -22,7 +22,10 @@ import type {
   RunDetail,
   RunSummary,
   UpdateDecisionResponse,
-  UpdateProgressEvent
+  UpdateProgressEvent,
+  WorkLogEntryDetail,
+  WorkLogEntrySummary,
+  WorkLogProjectSummary
 } from "@/types/api";
 
 const client = axios.create({
@@ -409,6 +412,18 @@ export async function fetchRuns(projectRoot: string) {
 
 export async function fetchRunDetail(projectRoot: string, runName: string) {
   return (await client.get<RunDetail>(`/history/${runName}`, { params: { projectRoot } })).data;
+}
+
+export async function fetchWorkLogProjects() {
+  return (await client.get<{ projects: WorkLogProjectSummary[] }>("/history/projects")).data.projects;
+}
+
+export async function fetchWorkLogEntries(projectRoot: string) {
+  return (await client.get<{ entries: WorkLogEntrySummary[] }>("/history/entries", { params: { projectRoot } })).data.entries;
+}
+
+export async function fetchWorkLogEntryDetail(projectRoot: string, entryId: string) {
+  return (await client.get<WorkLogEntryDetail>(`/history/entries/${encodeURIComponent(entryId)}`, { params: { projectRoot } })).data;
 }
 
 export async function highlightCode(payload: { code: string; language: string }) {

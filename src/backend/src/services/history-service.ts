@@ -22,12 +22,20 @@ function runSortName(name: string): boolean {
 
 async function readNewRunSummary(projectRoot: string, name: string): Promise<RunSummary> {
   const runPath = join(projectRoot, "runs", name);
+  const meta = parseRunMeta(await readFile(join(runPath, "run.meta"), "utf8").catch(() => ""));
+  const workLog = await readFile(join(runPath, "work-log.html"), "utf8").catch(() => "");
+  const resultReport = await readFile(join(runPath, "result-report.html"), "utf8").catch(() => "");
   return {
     name,
     path: runPath,
-    createdAt: "",
-    mode: ""
+    createdAt: meta.created_at,
+    mode: meta.run_mode || inferRunMode(`${workLog}\n${resultReport}`)
   };
+}
+
+function inferRunMode(content: string): string {
+  const match = /Mode:\s*<code>(build|update)<\/code>/i.exec(content);
+  return match?.[1]?.toLowerCase() ?? "";
 }
 
 async function listNewRuns(projectRoot: string): Promise<RunSummary[]> {
@@ -76,6 +84,7 @@ export async function listRuns(projectRoot: string): Promise<RunSummary[]> {
 
 export async function readRunDetail(projectRoot: string, runName: string): Promise<RunDetail> {
   const runPath = join(projectRoot, "runs", runName);
+  const meta = parseRunMeta(await readFile(join(runPath, "run.meta"), "utf8").catch(() => ""));
   const documents = Object.fromEntries(
     await Promise.all(
       USER_RUN_DOCUMENTS.map(async (documentName) => [
@@ -89,7 +98,9 @@ export async function readRunDetail(projectRoot: string, runName: string): Promi
     return {
       summary: {
         name: runName,
-        path: runPath
+        path: runPath,
+        createdAt: meta.created_at,
+        mode: meta.run_mode || inferRunMode(Object.values(documents).join("\n"))
       },
       meta: {},
       manifest: "",

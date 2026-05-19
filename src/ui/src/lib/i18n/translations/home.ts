@@ -26,7 +26,9 @@ export const homeTranslations = defineTranslations({
     "home.codexRun": "Codex agent run",
     "home.buildReady": "Start building from the product blueprint and current project files.",
     "home.afterBuild": "After build",
-    "home.updateReady": "Apply a change request to the source created by BUILD."
+    "home.updateReady": "Apply a change request to the source created by BUILD.",
+    "home.logsArchive": "Work archive",
+    "home.logsReady": "Review project conversations, run reports, and rendered artifacts."
   },
   ko: {
     "home.projectSlot": "프로젝트",
@@ -52,7 +54,9 @@ export const homeTranslations = defineTranslations({
     "home.codexRun": "Codex 에이전트 실행",
     "home.buildReady": "제품 블루프린트와 현재 프로젝트 파일을 바탕으로 빌드를 시작합니다.",
     "home.afterBuild": "빌드 이후",
-    "home.updateReady": "BUILD 이후 생성된 소스코드에 변경 요청을 적용합니다."
+    "home.updateReady": "BUILD 이후 생성된 소스코드에 변경 요청을 적용합니다.",
+    "home.logsArchive": "작업 아카이브",
+    "home.logsReady": "프로젝트별 대화, 실행 보고서, 렌더링 산출물을 확인합니다."
   },
   zh: {
     "home.projectSlot": "项目",

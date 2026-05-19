@@ -14,6 +14,7 @@ import { appendAppEvent } from "@backend/services/event-log-service.js";
 import { createDirectory, deleteEntry, designEntryPath, readDesignHtmlSnapshot, readProductHtml, readProductHtmlSnapshot, upsertArtifactManifest, writeArtifactFile, writeDesignHtmlSnapshot, writeProductHtml, writeProductHtmlSnapshot, writeUpdateDocument } from "@backend/services/file-service.js";
 import { readRunDetail, listRuns } from "@backend/services/history-service.js";
 import { jobManager } from "@backend/services/job-manager.js";
+import { listWorkLogEntries, listWorkLogProjects, readWorkLogEntryDetail } from "@backend/services/log-service.js";
 import { readProjectHistoryMeta, readProjectState } from "@backend/services/project-service.js";
 import { buildResourcePromptContext, listResourceCatalog } from "@backend/services/resource-service.js";
 import { buildUpdateDecisions, type UpdateProgressEvent } from "@backend/services/update-service.js";
@@ -862,6 +863,20 @@ router.get("/jobs/:jobId/stream", asyncHandler(async (req: Request, res: Respons
 router.get("/history", asyncHandler(async (req: Request, res: Response) => {
   const projectRoot = await getValidatedProjectRoot(String(req.query.projectRoot ?? ""));
   res.json({ runs: await listRuns(projectRoot) });
+}));
+
+router.get("/history/projects", asyncHandler(async (_req: Request, res: Response) => {
+  res.json({ projects: await listWorkLogProjects() });
+}));
+
+router.get("/history/entries", asyncHandler(async (req: Request, res: Response) => {
+  const projectRoot = await getValidatedProjectRoot(String(req.query.projectRoot ?? ""));
+  res.json({ entries: await listWorkLogEntries(projectRoot) });
+}));
+
+router.get("/history/entries/:entryId", asyncHandler(async (req: Request, res: Response) => {
+  const projectRoot = await getValidatedProjectRoot(String(req.query.projectRoot ?? ""));
+  res.json(await readWorkLogEntryDetail(projectRoot, String(req.params.entryId)));
 }));
 
 router.get("/history/:runName", asyncHandler(async (req: Request, res: Response) => {

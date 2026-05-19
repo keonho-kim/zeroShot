@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Bot, Boxes, DraftingCompass, FolderOpen, GitBranch, Paintbrush, RotateCcw } from "lucide-react";
+import { Bot, Boxes, DraftingCompass, FolderOpen, GitBranch, Paintbrush, RotateCcw, ScrollText } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { ProjectPickerModal } from "@/components/ProjectPickerModal";
@@ -229,6 +229,14 @@ export function HomePage() {
           accent="cyan"
           disabled={updateDisabled}
           onClick={() => navigate("/update")}
+        />
+        <ActionCard
+          title="LOGS"
+          eyebrow={t("home.logsArchive")}
+          description={t("home.logsReady")}
+          icon={<ScrollText aria-hidden="true" />}
+          accent="mint"
+          onClick={() => navigate("/logs")}
         />
       </div>
       <ProjectPickerModal
