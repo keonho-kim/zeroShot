@@ -272,6 +272,74 @@ export async function createArchitectProductHtml(payload: {
   return (await client.post<ProductArtifactFile>("/architect/product-html", payload)).data;
 }
 
+export async function createArchitectProductHtmlStream(
+  payload: {
+    projectRoot: string;
+    userBrief: string;
+    decisionSet: ArchitectDecisionResponse;
+    answers: Record<string, string>;
+    locale: string;
+    activeSkillId?: string;
+    activeDesignTemplateId?: string;
+    activeDesignSystemId?: string;
+  },
+  onProgress: (event: ArchitectProgressEvent) => void,
+  onMessage?: (message: string) => void
+) {
+  const response = await fetch("/api/architect/product-html/stream", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || "PRODUCT.html request failed.");
+  }
+  if (!response.body) {
+    throw new Error("PRODUCT.html stream is unavailable.");
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  while (true) {
+    const { done, value } = await reader.read();
+    buffer += decoder.decode(value, { stream: !done });
+    const parts = buffer.split("\n\n");
+    buffer = parts.pop() ?? "";
+
+    for (const part of parts) {
+      const parsed = parseStreamEvent(part);
+      if (!parsed) {
+        continue;
+      }
+      if (parsed.event === "progress") {
+        onProgress(parsed.data as ArchitectProgressEvent);
+      }
+      if (parsed.event === "message") {
+        const data = parsed.data as { message?: unknown };
+        if (typeof data.message === "string") {
+          onMessage?.(data.message);
+        }
+      }
+      if (parsed.event === "complete") {
+        return (parsed.data as { file: ProductArtifactFile }).file;
+      }
+      if (parsed.event === "error") {
+        throw new Error((parsed.data as { message: string }).message);
+      }
+    }
+
+    if (done) {
+      break;
+    }
+  }
+
+  throw new Error("PRODUCT.html stream ended before a file was returned.");
+}
+
 export async function requestDesignRuntimeStream(
   payload: {
     projectRoot: string;

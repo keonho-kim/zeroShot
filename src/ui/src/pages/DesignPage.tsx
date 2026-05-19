@@ -520,7 +520,7 @@ export function DesignPage() {
 
         {makeoverStep === "loading" ? (
           <Card className="makeover-loading-card">
-            <AgentLoadingStage label="MAKING OVER" />
+            <AgentLoadingStage label={t("makeover.runtimeLoadingLabel")} />
             <CodexLoadingLog
               progressItems={timelineItems}
               messages={runtimeMessages}

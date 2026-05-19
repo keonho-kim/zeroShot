@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { buildArchitectPrompt } from "@backend/llm/architect/prompt";
+import { buildArchitectProductHtmlPrompt } from "@backend/llm/architect/product-html-prompt";
 import { ensureDevelopmentLanguageDecision, extractArchitectChatMessage, type ArchitectDecisionResponse } from "@backend/services/architect-service";
 
 const baseDecision: ArchitectDecisionResponse["decisions"][number] = {
@@ -58,6 +59,23 @@ describe("architect service", () => {
     expect(prompt).toContain("zeroshot bootstrap");
     expect(prompt).toContain("--type <backend|frontend|fullstack|library|script>");
     expect(prompt).toContain("typescript, javascript, python, go, rust, java, ruby, zig");
+  });
+
+  test("asks PRODUCT.html generation to stream a user-facing chat message", () => {
+    const prompt = buildArchitectProductHtmlPrompt({
+      userBrief: "Build a planning app.",
+      decisionSet: {
+        chatMessage: "제품 방향을 정리했습니다.",
+        title: "Planner",
+        summary: "A focused planning product.",
+        decisions: [baseDecision]
+      },
+      answers: { workflow: "planning" },
+      locale: "en"
+    });
+
+    expect(prompt).toContain("Put chatMessage first");
+    expect(prompt).toContain("The html field must contain a complete interactive HTML document.");
   });
 
   test("extracts partial architect chat messages from runtime JSON", () => {

@@ -5,6 +5,8 @@ export const makeoverTranslations = defineTranslations({
     "makeover.defaultGoal": "Create the best INTERACTIVE CANVAS from the product blueprint, selected design system, and selected template.",
     "makeover.requiresProduct": "Create a PRODUCT BLUEPRINT before running MAKEOVER.",
     "makeover.loadingMessage": "Preparing the product blueprint, design template, and editing mode.",
+    "makeover.runtimeLoadingLabel": "Making over",
+    "makeover.recommendationLoadingMessage": "Comparing the product blueprint with the design assets.",
     "makeover.title": "Makeover",
     "makeover.description": "Turn the ARCHITECT result into an interactive UI canvas.",
     "makeover.source": "Source",
@@ -48,6 +50,8 @@ export const makeoverTranslations = defineTranslations({
     "makeover.defaultGoal": "제품 기획서와 선택한 디자인 시스템/템플릿에 맞춰 가장 적합한 INTERACTIVE CANVAS를 만들어주세요.",
     "makeover.requiresProduct": "PRODUCT BLUEPRINT를 먼저 만들어야 DESIGN을 실행할 수 있습니다.",
     "makeover.loadingMessage": "제품 블루프린트, 디자인 템플릿, 편집 모드를 정리하고 있습니다.",
+    "makeover.runtimeLoadingLabel": "MAKEOVER 작업 중",
+    "makeover.recommendationLoadingMessage": "제품 블루프린트와 디자인 자산을 비교하고 있습니다.",
     "makeover.description": "ARCHITECT 결과를 인터랙티브 UI 캔버스로 전환합니다.",
     "makeover.source": "소스",
     "makeover.skill": "스킬",
@@ -87,15 +91,23 @@ export const makeoverTranslations = defineTranslations({
     "artifact.attach": "첨부"
   },
   zh: {
-    "makeover.loadingMessage": "正在整理产品蓝图、设计模板和编辑模式。"
+    "makeover.loadingMessage": "正在整理产品蓝图、设计模板和编辑模式。",
+    "makeover.runtimeLoadingLabel": "正在执行 MAKEOVER",
+    "makeover.recommendationLoadingMessage": "正在对比产品蓝图和设计资源。"
   },
   ja: {
-    "makeover.loadingMessage": "プロダクト設計、デザインテンプレート、編集モードを整理しています。"
+    "makeover.loadingMessage": "プロダクト設計、デザインテンプレート、編集モードを整理しています。",
+    "makeover.runtimeLoadingLabel": "MAKEOVER 作業中",
+    "makeover.recommendationLoadingMessage": "プロダクト設計とデザイン素材を照らし合わせています。"
   },
   es: {
-    "makeover.loadingMessage": "Preparando el blueprint del producto, la plantilla de diseño y el modo de edición."
+    "makeover.loadingMessage": "Preparando el blueprint del producto, la plantilla de diseño y el modo de edición.",
+    "makeover.runtimeLoadingLabel": "Makeover en curso",
+    "makeover.recommendationLoadingMessage": "Comparando el blueprint del producto con los recursos de diseño."
   },
   de: {
-    "makeover.loadingMessage": "Produkt-Blueprint, Designvorlage und Bearbeitungsmodus werden vorbereitet."
+    "makeover.loadingMessage": "Produkt-Blueprint, Designvorlage und Bearbeitungsmodus werden vorbereitet.",
+    "makeover.runtimeLoadingLabel": "MAKEOVER läuft",
+    "makeover.recommendationLoadingMessage": "Produkt-Blueprint und Designressourcen werden abgeglichen."
   }
 });

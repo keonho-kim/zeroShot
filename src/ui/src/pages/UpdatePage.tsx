@@ -8,6 +8,7 @@ import { useAppStore } from "@/stores/app-store";
 import type { UpdateDecision, UpdateDecisionResponse, UpdateProgressEvent } from "@/types/api";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { AgentLoadingStage } from "@/components/AgentLoadingStage";
 import { CodexLoadingLog } from "@/components/CodexLoadingLog";
 import { PageHeader } from "@/components/PageHeader";
 import { RichPromptEditor } from "@/components/prompt/RichPromptEditor";
@@ -259,11 +260,14 @@ export function UpdatePage() {
                 ) : null}
 
                 {isGeneratingDecisions ? (
-                  <CodexLoadingLog
-                    progressItems={progressItems}
-                    messages={streamMessages}
-                    emptyMessage={t("update.organizingQuestions")}
-                  />
+                  <div className="makeover-loading-card">
+                    <AgentLoadingStage label={t("update.questionsLoadingLabel")} />
+                    <CodexLoadingLog
+                      progressItems={progressItems}
+                      messages={streamMessages}
+                      emptyMessage={t("update.organizingQuestions")}
+                    />
+                  </div>
                 ) : null}
 
                 <Button className="self-start" disabled={updateDisabled} onClick={requestDecisions}>

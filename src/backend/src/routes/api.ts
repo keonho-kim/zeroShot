@@ -496,6 +496,85 @@ router.post("/architect/product-html", asyncHandler(async (req: Request, res: Re
   }
 }));
 
+router.post("/architect/product-html/stream", asyncHandler(async (req: Request, res: Response) => {
+  const auth = await readAuthStatus();
+  if (!auth.valid) {
+    res.status(412).json(auth);
+    return;
+  }
+
+  const body = req.body as {
+    projectRoot?: string;
+    userBrief?: string;
+    decisionSet?: unknown;
+    answers?: Record<string, string>;
+    locale?: string;
+    model?: string;
+    activeSkillId?: string;
+    activeDesignTemplateId?: string;
+    activeDesignSystemId?: string;
+  };
+  const projectRoot = await getValidatedProjectRoot(String(body.projectRoot ?? ""));
+  if (!body.decisionSet || typeof body.userBrief !== "string" || !body.userBrief.trim()) {
+    res.status(400).json({ message: "Architect decisions and user brief are required" });
+    return;
+  }
+
+  res.writeHead(200, {
+    "Content-Type": "text/event-stream",
+    "Cache-Control": "no-cache",
+    Connection: "keep-alive"
+  });
+
+  let seq = 0;
+  const writeEvent = (type: string, data: object) => {
+    seq += 1;
+    res.write(`id: ${seq}\n`);
+    res.write(`event: ${type}\n`);
+    res.write(`data: ${JSON.stringify(data)}\n\n`);
+  };
+
+  try {
+    const appConfig = await loadAppConfig();
+    const html = await buildArchitectProductHtml({
+      projectRoot,
+      userBrief: body.userBrief.trim(),
+      decisionSet: body.decisionSet as Parameters<typeof buildArchitectProductHtml>[0]["decisionSet"],
+      answers: body.answers ?? {},
+      locale: normalizeLocale(body.locale),
+      reasoning: appConfig.defaults.planReasoning,
+      model: typeof body.model === "string" && body.model.trim() ? body.model.trim() : undefined,
+      additionalDirectories: [appConfig.resourceRoots.skills, appConfig.resourceRoots.designTemplates, appConfig.resourceRoots.designSystems],
+      resourceContext: await buildResourcePromptContext({
+        activeSkillId: body.activeSkillId,
+        activeDesignTemplateId: body.activeDesignTemplateId,
+        activeDesignSystemId: body.activeDesignSystemId,
+        includeCatalogSummary: true
+      }),
+      onProgress: (event: ArchitectProgressEvent) => writeEvent("progress", event),
+      onMessage: (message) => writeEvent("message", { message })
+    });
+    const file = await writeProductHtmlSnapshot(projectRoot, html);
+    await upsertArtifactManifest(projectRoot, [{
+      path: file.path,
+      type: "text/html",
+      title: "PRODUCT BLUEPRINT",
+      entry: true
+    }]);
+    await appendAppEvent("product_artifact_saved", {
+      projectRoot,
+      path: file.path,
+      etag: file.etag
+    });
+    writeEvent("complete", { file });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    writeEvent("error", { message: `Codex could not create PRODUCT.html: ${message}` });
+  } finally {
+    res.end();
+  }
+}));
+
 router.put("/projects/product-html", asyncHandler(async (req: Request, res: Response) => {
   const body = req.body as { projectRoot: string; content?: string; markdownMirror?: string };
   const projectRoot = await getValidatedProjectRoot(body.projectRoot);

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { AgentLoadingStage } from "@/components/AgentLoadingStage";
+import { CodexLoadingLog } from "@/components/CodexLoadingLog";
 import { useI18n } from "@/lib/i18n";
 import { designModeLabel, designResultStatus } from "@/entities/design/design-runtime";
 import type { DesignRecommendationOption, DesignRecommendationResponse, DesignRuntimeResponse, ResourceManifest } from "@/types/api";
@@ -195,16 +196,11 @@ export function DesignRuntimeSetup(props: {
       {props.hasProductHtml && props.isLoadingRecommendations ? (
         <Card className="makeover-loading-card">
           <AgentLoadingStage label={t("makeover.candidatesLoading")} />
-          {props.recommendationTimelineItems.length ? (
-            <div className="design-inline-log" aria-label={t("makeover.candidatesLoading")}>
-              {props.recommendationTimelineItems.map((item) => (
-                <div key={item.id}>
-                  <strong>{item.title}</strong>
-                  <span>{item.detail}</span>
-                </div>
-              ))}
-            </div>
-          ) : null}
+          <CodexLoadingLog
+            progressItems={props.recommendationTimelineItems}
+            messages={[]}
+            emptyMessage={t("makeover.recommendationLoadingMessage")}
+          />
         </Card>
       ) : null}
 

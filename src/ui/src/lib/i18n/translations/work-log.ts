@@ -2,8 +2,8 @@ import { defineTranslations } from "@/lib/i18n/define-translations";
 
 export const workLogTranslations = defineTranslations({
   en: {
-    "log.building": "Building",
-    "log.updating": "Updating",
+    "log.building": "Building the app",
+    "log.updating": "Updating the app",
     "log.streamTitle": "Codex work stream",
     "log.streamDetail": "Work stages and log messages appear here as one flow.",
     "log.waiting": "Waiting for work logs.",
@@ -41,8 +41,8 @@ export const workLogTranslations = defineTranslations({
     "runArtifacts.empty": "No HTML artifacts to show."
   },
   ko: {
-    "log.building": "BUILDING",
-    "log.updating": "UPDATING",
+    "log.building": "BUILD 작업 중",
+    "log.updating": "UPDATE 작업 중",
     "log.streamTitle": "Codex 작업 흐름",
     "log.streamDetail": "실행 단계와 작업 로그를 한 흐름으로 표시합니다.",
     "log.waiting": "작업 로그를 기다리고 있습니다.",

@@ -16,7 +16,7 @@ import {
   selectedOption
 } from "@/entities/architect/architect-core";
 import {
-  createArchitectProductHtml,
+  createArchitectProductHtmlStream,
   fetchProjectSettings,
   fetchProjectState,
   requestArchitectDecisionsStream,
@@ -103,9 +103,14 @@ export function ArchitectProgressPage() {
   const architectError = useArchitectFlowStore((state) => state.architectError);
   const timelineItems = useArchitectFlowStore((state) => state.timelineItems);
   const streamMessages = useArchitectFlowStore((state) => state.streamMessages);
+  const blueprintTimelineItems = useArchitectFlowStore((state) => state.blueprintTimelineItems);
+  const blueprintStreamMessages = useArchitectFlowStore((state) => state.blueprintStreamMessages);
   const markRequestStarted = useArchitectFlowStore((state) => state.markRequestStarted);
   const addProgress = useArchitectFlowStore((state) => state.addProgress);
   const addStreamMessage = useArchitectFlowStore((state) => state.addStreamMessage);
+  const resetBlueprintStream = useArchitectFlowStore((state) => state.resetBlueprintStream);
+  const addBlueprintProgress = useArchitectFlowStore((state) => state.addBlueprintProgress);
+  const addBlueprintStreamMessage = useArchitectFlowStore((state) => state.addBlueprintStreamMessage);
   const completeRequest = useArchitectFlowStore((state) => state.completeRequest);
   const failRequest = useArchitectFlowStore((state) => state.failRequest);
   const chooseOption = useArchitectFlowStore((state) => state.chooseOption);
@@ -152,16 +157,21 @@ export function ArchitectProgressPage() {
       if (!decisionSet || !canCreateBlueprint) {
         throw new Error("Architect decisions are required before a product blueprint can be created.");
       }
-      return createArchitectProductHtml({
-        projectRoot,
-        userBrief: submittedBrief || userBrief,
-        decisionSet,
-        answers,
-        locale,
-        activeSkillId: activeSkillId || undefined,
-        activeDesignTemplateId: activeDesignTemplateId || undefined,
-        activeDesignSystemId: activeDesignSystemId || undefined
-      });
+      resetBlueprintStream();
+      return createArchitectProductHtmlStream(
+        {
+          projectRoot,
+          userBrief: submittedBrief || userBrief,
+          decisionSet,
+          answers,
+          locale,
+          activeSkillId: activeSkillId || undefined,
+          activeDesignTemplateId: activeDesignTemplateId || undefined,
+          activeDesignSystemId: activeDesignSystemId || undefined
+        },
+        addBlueprintProgress,
+        addBlueprintStreamMessage
+      );
     },
     onSuccess: (file) => {
       setBlueprintHtml(file.content);
@@ -400,7 +410,14 @@ export function ArchitectProgressPage() {
                   <div className="architect-stage-panel">
                     <Card className="decision-card complete architect-blueprint-status">
                       {createBlueprintMutation.isPending ? (
-                        <AgentLoadingStage label={t("architect.writingBlueprint")} />
+                        <>
+                          <AgentLoadingStage label={t("architect.writingBlueprint")} />
+                          <CodexLoadingLog
+                            progressItems={blueprintTimelineItems}
+                            messages={blueprintStreamMessages}
+                            emptyMessage={t("architect.blueprintLoadingMessage")}
+                          />
+                        </>
                       ) : (
                         <>
                           <div className="decision-kicker">{t("architect.blueprintReady")}</div>

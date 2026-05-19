@@ -71,13 +71,15 @@ export type ArchitectDecisionResponse = z.infer<typeof architectDecisionResponse
 const architectProductHtmlSchema = {
   type: "object",
   properties: {
+    chatMessage: { type: "string" },
     html: { type: "string" }
   },
-  required: ["html"],
+  required: ["chatMessage", "html"],
   additionalProperties: false
 };
 
 const architectProductHtmlResponseSchema = z.object({
+  chatMessage: z.string().trim().min(1),
   html: z.string().trim().min(1)
 });
 
@@ -264,6 +266,73 @@ function describeProgress(event: ThreadEvent, locale: string): ArchitectProgress
   return null;
 }
 
+function describeProductHtmlProgress(event: ThreadEvent, locale: string): ArchitectProgressEvent | null {
+  if (event.type === "thread.started") {
+    return {
+      id: "product-session",
+      title: progressText(locale, "PRODUCT.html 생성 시작", "PRODUCT.html generation started"),
+      detail: progressText(locale, "선택한 답변과 제품 방향을 문서 작성 작업으로 넘겼습니다.", "Your choices and product direction are being prepared for the document."),
+      status: "completed"
+    };
+  }
+  if (event.type === "turn.started") {
+    return {
+      id: "product-writing",
+      title: progressText(locale, "제품 블루프린트 작성 중", "Writing the product blueprint"),
+      detail: progressText(locale, "제품 구조, 핵심 기능, 화면 흐름을 PRODUCT.html로 정리하고 있습니다.", "Organizing product structure, core features, and screen flows into PRODUCT.html."),
+      status: "running"
+    };
+  }
+  if (event.type === "turn.completed") {
+    return {
+      id: "product-validation",
+      title: progressText(locale, "PRODUCT.html 검토 완료", "PRODUCT.html reviewed"),
+      detail: progressText(
+        locale,
+        `입력 ${event.usage.input_tokens} 토큰, 출력 ${event.usage.output_tokens} 토큰으로 제품 문서를 작성했습니다.`,
+        `Prepared the product document using ${event.usage.input_tokens} input tokens and ${event.usage.output_tokens} output tokens.`
+      ),
+      status: "completed"
+    };
+  }
+  if (event.type === "turn.failed") {
+    return {
+      id: "product-failed",
+      title: progressText(locale, "PRODUCT.html 생성 실패", "PRODUCT.html generation failed"),
+      detail: event.error.message,
+      status: "failed"
+    };
+  }
+  if (event.type === "error") {
+    return {
+      id: "product-failed",
+      title: progressText(locale, "스트림 오류", "Stream error"),
+      detail: event.message,
+      status: "failed"
+    };
+  }
+
+  const item = event.item;
+  if (item.type === "reasoning") {
+    return {
+      id: "product-reasoning",
+      title: progressText(locale, "제품 명세 구조화 중", "Structuring the product spec"),
+      detail: progressText(locale, "선택한 답변을 기능 명세와 수용 기준으로 나누고 있습니다.", "Turning selected answers into feature specs and acceptance criteria."),
+      status: event.type === "item.completed" ? "completed" : "running"
+    };
+  }
+  if (item.type === "agent_message") {
+    return {
+      id: "product-draft",
+      title: progressText(locale, "PRODUCT.html 산출물 작성 중", "Drafting PRODUCT.html"),
+      detail: progressText(locale, "이후 MAKEOVER와 BUILD가 참고할 제품 블루프린트 화면을 작성하고 있습니다.", "Writing the product blueprint page that Makeover and Build will use next."),
+      status: event.type === "item.completed" ? "completed" : "running"
+    };
+  }
+
+  return null;
+}
+
 export async function buildArchitectDecisions(params: {
   projectRoot: string;
   goal: string;
@@ -333,6 +402,8 @@ export async function buildArchitectProductHtml(params: {
   model?: string;
   resourceContext?: string;
   additionalDirectories?: string[];
+  onProgress?: (event: ArchitectProgressEvent) => void;
+  onMessage?: (message: string) => void;
 }): Promise<string> {
   const codex = new Codex();
   const thread = codex.startThread({
@@ -351,8 +422,20 @@ export async function buildArchitectProductHtml(params: {
     outputSchema: architectProductHtmlSchema
   });
   let finalResponse = "";
+  let lastMessage = "";
 
   for await (const event of events) {
+    const progress = describeProductHtmlProgress(event, params.locale);
+    if (progress) {
+      params.onProgress?.(progress);
+    }
+    if ((event.type === "item.updated" || event.type === "item.completed") && event.item.type === "agent_message") {
+      const nextMessage = extractArchitectChatMessage(event.item.text).trim();
+      if (nextMessage && nextMessage !== lastMessage) {
+        lastMessage = nextMessage;
+        params.onMessage?.(nextMessage);
+      }
+    }
     if (event.type === "item.completed" && event.item.type === "agent_message") {
       finalResponse = event.item.text;
     }

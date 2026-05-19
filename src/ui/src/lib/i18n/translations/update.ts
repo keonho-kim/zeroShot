@@ -19,6 +19,7 @@ export const updateTranslations = defineTranslations({
     "update.noSource": "No source files detected.",
     "update.requestLabel": "Update request",
     "update.requestPlaceholder": "Describe what you want to change or improve.",
+    "update.questionsLoadingLabel": "Preparing update questions",
     "update.organizingQuestions": "Preparing update questions.",
     "update.generateQuestions": "Prepare questions",
     "update.generatingQuestions": "Preparing questions...",
@@ -51,6 +52,7 @@ export const updateTranslations = defineTranslations({
     "update.noSource": "감지된 소스코드가 없습니다.",
     "update.requestLabel": "업데이트 요청",
     "update.requestPlaceholder": "변경하거나 보완할 내용을 입력하세요.",
+    "update.questionsLoadingLabel": "업데이트 질문 정리 중",
     "update.organizingQuestions": "업데이트 질문을 정리하고 있습니다.",
     "update.generateQuestions": "질문 생성",
     "update.generatingQuestions": "질문 정리 중...",
@@ -67,18 +69,22 @@ export const updateTranslations = defineTranslations({
   },
   zh: {
     "update.requestTitle": "想改什么？",
-    "update.requestDescription": "Codex 会先根据 PRODUCT 和当前源码整理几个清晰的问题。"
+    "update.requestDescription": "Codex 会先根据 PRODUCT 和当前源码整理几个清晰的问题。",
+    "update.questionsLoadingLabel": "正在整理更新问题"
   },
   ja: {
     "update.requestTitle": "何を変更しますか？",
-    "update.requestDescription": "Codex が PRODUCT と現在のソースをもとに、必要な質問を先に整理します。"
+    "update.requestDescription": "Codex が PRODUCT と現在のソースをもとに、必要な質問を先に整理します。",
+    "update.questionsLoadingLabel": "更新の質問を整理中"
   },
   es: {
     "update.requestTitle": "¿Qué quieres cambiar?",
-    "update.requestDescription": "Codex convertirá tu petición en unas pocas preguntas claras usando PRODUCT y el código actual."
+    "update.requestDescription": "Codex convertirá tu petición en unas pocas preguntas claras usando PRODUCT y el código actual.",
+    "update.questionsLoadingLabel": "Preparando preguntas de actualización"
   },
   de: {
     "update.requestTitle": "Was soll geändert werden?",
-    "update.requestDescription": "Codex leitet aus PRODUCT und dem aktuellen Code zuerst klare Fragen ab."
+    "update.requestDescription": "Codex leitet aus PRODUCT und dem aktuellen Code zuerst klare Fragen ab.",
+    "update.questionsLoadingLabel": "Update-Fragen werden vorbereitet"
   }
 });

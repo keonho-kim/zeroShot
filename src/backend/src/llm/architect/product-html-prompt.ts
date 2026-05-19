@@ -22,7 +22,9 @@ export function buildArchitectProductHtmlPrompt(params: {
   return [
     "Create ARCHITECT/PRODUCT.html for this ZeroShot project.",
     "",
-    "Return only JSON matching the schema. The html field must contain a complete interactive HTML document.",
+    "Return only JSON matching the schema. Put chatMessage first, then html.",
+    "chatMessage must be a concise user-facing status update in the requested locale that explains what you are preparing.",
+    "The html field must contain a complete interactive HTML document.",
     "Do not create files or run commands. Do not return Markdown.",
     "The HTML must be a product planning document, not implementation code. It should be useful later for DESIGN, BUILD, and UPDATE.",
     "Use self-contained CSS and lightweight JavaScript only when it improves interactive review.",
