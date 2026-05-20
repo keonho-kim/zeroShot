@@ -4,6 +4,7 @@ import { basename, relative } from "node:path";
 import { loadAppConfig, saveAppConfig } from "@backend/config/app-config.js";
 import { loadCodexSettings, readProjectCodexSettings, saveCodexSettings, saveProjectCodexSettings } from "@backend/config/codex-config.js";
 import { assertPathWithinRoots, assertProjectRootWithinRoots, isWithin, listDirectoryEntries } from "@backend/core/path-guards.js";
+import { createSseStream } from "@backend/core/sse.js";
 import { readAuthStatus, saveAuthFile } from "@backend/services/auth-service.js";
 import { buildArchitectDecisions, buildArchitectProductHtml, type ArchitectProgressEvent } from "@backend/services/architect-service.js";
 import { readLatestDesignSession, readProjectSettings, recordArchitectSession, recordDesignSession, saveProjectSettings } from "@backend/services/app-storage-service.js";
@@ -364,19 +365,7 @@ router.post("/architect/decisions/stream", asyncHandler(async (req: Request, res
     return;
   }
 
-  res.writeHead(200, {
-    "Content-Type": "text/event-stream",
-    "Cache-Control": "no-cache",
-    Connection: "keep-alive"
-  });
-
-  let seq = 0;
-  const writeEvent = (type: string, data: object) => {
-    seq += 1;
-    res.write(`id: ${seq}\n`);
-    res.write(`event: ${type}\n`);
-    res.write(`data: ${JSON.stringify(data)}\n\n`);
-  };
+  const stream = createSseStream(res);
 
   try {
     const appConfig = await loadAppConfig();
@@ -393,8 +382,8 @@ router.post("/architect/decisions/stream", asyncHandler(async (req: Request, res
         activeDesignSystemId: body.activeDesignSystemId,
         includeCatalogSummary: true
       }),
-      onProgress: (event: ArchitectProgressEvent) => writeEvent("progress", event),
-      onMessage: (message) => writeEvent("message", { message })
+      onProgress: (event: ArchitectProgressEvent) => stream.write("progress", event),
+      onMessage: (message) => stream.write("message", { message })
     });
     await recordArchitectSession({
       projectRoot,
@@ -408,12 +397,12 @@ router.post("/architect/decisions/stream", asyncHandler(async (req: Request, res
       title: decisions.title,
       decisionsCount: decisions.decisions.length
     });
-    writeEvent("complete", { decisions });
+    await stream.write("complete", { decisions });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    writeEvent("error", { message: `Codex could not produce architect decisions: ${message}` });
+    await stream.write("error", { message: `Codex could not produce architect decisions: ${message}` });
   } finally {
-    res.end();
+    stream.close();
   }
 }));
 
@@ -520,19 +509,7 @@ router.post("/architect/product-html/stream", asyncHandler(async (req: Request, 
     return;
   }
 
-  res.writeHead(200, {
-    "Content-Type": "text/event-stream",
-    "Cache-Control": "no-cache",
-    Connection: "keep-alive"
-  });
-
-  let seq = 0;
-  const writeEvent = (type: string, data: object) => {
-    seq += 1;
-    res.write(`id: ${seq}\n`);
-    res.write(`event: ${type}\n`);
-    res.write(`data: ${JSON.stringify(data)}\n\n`);
-  };
+  const stream = createSseStream(res);
 
   try {
     const appConfig = await loadAppConfig();
@@ -551,8 +528,8 @@ router.post("/architect/product-html/stream", asyncHandler(async (req: Request, 
         activeDesignSystemId: body.activeDesignSystemId,
         includeCatalogSummary: true
       }),
-      onProgress: (event: ArchitectProgressEvent) => writeEvent("progress", event),
-      onMessage: (message) => writeEvent("message", { message })
+      onProgress: (event: ArchitectProgressEvent) => stream.write("progress", event),
+      onMessage: (message) => stream.write("message", { message })
     });
     const file = await writeProductHtmlSnapshot(projectRoot, html);
     await upsertArtifactManifest(projectRoot, [{
@@ -566,12 +543,12 @@ router.post("/architect/product-html/stream", asyncHandler(async (req: Request, 
       path: file.path,
       etag: file.etag
     });
-    writeEvent("complete", { file });
+    await stream.write("complete", { file });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    writeEvent("error", { message: `Codex could not create PRODUCT.html: ${message}` });
+    await stream.write("error", { message: `Codex could not create PRODUCT.html: ${message}` });
   } finally {
-    res.end();
+    stream.close();
   }
 }));
 
@@ -674,34 +651,22 @@ router.post("/design/recommendations/stream", asyncHandler(async (req: Request, 
     return;
   }
 
-  res.writeHead(200, {
-    "Content-Type": "text/event-stream",
-    "Cache-Control": "no-cache",
-    Connection: "keep-alive"
-  });
-
-  let seq = 0;
-  const writeEvent = (type: string, data: object) => {
-    seq += 1;
-    res.write(`id: ${seq}\n`);
-    res.write(`event: ${type}\n`);
-    res.write(`data: ${JSON.stringify(data)}\n\n`);
-  };
+  const stream = createSseStream(res);
 
   try {
     const recommendations = await recommendDesignResources({
       projectRoot,
       locale: normalizeLocale(body.locale),
       model: typeof body.model === "string" && body.model.trim() ? body.model.trim() : undefined,
-      onProgress: (event: DesignProgressEvent) => writeEvent("progress", event),
-      onMessage: (message) => writeEvent("message", { message })
+      onProgress: (event: DesignProgressEvent) => stream.write("progress", event),
+      onMessage: (message) => stream.write("message", { message })
     });
-    writeEvent("complete", { recommendations });
+    await stream.write("complete", { recommendations });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    writeEvent("error", { message: `Design recommendations failed: ${message}` });
+    await stream.write("error", { message: `Design recommendations failed: ${message}` });
   } finally {
-    res.end();
+    stream.close();
   }
 }));
 
@@ -730,19 +695,7 @@ router.post("/design/runtime/stream", asyncHandler(async (req: Request, res: Res
     return;
   }
 
-  res.writeHead(200, {
-    "Content-Type": "text/event-stream",
-    "Cache-Control": "no-cache",
-    Connection: "keep-alive"
-  });
-
-  let seq = 0;
-  const writeEvent = (type: string, data: object) => {
-    seq += 1;
-    res.write(`id: ${seq}\n`);
-    res.write(`event: ${type}\n`);
-    res.write(`data: ${JSON.stringify(data)}\n\n`);
-  };
+  const stream = createSseStream(res);
 
   try {
     const design = await buildDesignRuntime({
@@ -754,8 +707,8 @@ router.post("/design/runtime/stream", asyncHandler(async (req: Request, res: Res
       activeDesignTemplateId: body.activeDesignTemplateId,
       activeDesignSystemId: body.activeDesignSystemId,
       model: typeof body.model === "string" && body.model.trim() ? body.model.trim() : undefined,
-      onProgress: (event: DesignProgressEvent) => writeEvent("progress", event),
-      onMessage: (message) => writeEvent("message", { message })
+      onProgress: (event: DesignProgressEvent) => stream.write("progress", event),
+      onMessage: (message) => stream.write("message", { message })
     });
     for (const file of design.files) {
       if (!file.path.startsWith("DESIGN/")) {
@@ -785,12 +738,12 @@ router.post("/design/runtime/stream", asyncHandler(async (req: Request, res: Res
       designId: design.id,
       title: design.title
     });
-    writeEvent("complete", { design });
+    await stream.write("complete", { design });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    writeEvent("error", { message: `Design runtime failed: ${message}` });
+    await stream.write("error", { message: `Design runtime failed: ${message}` });
   } finally {
-    res.end();
+    stream.close();
   }
 }));
 
@@ -863,19 +816,7 @@ router.post("/update/decisions/stream", asyncHandler(async (req: Request, res: R
     return;
   }
 
-  res.writeHead(200, {
-    "Content-Type": "text/event-stream",
-    "Cache-Control": "no-cache",
-    Connection: "keep-alive"
-  });
-
-  let seq = 0;
-  const writeEvent = (type: string, data: object) => {
-    seq += 1;
-    res.write(`id: ${seq}\n`);
-    res.write(`event: ${type}\n`);
-    res.write(`data: ${JSON.stringify(data)}\n\n`);
-  };
+  const stream = createSseStream(res);
 
   try {
     const appConfig = await loadAppConfig();
@@ -886,20 +827,20 @@ router.post("/update/decisions/stream", asyncHandler(async (req: Request, res: R
       reasoning: appConfig.defaults.planReasoning,
       model: typeof body.model === "string" && body.model.trim() ? body.model.trim() : undefined,
       additionalDirectories: [appConfig.resourceRoots.skills, appConfig.resourceRoots.designTemplates, appConfig.resourceRoots.designSystems],
-      onProgress: (event: UpdateProgressEvent) => writeEvent("progress", event),
-      onMessage: (message) => writeEvent("message", { message })
+      onProgress: (event: UpdateProgressEvent) => stream.write("progress", event),
+      onMessage: (message) => stream.write("message", { message })
     });
     await appendAppEvent("update_decisions_created", {
       projectRoot,
       title: decisions.title,
       decisionsCount: decisions.decisions.length
     });
-    writeEvent("complete", { decisions });
+    await stream.write("complete", { decisions });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    writeEvent("error", { message: `Codex could not produce update decisions: ${message}` });
+    await stream.write("error", { message: `Codex could not produce update decisions: ${message}` });
   } finally {
-    res.end();
+    stream.close();
   }
 }));
 
@@ -919,24 +860,20 @@ router.get("/jobs/:jobId/stream", asyncHandler(async (req: Request, res: Respons
     return;
   }
 
-  res.writeHead(200, {
-    "Content-Type": "text/event-stream",
-    "Cache-Control": "no-cache",
-    Connection: "keep-alive"
-  });
+  const stream = createSseStream(res);
 
   const writeEvent = (event: { type: string; data: Record<string, unknown>; seq: number }) => {
-    res.write(`id: ${event.seq}\n`);
-    res.write(`event: ${event.type}\n`);
-    res.write(`data: ${JSON.stringify(event.data)}\n\n`);
+    void stream.write(event.type, event.data, event.seq);
   };
 
-  history.forEach(writeEvent);
+  for (const event of history) {
+    await stream.write(event.type, event.data, event.seq);
+  }
   const unsubscribe = jobManager.subscribe(jobId, writeEvent);
 
   req.on("close", () => {
     unsubscribe();
-    res.end();
+    stream.close();
   });
 }));
 

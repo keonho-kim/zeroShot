@@ -307,8 +307,8 @@ export async function buildArchitectDecisions(params: {
   model?: string;
   resourceContext?: string;
   additionalDirectories?: string[];
-  onProgress?: (event: ArchitectProgressEvent) => void;
-  onMessage?: (message: string) => void;
+  onProgress?: (event: ArchitectProgressEvent) => void | Promise<void>;
+  onMessage?: (message: string) => void | Promise<void>;
 }): Promise<ArchitectDecisionResponse> {
   const codex = new Codex();
   const thread = codex.startThread({
@@ -330,13 +330,13 @@ export async function buildArchitectDecisions(params: {
   for await (const event of events) {
     const progress = describeProgress(event, params.locale);
     if (progress) {
-      params.onProgress?.(progress);
+      await params.onProgress?.(progress);
     }
     if ((event.type === "item.updated" || event.type === "item.completed") && event.item.type === "agent_message") {
       const nextMessage = extractArchitectChatMessage(event.item.text).trim();
       if (nextMessage && nextMessage !== lastMessage) {
         lastMessage = nextMessage;
-        params.onMessage?.(nextMessage);
+        await params.onMessage?.(nextMessage);
       }
     }
     if (event.type === "item.completed" && event.item.type === "agent_message") {
@@ -368,8 +368,8 @@ export async function buildArchitectProductHtml(params: {
   model?: string;
   resourceContext?: string;
   additionalDirectories?: string[];
-  onProgress?: (event: ArchitectProgressEvent) => void;
-  onMessage?: (message: string) => void;
+  onProgress?: (event: ArchitectProgressEvent) => void | Promise<void>;
+  onMessage?: (message: string) => void | Promise<void>;
 }): Promise<string> {
   const codex = new Codex();
   const thread = codex.startThread({
@@ -393,13 +393,13 @@ export async function buildArchitectProductHtml(params: {
   for await (const event of events) {
     const progress = describeProductHtmlProgress(event, params.locale);
     if (progress) {
-      params.onProgress?.(progress);
+      await params.onProgress?.(progress);
     }
     if ((event.type === "item.updated" || event.type === "item.completed") && event.item.type === "agent_message") {
       const nextMessage = extractArchitectChatMessage(event.item.text).trim();
       if (nextMessage && nextMessage !== lastMessage) {
         lastMessage = nextMessage;
-        params.onMessage?.(nextMessage);
+        await params.onMessage?.(nextMessage);
       }
     }
     if (event.type === "item.completed" && event.item.type === "agent_message") {

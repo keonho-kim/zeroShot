@@ -14,7 +14,12 @@ export default defineConfig({
     port: 32576,
     strictPort: true,
     proxy: {
-      "/api": "http://localhost:32575"
+      "/api": {
+        target: "http://localhost:32575",
+        changeOrigin: false,
+        timeout: 0,
+        proxyTimeout: 0
+      }
     }
   },
   build: {

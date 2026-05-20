@@ -183,8 +183,6 @@ export function DesignPage() {
     },
     onSuccess: (nextRecommendations) => {
       setRecommendations(nextRecommendations);
-      setRecommendationTimelineItems([]);
-      setRecommendationMessages([]);
       setRecommendationError("");
       setActiveDesignSystemId((current) => nextRecommendations.designSystems.some((option) => option.resourceId === current) ? current : "");
       setActiveDesignTemplateId((current) => nextRecommendations.designTemplates.some((option) => option.resourceId === current) ? current : "");
@@ -252,7 +250,6 @@ export function DesignPage() {
           isStreaming: false
         }];
       });
-      setTimelineItems([]);
       setMakeoverComplete(true);
       setMakeoverStep("workbench");
       setArtifactMode("preview");

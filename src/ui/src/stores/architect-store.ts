@@ -159,9 +159,6 @@ export const useArchitectFlowStore = create<ArchitectFlowState>((set) => ({
       stepIndex: state.omakaseMode ? decisionSet.decisions.length : state.stepIndex,
       answers,
       continuePromptOpen: state.omakaseMode,
-      timelineItems: [],
-      streamMessages: [],
-      expandedTimelineId: null,
       architectPending: false
     };
   }),

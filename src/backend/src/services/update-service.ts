@@ -184,8 +184,8 @@ export async function buildUpdateDecisions(params: {
   reasoning: string;
   model?: string;
   additionalDirectories?: string[];
-  onProgress?: (event: UpdateProgressEvent) => void;
-  onMessage?: (message: string) => void;
+  onProgress?: (event: UpdateProgressEvent) => void | Promise<void>;
+  onMessage?: (message: string) => void | Promise<void>;
 }): Promise<UpdateDecisionResponse> {
   const codex = new Codex();
   const thread = codex.startThread({
@@ -207,13 +207,13 @@ export async function buildUpdateDecisions(params: {
   for await (const event of events) {
     const progress = describeProgress(event, params.locale);
     if (progress) {
-      params.onProgress?.(progress);
+      await params.onProgress?.(progress);
     }
     if ((event.type === "item.updated" || event.type === "item.completed") && event.item.type === "agent_message") {
       const nextMessage = extractArchitectChatMessage(event.item.text).trim();
       if (nextMessage && nextMessage !== lastMessage) {
         lastMessage = nextMessage;
-        params.onMessage?.(nextMessage);
+        await params.onMessage?.(nextMessage);
       }
     }
     if (event.type === "item.completed" && event.item.type === "agent_message") {

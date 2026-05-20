@@ -401,8 +401,8 @@ export async function recommendDesignResources(params: {
   projectRoot: string;
   locale: string;
   model?: string;
-  onProgress?: (event: DesignProgressEvent) => void;
-  onMessage?: (message: string) => void;
+  onProgress?: (event: DesignProgressEvent) => void | Promise<void>;
+  onMessage?: (message: string) => void | Promise<void>;
 }): Promise<DesignRecommendationResponse> {
   const appConfig = await loadAppConfig();
   const productHtml = await readProductHtml(params.projectRoot).catch(() => "");
@@ -434,13 +434,13 @@ export async function recommendDesignResources(params: {
   for await (const event of events) {
     const progress = describeRecommendationProgress(event, params.locale);
     if (progress) {
-      params.onProgress?.(progress);
+      await params.onProgress?.(progress);
     }
     if ((event.type === "item.updated" || event.type === "item.completed") && event.item.type === "agent_message") {
       const nextMessage = extractDesignChatMessage(event.item.text).trim();
       if (nextMessage && nextMessage !== lastMessage) {
         lastMessage = nextMessage;
-        params.onMessage?.(nextMessage);
+        await params.onMessage?.(nextMessage);
       }
     }
     if (event.type === "item.completed" && event.item.type === "agent_message") {
@@ -460,7 +460,7 @@ export async function recommendDesignResources(params: {
 
   const recommendations = validateDesignRecommendations(JSON.parse(finalResponse), catalog);
   if (recommendations.chatMessage.trim() && recommendations.chatMessage.trim() !== lastMessage) {
-    params.onMessage?.(recommendations.chatMessage.trim());
+    await params.onMessage?.(recommendations.chatMessage.trim());
   }
   return recommendations;
 }
@@ -509,8 +509,8 @@ export async function buildDesignRuntime(params: {
   activeDesignTemplateId?: string;
   activeDesignSystemId?: string;
   model?: string;
-  onProgress?: (event: DesignProgressEvent) => void;
-  onMessage?: (message: string) => void;
+  onProgress?: (event: DesignProgressEvent) => void | Promise<void>;
+  onMessage?: (message: string) => void | Promise<void>;
 }): Promise<DesignRuntimeResponse> {
   const appConfig = await loadAppConfig();
   const productHtml = await readProductHtml(params.projectRoot).catch(() => "");
@@ -549,13 +549,13 @@ export async function buildDesignRuntime(params: {
   for await (const event of events) {
     const progress = describeProgress(event, params.locale);
     if (progress) {
-      params.onProgress?.(progress);
+      await params.onProgress?.(progress);
     }
     if ((event.type === "item.updated" || event.type === "item.completed") && event.item.type === "agent_message") {
       const nextMessage = extractDesignChatMessage(event.item.text).trim();
       if (nextMessage && nextMessage !== lastMessage) {
         lastMessage = nextMessage;
-        params.onMessage?.(nextMessage);
+        await params.onMessage?.(nextMessage);
       }
     }
     if (event.type === "item.completed" && event.item.type === "agent_message") {
@@ -586,7 +586,7 @@ export async function buildDesignRuntime(params: {
     ...parsed
   };
   if (response.chatMessage.trim() && response.chatMessage.trim() !== lastMessage) {
-    params.onMessage?.(response.chatMessage.trim());
+    await params.onMessage?.(response.chatMessage.trim());
   }
   return {
     ...response,
