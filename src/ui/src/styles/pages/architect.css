@@ -144,6 +144,14 @@
   line-height: 0.95;
 }
 
+.agent-loading-stage + .codex-loading-log {
+  margin-top: clamp(2rem, 4vw, 3.5rem);
+}
+
+.agent-loading-stage + div + .codex-loading-log {
+  margin-top: clamp(1rem, 2vw, 2rem);
+}
+
 .agent-dot-wave {
   display: inline-grid;
   grid-template-columns: repeat(3, 0.7rem);

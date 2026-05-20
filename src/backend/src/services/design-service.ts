@@ -6,6 +6,7 @@ import { loadAppConfig } from "@backend/config/app-config.js";
 import { buildDesignPrompt, modeDisplayName } from "@backend/llm/makeover/prompt.js";
 import { buildRecommendationPrompt } from "@backend/llm/makeover/recommendation-prompt.js";
 import { textByLocale } from "@backend/i18n/locale.js";
+import { describeCodexProgress } from "@backend/services/codex-progress-service.js";
 import { architectProductPath, readProductHtml } from "@backend/services/file-service.js";
 import { buildResourcePromptContext, listResourceCatalog } from "@backend/services/resource-service.js";
 import type {
@@ -120,6 +121,7 @@ const designRuntimeResponseSchema = z.object({
 const designRecommendationSchema = {
   type: "object",
   properties: {
+    chatMessage: { type: "string" },
     title: { type: "string" },
     summary: { type: "string" },
     designSystems: {
@@ -157,11 +159,12 @@ const designRecommendationSchema = {
       }
     }
   },
-  required: ["title", "summary", "designSystems", "designTemplates"],
+  required: ["chatMessage", "title", "summary", "designSystems", "designTemplates"],
   additionalProperties: false
 };
 
 const designRecommendationResponseSchema = z.object({
+  chatMessage: z.string().trim().min(1),
   title: z.string().trim().min(1),
   summary: z.string().trim().min(1),
   designSystems: z.array(z.object({
@@ -286,24 +289,12 @@ function describeProgress(event: ThreadEvent, locale: string): DesignProgressEve
     };
   }
 
-  const item = event.item;
-  if (item.type === "reasoning") {
-    return {
-      id: "reasoning",
-      title: progressText(locale, "디자인 방향 구조화", "Structuring design direction"),
-      detail: progressText(locale, "생성, 와이어 프레임 편집, 프레젠테이션 편집에 맞는 작업 단계를 나누고 있습니다.", "Splitting work into generation, wireframe editing, and presentation editing steps."),
-      status: event.type === "item.completed" ? "completed" : "running"
-    };
-  }
-  if (item.type === "agent_message") {
-    return {
-      id: "draft",
-      title: progressText(locale, "디자인 브리프 작성", "Writing design brief"),
-      detail: progressText(locale, "실제 편집자가 따라갈 수 있는 디자인 산출물 계약을 작성하고 있습니다.", "Writing an actionable design artifact contract."),
-      status: event.type === "item.completed" ? "completed" : "running"
-    };
-  }
-  return null;
+  return describeCodexProgress(event, locale, {
+    reasoningTitle: progressText(locale, "캔버스 변경 범위 검토", "Reviewing canvas change scope"),
+    reasoningDetail: progressText(locale, "PRODUCT, 선택 리소스, 사용자 요청을 기준으로 수정할 화면 구조를 나누고 있습니다.", "Separating the target screen structure from PRODUCT, selected resources, and the user request."),
+    agentTitle: progressText(locale, "INTERACTIVE CANVAS 응답 작성", "Writing INTERACTIVE CANVAS response"),
+    agentDetail: progressText(locale, "DESIGN/index.html과 사용자에게 보여줄 상태 메시지를 JSON 응답으로 작성하고 있습니다.", "Writing DESIGN/index.html and the user-facing status message into the JSON response.")
+  });
 }
 
 function describeRecommendationProgress(event: ThreadEvent, locale: string): DesignProgressEvent | null {
@@ -348,24 +339,12 @@ function describeRecommendationProgress(event: ThreadEvent, locale: string): Des
     };
   }
 
-  const item = event.item;
-  if (item.type === "reasoning") {
-    return {
-      id: "reasoning",
-      title: progressText(locale, "제품과 자산 매칭 중", "Matching product to resources"),
-      detail: progressText(locale, "제품 성격에 맞는 디자인 시스템과 템플릿 후보를 추리고 있습니다.", "Finding design systems and templates that fit the product."),
-      status: event.type === "item.completed" ? "completed" : "running"
-    };
-  }
-  if (item.type === "agent_message") {
-    return {
-      id: "draft",
-      title: progressText(locale, "추천 선택지 작성 중", "Writing recommendation options"),
-      detail: progressText(locale, "이름 대신 사용자가 이해할 수 있는 느낌과 이유로 선택지를 작성하고 있습니다.", "Writing options as readable direction and rationale instead of raw resource names."),
-      status: event.type === "item.completed" ? "completed" : "running"
-    };
-  }
-  return null;
+  return describeCodexProgress(event, locale, {
+    reasoningTitle: progressText(locale, "제품과 디자인 자산 매칭", "Matching product to design assets"),
+    reasoningDetail: progressText(locale, "PRODUCT와 카탈로그를 비교해 어울리는 디자인 시스템과 템플릿 후보를 좁히고 있습니다.", "Comparing PRODUCT with the catalog to narrow design systems and templates."),
+    agentTitle: progressText(locale, "추천 응답 작성", "Writing recommendation response"),
+    agentDetail: progressText(locale, "추천 이유, 디자인 기조, 화면 구성을 사용자가 고를 수 있는 JSON 응답으로 작성하고 있습니다.", "Writing rationale, design direction, and screen structure options into the JSON response.")
+  });
 }
 
 function assertResourceIds(kind: string, selectedIds: string[], resources: ResourceManifest[]): void {
@@ -423,6 +402,7 @@ export async function recommendDesignResources(params: {
   locale: string;
   model?: string;
   onProgress?: (event: DesignProgressEvent) => void;
+  onMessage?: (message: string) => void;
 }): Promise<DesignRecommendationResponse> {
   const appConfig = await loadAppConfig();
   const productHtml = await readProductHtml(params.projectRoot).catch(() => "");
@@ -449,11 +429,19 @@ export async function recommendDesignResources(params: {
     outputSchema: designRecommendationSchema
   });
   let finalResponse = "";
+  let lastMessage = "";
 
   for await (const event of events) {
     const progress = describeRecommendationProgress(event, params.locale);
     if (progress) {
       params.onProgress?.(progress);
+    }
+    if ((event.type === "item.updated" || event.type === "item.completed") && event.item.type === "agent_message") {
+      const nextMessage = extractDesignChatMessage(event.item.text).trim();
+      if (nextMessage && nextMessage !== lastMessage) {
+        lastMessage = nextMessage;
+        params.onMessage?.(nextMessage);
+      }
     }
     if (event.type === "item.completed" && event.item.type === "agent_message") {
       finalResponse = event.item.text;
@@ -470,7 +458,11 @@ export async function recommendDesignResources(params: {
     throw new Error("Codex did not return design recommendations.");
   }
 
-  return validateDesignRecommendations(JSON.parse(finalResponse), catalog);
+  const recommendations = validateDesignRecommendations(JSON.parse(finalResponse), catalog);
+  if (recommendations.chatMessage.trim() && recommendations.chatMessage.trim() !== lastMessage) {
+    params.onMessage?.(recommendations.chatMessage.trim());
+  }
+  return recommendations;
 }
 
 async function readArchitectContext(projectRoot: string): Promise<string> {

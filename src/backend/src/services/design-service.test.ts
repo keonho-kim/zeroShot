@@ -66,6 +66,7 @@ describe("design service", () => {
       designTemplates: ["template-a", "template-b", "template-c", "template-d", "template-e"].map(resource)
     };
     const recommendations = validateDesignRecommendations({
+      chatMessage: "I am matching the product with the best design resources.",
       title: "Recommended direction",
       summary: "Pick a system and template.",
       designSystems: catalog.designSystems.map((item, index) => ({
@@ -86,6 +87,7 @@ describe("design service", () => {
 
     expect(recommendations.designSystems).toHaveLength(5);
     expect(recommendations.designTemplates).toHaveLength(5);
+    expect(recommendations.chatMessage).toBe("I am matching the product with the best design resources.");
   });
 
   test("rejects design recommendation resource ids outside the catalog", () => {
@@ -95,6 +97,7 @@ describe("design service", () => {
     };
 
     expect(() => validateDesignRecommendations({
+      chatMessage: "I am matching the product with the best design resources.",
       title: "Recommended direction",
       summary: "Pick a system and template.",
       designSystems: [

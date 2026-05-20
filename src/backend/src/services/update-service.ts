@@ -3,6 +3,7 @@ import { z } from "zod";
 import { extractArchitectChatMessage, type ArchitectDecisionResponse } from "@backend/services/architect-service.js";
 import { buildUpdatePrompt } from "@backend/llm/update/prompt.js";
 import { textByLocale } from "@backend/i18n/locale.js";
+import { describeCodexProgress } from "@backend/services/codex-progress-service.js";
 
 const updateDecisionSchema = {
   type: "object",
@@ -168,15 +169,12 @@ function describeProgress(event: ThreadEvent, locale: string): UpdateProgressEve
       status: "failed"
     };
   }
-  if ((event.type === "item.updated" || event.type === "item.completed") && event.item.type === "agent_message") {
-    return {
-      id: "options",
-      title: progressText(locale, "선택지 작성 중", "Writing update options"),
-      detail: progressText(locale, "바로 선택할 수 있는 업데이트 방향을 작성하고 있습니다.", "Writing concrete update directions."),
-      status: event.type === "item.completed" ? "completed" : "running"
-    };
-  }
-  return null;
+  return describeCodexProgress(event, locale, {
+    reasoningTitle: progressText(locale, "업데이트 범위 검토", "Reviewing update scope"),
+    reasoningDetail: progressText(locale, "요청이 바꾸는 기능, 검증 방법, PRODUCT 반영 여부를 분리하고 있습니다.", "Separating changed features, validation needs, and PRODUCT spec impact."),
+    agentTitle: progressText(locale, "업데이트 선택지 응답 작성", "Writing update choices"),
+    agentDetail: progressText(locale, "사용자가 고를 수 있는 업데이트 방향과 후속 실행 기준을 JSON 응답으로 작성하고 있습니다.", "Writing selectable update directions and execution criteria into the JSON response.")
+  });
 }
 
 export async function buildUpdateDecisions(params: {

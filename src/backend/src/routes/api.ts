@@ -693,7 +693,8 @@ router.post("/design/recommendations/stream", asyncHandler(async (req: Request, 
       projectRoot,
       locale: normalizeLocale(body.locale),
       model: typeof body.model === "string" && body.model.trim() ? body.model.trim() : undefined,
-      onProgress: (event: DesignProgressEvent) => writeEvent("progress", event)
+      onProgress: (event: DesignProgressEvent) => writeEvent("progress", event),
+      onMessage: (message) => writeEvent("message", { message })
     });
     writeEvent("complete", { recommendations });
   } catch (error) {

@@ -412,7 +412,8 @@ export async function requestDesignRecommendationsStream(
     projectRoot: string;
     locale: string;
   },
-  onProgress: (event: DesignProgressEvent) => void
+  onProgress: (event: DesignProgressEvent) => void,
+  onMessage?: (message: string) => void
 ) {
   const response = await fetch("/api/design/recommendations/stream", {
     method: "POST",
@@ -445,6 +446,12 @@ export async function requestDesignRecommendationsStream(
       }
       if (parsed.event === "progress") {
         onProgress(parsed.data as DesignProgressEvent);
+      }
+      if (parsed.event === "message") {
+        const data = parsed.data as { message?: unknown };
+        if (typeof data.message === "string") {
+          onMessage?.(data.message);
+        }
       }
       if (parsed.event === "complete") {
         return (parsed.data as { recommendations: DesignRecommendationResponse }).recommendations;

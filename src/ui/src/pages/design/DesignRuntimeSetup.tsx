@@ -112,6 +112,7 @@ export function DesignRuntimeSetup(props: {
   resources: { skills: ResourceManifest[]; designTemplates: ResourceManifest[]; designSystems: ResourceManifest[] };
   recommendations: DesignRecommendationResponse | null;
   recommendationTimelineItems: DesignTimelineItem[];
+  recommendationMessages: string[];
   recommendationError: string;
   isLoadingRecommendations: boolean;
   designResult: DesignRuntimeResponse | null;
@@ -198,7 +199,7 @@ export function DesignRuntimeSetup(props: {
           <AgentLoadingStage label={t("makeover.candidatesLoading")} />
           <CodexLoadingLog
             progressItems={props.recommendationTimelineItems}
-            messages={[]}
+            messages={props.recommendationMessages}
             emptyMessage={t("makeover.recommendationLoadingMessage")}
           />
         </Card>

@@ -4,6 +4,7 @@ import { buildArchitectPrompt } from "@backend/llm/architect/prompt.js";
 import { buildArchitectProductHtmlPrompt } from "@backend/llm/architect/product-html-prompt.js";
 import { ensureDevelopmentLanguageDecision } from "@backend/llm/architect/development-stack-decision.js";
 import { textByLocale } from "@backend/i18n/locale.js";
+import { describeCodexProgress } from "@backend/services/codex-progress-service.js";
 
 const architectDecisionSchema = {
   type: "object",
@@ -236,34 +237,12 @@ function describeProgress(event: ThreadEvent, locale: string): ArchitectProgress
     };
   }
 
-  const item = event.item;
-  if (item.type === "reasoning") {
-    return {
-      id: "reasoning",
-      title: progressText(locale, "제품 구조 정리 중", "Structuring product decisions"),
-      detail: progressText(locale, "설명에서 선택이 필요한 제품 축을 추려내고 있습니다.", "Finding the product choices that need a user decision."),
-      status: event.type === "item.completed" ? "completed" : "running"
-    };
-  }
-  if (item.type === "agent_message") {
-    return {
-      id: "draft",
-      title: progressText(locale, "선택지 작성 중", "Writing product options"),
-      detail: progressText(locale, "바로 고를 수 있는 제품 선택지와 구현 요구사항을 작성하고 있습니다.", "Writing concrete options and implementation-ready requirements."),
-      status: event.type === "item.completed" ? "completed" : "running"
-    };
-  }
-  if (item.type === "command_execution") {
-    return null;
-  }
-  if (item.type === "mcp_tool_call") {
-    return null;
-  }
-  if (item.type === "web_search") {
-    return null;
-  }
-
-  return null;
+  return describeCodexProgress(event, locale, {
+    reasoningTitle: progressText(locale, "제품 선택 기준 검토", "Reviewing product decision criteria"),
+    reasoningDetail: progressText(locale, "입력 설명에서 사용자를 나누고 선택이 필요한 제품 축을 추리고 있습니다.", "Separating users from the brief and finding product axes that need a decision."),
+    agentTitle: progressText(locale, "선택지 응답 작성", "Writing product options"),
+    agentDetail: progressText(locale, "사용자가 바로 고를 수 있는 선택지와 구현 요구사항을 JSON 응답으로 작성하고 있습니다.", "Writing selectable options and implementation requirements into the JSON response.")
+  });
 }
 
 function describeProductHtmlProgress(event: ThreadEvent, locale: string): ArchitectProgressEvent | null {
@@ -312,25 +291,12 @@ function describeProductHtmlProgress(event: ThreadEvent, locale: string): Archit
     };
   }
 
-  const item = event.item;
-  if (item.type === "reasoning") {
-    return {
-      id: "product-reasoning",
-      title: progressText(locale, "제품 명세 구조화 중", "Structuring the product spec"),
-      detail: progressText(locale, "선택한 답변을 기능 명세와 수용 기준으로 나누고 있습니다.", "Turning selected answers into feature specs and acceptance criteria."),
-      status: event.type === "item.completed" ? "completed" : "running"
-    };
-  }
-  if (item.type === "agent_message") {
-    return {
-      id: "product-draft",
-      title: progressText(locale, "PRODUCT.html 산출물 작성 중", "Drafting PRODUCT.html"),
-      detail: progressText(locale, "이후 MAKEOVER와 BUILD가 참고할 제품 블루프린트 화면을 작성하고 있습니다.", "Writing the product blueprint page that Makeover and Build will use next."),
-      status: event.type === "item.completed" ? "completed" : "running"
-    };
-  }
-
-  return null;
+  return describeCodexProgress(event, locale, {
+    reasoningTitle: progressText(locale, "제품 문서 구조 설계", "Structuring the product document"),
+    reasoningDetail: progressText(locale, "선택한 답변을 기능 명세, 화면 흐름, 수용 기준 섹션으로 나누고 있습니다.", "Turning selected answers into feature specs, screen flows, and acceptance criteria."),
+    agentTitle: progressText(locale, "PRODUCT.html 응답 작성", "Writing PRODUCT.html response"),
+    agentDetail: progressText(locale, "MAKEOVER와 BUILD가 참고할 제품 블루프린트 HTML과 상태 메시지를 작성하고 있습니다.", "Writing the product blueprint HTML and status message for Makeover and Build.")
+  });
 }
 
 export async function buildArchitectDecisions(params: {

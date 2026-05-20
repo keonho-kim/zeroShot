@@ -224,6 +224,7 @@ export interface DesignRecommendationOption {
 }
 
 export interface DesignRecommendationResponse {
+  chatMessage: string;
   title: string;
   summary: string;
   designSystems: DesignRecommendationOption[];

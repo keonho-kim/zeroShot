@@ -56,6 +56,7 @@ export function DesignPage() {
   const [activeDesignSystemSelectionMode, setActiveDesignSystemSelectionMode] = useState<DesignResourceSelectionMode>("manual");
   const [recommendations, setRecommendations] = useState<DesignRecommendationResponse | null>(null);
   const [recommendationTimelineItems, setRecommendationTimelineItems] = useState<DesignTimelineItem[]>([]);
+  const [recommendationMessages, setRecommendationMessages] = useState<string[]>([]);
   const [recommendationError, setRecommendationError] = useState("");
   const [timelineItems, setTimelineItems] = useState<DesignTimelineItem[]>([]);
   const [runtimeMessages, setRuntimeMessages] = useState<string[]>([]);
@@ -136,6 +137,7 @@ export function DesignPage() {
     setMakeoverComplete(false);
     setRecommendations(null);
     setRecommendationTimelineItems([]);
+    setRecommendationMessages([]);
     setRuntimeMessages([]);
     setRecommendationError("");
     setActiveDesignTemplateSelectionMode("manual");
@@ -170,16 +172,20 @@ export function DesignPage() {
     mutationFn: async () => {
       setRecommendationError("");
       setRecommendationTimelineItems([]);
+      setRecommendationMessages([]);
       return requestDesignRecommendationsStream({
         projectRoot,
         locale
       }, (event) => {
         setRecommendationTimelineItems((items) => upsertTimelineItem(items, event));
+      }, (message) => {
+        setRecommendationMessages((items) => items.at(-1) === message ? items : [...items.slice(-24), message]);
       });
     },
     onSuccess: (nextRecommendations) => {
       setRecommendations(nextRecommendations);
       setRecommendationTimelineItems([]);
+      setRecommendationMessages([]);
       setRecommendationError("");
       setActiveDesignSystemId((current) => nextRecommendations.designSystems.some((option) => option.resourceId === current) ? current : "");
       setActiveDesignTemplateId((current) => nextRecommendations.designTemplates.some((option) => option.resourceId === current) ? current : "");
@@ -493,6 +499,7 @@ export function DesignPage() {
             resources={resources}
             recommendations={recommendations}
             recommendationTimelineItems={recommendationTimelineItems}
+            recommendationMessages={recommendationMessages}
             recommendationError={recommendationError}
             isLoadingRecommendations={recommendationMutation.isPending}
             designResult={designResult}
