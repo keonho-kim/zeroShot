@@ -41,7 +41,7 @@ function ActionCard({
       disabled={disabled}
       onClick={onClick}
       className={cn(
-        "action-card min-h-[188px] text-left",
+        "action-card text-left",
         accent === "cyan" ? "action-card-cyan" : accent === "amber" ? "action-card-amber" : "action-card-mint"
       )}
     >

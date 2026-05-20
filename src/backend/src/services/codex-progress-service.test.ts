@@ -78,4 +78,23 @@ describe("codex progress service", () => {
       status: "running"
     });
   });
+
+  test("describes todo list updates with the next visible task", () => {
+    expect(describeCodexProgress({
+      type: "item.updated",
+      item: {
+        type: "todo_list",
+        id: "todos-1",
+        items: [
+          { text: "Read PRODUCT.html", completed: true },
+          { text: "Compare the requested UI change with DESIGN/index.html", completed: false }
+        ]
+      }
+    } as ThreadEvent, "en", copy)).toMatchObject({
+      id: "todo-todos-1",
+      title: "Task list",
+      detail: "Compare the requested UI change with DESIGN/index.html",
+      status: "running"
+    });
+  });
 });

@@ -71,6 +71,22 @@ function fileChangeDetail(locale: string, item: Record<string, unknown>): string
   return truncate(summary || progressText(locale, "파일 변경 내역을 확인하고 있습니다.", "Inspecting file changes."));
 }
 
+function todoListDetail(locale: string, item: Record<string, unknown>): string {
+  const items = Array.isArray(item.items) ? item.items : [];
+  const completed = items.filter((todo) => Boolean((todo as Record<string, unknown> | null)?.completed)).length;
+  const next = items.find((todo) => todo && typeof todo === "object" && !Boolean((todo as Record<string, unknown>).completed));
+  if (next && typeof next === "object") {
+    const text = readString((next as Record<string, unknown>).text);
+    if (text) {
+      return truncate(text);
+    }
+  }
+  if (items.length) {
+    return progressText(locale, `${completed}/${items.length}개 작업을 정리했습니다.`, `${completed}/${items.length} tasks are organized.`);
+  }
+  return progressText(locale, "작업 목록을 정리하고 있습니다.", "Organizing the task list.");
+}
+
 export function describeCodexProgress(event: ThreadEvent, locale: string, copy: CodexProgressCopy): CodexProgressEvent | null {
   if (!("item" in event)) {
     return null;
@@ -134,6 +150,15 @@ export function describeCodexProgress(event: ThreadEvent, locale: string, copy: 
       id: `file-${itemKey(item, "changes")}`,
       title: progressText(locale, "파일 변경", "File changes"),
       detail: fileChangeDetail(locale, item),
+      status
+    };
+  }
+
+  if (type === "todo_list") {
+    return {
+      id: `todo-${itemKey(item, "items")}`,
+      title: progressText(locale, "작업 목록", "Task list"),
+      detail: todoListDetail(locale, item),
       status
     };
   }

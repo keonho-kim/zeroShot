@@ -1,12 +1,13 @@
 import { readdir, readFile, stat } from "node:fs/promises";
 import { join, relative } from "node:path";
-import { Codex, type ApprovalMode, type ModelReasoningEffort, type SandboxMode, type ThreadEvent } from "@openai/codex-sdk";
+import { Codex, type ApprovalMode, type ModelReasoningEffort, type SandboxMode, type ThreadEvent, type ThreadOptions } from "@openai/codex-sdk";
 import { z } from "zod";
 import { loadAppConfig } from "@backend/config/app-config.js";
 import { buildDesignPrompt, modeDisplayName } from "@backend/llm/makeover/prompt.js";
 import { buildRecommendationPrompt } from "@backend/llm/makeover/recommendation-prompt.js";
 import { textByLocale } from "@backend/i18n/locale.js";
 import { describeCodexProgress } from "@backend/services/codex-progress-service.js";
+import { compactVisibleContext, streamVisibleCodexPrelude, visiblePreludePrompt } from "@backend/services/codex-visible-stream-service.js";
 import { architectProductPath, readProductHtml } from "@backend/services/file-service.js";
 import { buildResourcePromptContext, listResourceCatalog } from "@backend/services/resource-service.js";
 import type {
@@ -410,7 +411,7 @@ export async function recommendDesignResources(params: {
   const catalog = await listResourceCatalog();
 
   const codex = new Codex();
-  const thread = codex.startThread({
+  const threadOptions = {
     workingDirectory: params.projectRoot,
     skipGitRepoCheck: true,
     approvalPolicy: "never" satisfies ApprovalMode,
@@ -418,8 +419,27 @@ export async function recommendDesignResources(params: {
     modelReasoningEffort: asReasoningEffort(appConfig.defaults.planReasoning),
     additionalDirectories: [appConfig.resourceRoots.skills, appConfig.resourceRoots.designTemplates, appConfig.resourceRoots.designSystems],
     ...(params.model ? { model: params.model } : {})
+  } satisfies ThreadOptions;
+
+  await streamVisibleCodexPrelude({
+    thread: codex.startThread({ ...threadOptions, modelReasoningEffort: "low" satisfies ModelReasoningEffort }),
+    prompt: visiblePreludePrompt({
+      locale: params.locale,
+      workflow: "MAKEOVER recommendation",
+      task: [
+        "Recommend design systems and templates for the current product blueprint.",
+        "",
+        `PRODUCT.html:\n${compactVisibleContext(productHtml)}`,
+        "",
+        `ARCHITECT context:\n${compactVisibleContext(architectContext)}`
+      ].join("\n")
+    }),
+    describeProgress: (event) => describeRecommendationProgress(event, params.locale),
+    onProgress: params.onProgress,
+    onMessage: params.onMessage
   });
 
+  const thread = codex.startThread(threadOptions);
   const { events } = await thread.runStreamed(buildRecommendationPrompt({
     locale: params.locale,
     productHtml,
@@ -523,7 +543,7 @@ export async function buildDesignRuntime(params: {
   });
 
   const codex = new Codex();
-  const thread = codex.startThread({
+  const threadOptions = {
     workingDirectory: params.projectRoot,
     skipGitRepoCheck: true,
     approvalPolicy: "never" satisfies ApprovalMode,
@@ -531,8 +551,30 @@ export async function buildDesignRuntime(params: {
     modelReasoningEffort: asReasoningEffort(appConfig.defaults.planReasoning),
     additionalDirectories: [appConfig.resourceRoots.skills, appConfig.resourceRoots.designTemplates, appConfig.resourceRoots.designSystems],
     ...(params.model ? { model: params.model } : {})
+  } satisfies ThreadOptions;
+
+  await streamVisibleCodexPrelude({
+    thread: codex.startThread({ ...threadOptions, modelReasoningEffort: "low" satisfies ModelReasoningEffort }),
+    prompt: visiblePreludePrompt({
+      locale: params.locale,
+      workflow: "MAKEOVER runtime",
+      task: [
+        "Generate or revise DESIGN/index.html as an interactive canvas.",
+        "",
+        `Mode: ${params.mode}`,
+        `Goal: ${params.goal}`,
+        "",
+        `PRODUCT.html:\n${compactVisibleContext(productHtml)}`,
+        "",
+        `Selected resources:\n${compactVisibleContext(resourceContext)}`
+      ].join("\n")
+    }),
+    describeProgress: (event) => describeProgress(event, params.locale),
+    onProgress: params.onProgress,
+    onMessage: params.onMessage
   });
 
+  const thread = codex.startThread(threadOptions);
   const { events } = await thread.runStreamed(buildDesignPrompt({
     mode: params.mode,
     goal: params.goal,

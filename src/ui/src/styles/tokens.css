@@ -46,7 +46,12 @@
   --arcade-yellow: #ffe14a;
   --arcade-pink: #ff4fa3;
   --arcade-green: #24d17e;
+  /* Text scale only changes the root font size. */
   --ui-scale: 0.8;
+  /* Component density changes spacing and component chrome without changing text size. */
+  --density-scale: 1;
+  /* Home is intentionally less dense on desktop so the landing screen has more breathing room. */
+  --home-density-scale: 1;
   --border-strong: 2px;
   --border-medium: 2px;
   --font-display: ui-monospace, "IBM Plex Mono", "JetBrains Mono", "SFMono-Regular", Menlo, monospace;
@@ -59,6 +64,8 @@
 
 @media (min-width: 1024px) {
   :root {
-    --ui-scale: 1.2;
+    --ui-scale: 1.05;
+    --density-scale: 1;
+    --home-density-scale: 0.85;
   }
 }

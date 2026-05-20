@@ -1,10 +1,11 @@
-import { Codex, type ApprovalMode, type ModelReasoningEffort, type SandboxMode, type ThreadEvent } from "@openai/codex-sdk";
+import { Codex, type ApprovalMode, type ModelReasoningEffort, type SandboxMode, type ThreadEvent, type ThreadOptions } from "@openai/codex-sdk";
 import { z } from "zod";
 import { buildArchitectPrompt } from "@backend/llm/architect/prompt.js";
 import { buildArchitectProductHtmlPrompt } from "@backend/llm/architect/product-html-prompt.js";
 import { ensureDevelopmentLanguageDecision } from "@backend/llm/architect/development-stack-decision.js";
 import { textByLocale } from "@backend/i18n/locale.js";
 import { describeCodexProgress } from "@backend/services/codex-progress-service.js";
+import { compactVisibleContext, streamVisibleCodexPrelude, visiblePreludePrompt } from "@backend/services/codex-visible-stream-service.js";
 
 const architectDecisionSchema = {
   type: "object",
@@ -311,7 +312,7 @@ export async function buildArchitectDecisions(params: {
   onMessage?: (message: string) => void | Promise<void>;
 }): Promise<ArchitectDecisionResponse> {
   const codex = new Codex();
-  const thread = codex.startThread({
+  const threadOptions = {
     workingDirectory: params.projectRoot,
     skipGitRepoCheck: true,
     approvalPolicy: "never" satisfies ApprovalMode,
@@ -319,8 +320,25 @@ export async function buildArchitectDecisions(params: {
     modelReasoningEffort: asReasoningEffort(params.reasoning),
     additionalDirectories: params.additionalDirectories ?? [],
     ...(params.model ? { model: params.model } : {})
+  } satisfies ThreadOptions;
+
+  await streamVisibleCodexPrelude({
+    thread: codex.startThread({ ...threadOptions, modelReasoningEffort: "low" satisfies ModelReasoningEffort }),
+    prompt: visiblePreludePrompt({
+      locale: params.locale,
+      workflow: "ARCHITECT",
+      task: [
+        "Create product direction questions from this brief.",
+        "",
+        compactVisibleContext(params.goal)
+      ].join("\n")
+    }),
+    describeProgress: (event) => describeProgress(event, params.locale),
+    onProgress: params.onProgress,
+    onMessage: params.onMessage
   });
 
+  const thread = codex.startThread(threadOptions);
   const { events } = await thread.runStreamed(buildArchitectPrompt(params.goal, params.locale, params.resourceContext ?? ""), {
     outputSchema: architectDecisionSchema
   });
@@ -372,7 +390,7 @@ export async function buildArchitectProductHtml(params: {
   onMessage?: (message: string) => void | Promise<void>;
 }): Promise<string> {
   const codex = new Codex();
-  const thread = codex.startThread({
+  const threadOptions = {
     workingDirectory: params.projectRoot,
     skipGitRepoCheck: true,
     approvalPolicy: "never" satisfies ApprovalMode,
@@ -380,10 +398,29 @@ export async function buildArchitectProductHtml(params: {
     modelReasoningEffort: asReasoningEffort(params.reasoning),
     additionalDirectories: params.additionalDirectories ?? [],
     ...(params.model ? { model: params.model } : {})
-  });
+  } satisfies ThreadOptions;
 
   const prompt = buildArchitectProductHtmlPrompt(params);
 
+  await streamVisibleCodexPrelude({
+    thread: codex.startThread({ ...threadOptions, modelReasoningEffort: "low" satisfies ModelReasoningEffort }),
+    prompt: visiblePreludePrompt({
+      locale: params.locale,
+      workflow: "ARCHITECT PRODUCT.html",
+      task: [
+        "Write the product blueprint HTML from the user's brief and selected decisions.",
+        "",
+        `User brief:\n${compactVisibleContext(params.userBrief)}`,
+        "",
+        `Selected answers:\n${compactVisibleContext(JSON.stringify(params.answers, null, 2))}`
+      ].join("\n")
+    }),
+    describeProgress: (event) => describeProductHtmlProgress(event, params.locale),
+    onProgress: params.onProgress,
+    onMessage: params.onMessage
+  });
+
+  const thread = codex.startThread(threadOptions);
   const { events } = await thread.runStreamed(prompt, {
     outputSchema: architectProductHtmlSchema
   });

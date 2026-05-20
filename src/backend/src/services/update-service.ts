@@ -1,9 +1,10 @@
-import { Codex, type ApprovalMode, type ModelReasoningEffort, type SandboxMode, type ThreadEvent } from "@openai/codex-sdk";
+import { Codex, type ApprovalMode, type ModelReasoningEffort, type SandboxMode, type ThreadEvent, type ThreadOptions } from "@openai/codex-sdk";
 import { z } from "zod";
 import { extractArchitectChatMessage, type ArchitectDecisionResponse } from "@backend/services/architect-service.js";
 import { buildUpdatePrompt } from "@backend/llm/update/prompt.js";
 import { textByLocale } from "@backend/i18n/locale.js";
 import { describeCodexProgress } from "@backend/services/codex-progress-service.js";
+import { streamVisibleCodexPrelude, visiblePreludePrompt } from "@backend/services/codex-visible-stream-service.js";
 
 const updateDecisionSchema = {
   type: "object",
@@ -188,7 +189,7 @@ export async function buildUpdateDecisions(params: {
   onMessage?: (message: string) => void | Promise<void>;
 }): Promise<UpdateDecisionResponse> {
   const codex = new Codex();
-  const thread = codex.startThread({
+  const threadOptions = {
     workingDirectory: params.projectRoot,
     skipGitRepoCheck: true,
     approvalPolicy: "never" satisfies ApprovalMode,
@@ -196,8 +197,25 @@ export async function buildUpdateDecisions(params: {
     modelReasoningEffort: asReasoningEffort(params.reasoning),
     additionalDirectories: params.additionalDirectories ?? [],
     ...(params.model ? { model: params.model } : {})
+  } satisfies ThreadOptions;
+
+  await streamVisibleCodexPrelude({
+    thread: codex.startThread({ ...threadOptions, modelReasoningEffort: "low" satisfies ModelReasoningEffort }),
+    prompt: visiblePreludePrompt({
+      locale: params.locale,
+      workflow: "UPDATE",
+      task: [
+        "Create follow-up questions for this update request.",
+        "",
+        params.updateRequest
+      ].join("\n")
+    }),
+    describeProgress: (event) => describeProgress(event, params.locale),
+    onProgress: params.onProgress,
+    onMessage: params.onMessage
   });
 
+  const thread = codex.startThread(threadOptions);
   const { events } = await thread.runStreamed(buildUpdatePrompt(params.updateRequest, params.locale), {
     outputSchema: updateDecisionSchema
   });

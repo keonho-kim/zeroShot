@@ -29,15 +29,30 @@ function messageItem(message: string, index: number) {
   };
 }
 
+function mergeGrowingMessages(messages: string[]): string[] {
+  return messages.reduce<string[]>((items, message) => {
+    const trimmed = compact(message);
+    if (!trimmed) {
+      return items;
+    }
+    const previous = items.at(-1);
+    if (previous && trimmed.startsWith(previous)) {
+      return [...items.slice(0, -1), trimmed];
+    }
+    if (previous === trimmed) {
+      return items;
+    }
+    return [...items, trimmed];
+  }, []);
+}
+
 export function CodexLoadingLog(props: {
   progressItems: CodexLoadingProgressItem[];
   messages: string[];
   emptyMessage: string;
 }) {
   const logRef = useRef<HTMLDivElement>(null);
-  const messages = props.messages
-    .map((message) => compact(message))
-    .filter((message, index, items) => message && items[index - 1] !== message)
+  const messages = mergeGrowingMessages(props.messages)
     .slice(-20)
     .map(messageItem);
   const progressItems = props.progressItems.map((item) => ({
@@ -46,6 +61,7 @@ export function CodexLoadingLog(props: {
     detail: compact(item.detail)
   }));
   const items = [...progressItems, ...messages].filter((item) => item.detail.trim()).slice(-30);
+  const itemSignature = items.map((item) => `${item.id}:${item.detail}`).join("\n");
 
   useEffect(() => {
     const log = logRef.current;
@@ -53,7 +69,7 @@ export function CodexLoadingLog(props: {
       return;
     }
     log.scrollTop = log.scrollHeight;
-  }, [items.length]);
+  }, [itemSignature]);
 
   return (
     <div className="codex-loading-log" aria-label="Codex progress" ref={logRef}>
