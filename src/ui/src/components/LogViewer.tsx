@@ -2,8 +2,7 @@ import { useEffect, useMemo } from "react";
 import type { JobSnapshot } from "@/types/api";
 import { useAppStore, type LogLine } from "@/stores/app-store";
 import { Card } from "@/components/ui/card";
-import { AgentLoadingStage } from "@/components/AgentLoadingStage";
-import { CodexLoadingLog } from "@/components/CodexLoadingLog";
+import { CodexLoadingPanel } from "@/components/CodexLoadingPanel";
 import { RunArtifactsPreview } from "@/components/RunArtifactsPreview";
 import { useI18n } from "@/lib/i18n";
 
@@ -77,7 +76,21 @@ function readableCodexLine(value: string): string {
   if (/^(?:item updated|item completed): agent_message$/.test(detail)) {
     return "Codex 응답: 최종 보고와 다음 작업 상태를 작성하고 있습니다.";
   }
-  return compact(detail);
+  return `작업 로그: ${compact(detail)}`;
+}
+
+function latestUnique(items: string[], limit: number): string[] {
+  const seen = new Set<string>();
+  const result: string[] = [];
+  for (let index = items.length - 1; index >= 0 && result.length < limit; index -= 1) {
+    const item = items[index];
+    if (seen.has(item)) {
+      continue;
+    }
+    seen.add(item);
+    result.unshift(item);
+  }
+  return result;
 }
 
 function toProgressItems(job: JobSnapshot | null, logs: LogLine[], t: ReturnType<typeof useI18n>["t"]) {
@@ -106,12 +119,12 @@ function toProgressItems(job: JobSnapshot | null, logs: LogLine[], t: ReturnType
 }
 
 function toMessages(logs: LogLine[]): string[] {
-  return logs
+  const messages = logs
     .filter((line) => line.type === "stdout" || line.type === "stderr")
     .map((line) => readableCodexLine(lineDetail(line)))
     .filter(Boolean)
-    .filter((line, index, items) => items[index - 1] !== line)
-    .slice(-20);
+    .filter((line, index, items) => items[index - 1] !== line);
+  return latestUnique(messages, 20);
 }
 
 export function LogViewer({ job }: Props) {
@@ -158,12 +171,10 @@ export function LogViewer({ job }: Props) {
   return (
     <div className="flex flex-col gap-4">
       <Card className="flex flex-col gap-4 bg-[var(--panel)]">
-        <AgentLoadingStage label={job?.mode === "update" ? t("log.updating") : t("log.building")} />
-        <div>
-          <p className="text-sm font-semibold">{t("log.streamTitle")}</p>
-          <p className="text-xs text-[var(--muted-foreground)]">{t("log.streamDetail")}</p>
-        </div>
-        <CodexLoadingLog
+        <CodexLoadingPanel
+          label={job?.mode === "update" ? t("log.updating") : t("log.building")}
+          noteTitle={t("log.streamTitle")}
+          noteDetail={t("log.streamDetail")}
           progressItems={progressItems}
           messages={messages}
           emptyMessage={job ? t("log.waiting") : t("log.notStarted")}

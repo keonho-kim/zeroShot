@@ -32,6 +32,12 @@ function itemKey(item: Record<string, unknown>, fallback: string): string {
   return readString(item.id) || readString(item.call_id) || readString(item.name) || fallback;
 }
 
+function humanizeItemType(value: string): string {
+  return value
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
 function itemStatus(event: ThreadEvent, item: Record<string, unknown>): CodexProgressEvent["status"] {
   const raw = readString(item.status).toLowerCase();
   if (raw === "failed" || raw === "error") {
@@ -128,6 +134,16 @@ export function describeCodexProgress(event: ThreadEvent, locale: string, copy: 
       id: `file-${itemKey(item, "changes")}`,
       title: progressText(locale, "파일 변경", "File changes"),
       detail: fileChangeDetail(locale, item),
+      status
+    };
+  }
+
+  if (type) {
+    const rawStatus = readString(item.status);
+    return {
+      id: `item-${itemKey(item, type)}`,
+      title: progressText(locale, "작업 이벤트", "Work event"),
+      detail: truncate([humanizeItemType(type), rawStatus].filter(Boolean).join(" · ")),
       status
     };
   }

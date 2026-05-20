@@ -4,8 +4,7 @@ import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { AgentLoadingStage } from "@/components/AgentLoadingStage";
-import { CodexLoadingLog } from "@/components/CodexLoadingLog";
+import { CodexLoadingPanel } from "@/components/CodexLoadingPanel";
 import { useI18n } from "@/lib/i18n";
 import { designModeLabel, designResultStatus } from "@/entities/design/design-runtime";
 import type { DesignRecommendationOption, DesignRecommendationResponse, DesignRuntimeResponse, ResourceManifest } from "@/types/api";
@@ -196,8 +195,8 @@ export function DesignRuntimeSetup(props: {
 
       {props.hasProductHtml && props.isLoadingRecommendations ? (
         <Card className="makeover-loading-card">
-          <AgentLoadingStage label={t("makeover.candidatesLoading")} />
-          <CodexLoadingLog
+          <CodexLoadingPanel
+            label={t("makeover.candidatesLoading")}
             progressItems={props.recommendationTimelineItems}
             messages={props.recommendationMessages}
             emptyMessage={t("makeover.recommendationLoadingMessage")}

@@ -66,4 +66,16 @@ describe("codex progress service", () => {
       detail: "사용자에게 보여줄 내용을 작성하고 있습니다."
     });
   });
+
+  test("keeps unknown codex items visible as compact work events", () => {
+    expect(describeCodexProgress({
+      type: "item.updated",
+      item: { type: "custom_tool_event", id: "custom-1", status: "running" }
+    } as ThreadEvent, "ko", copy)).toMatchObject({
+      id: "item-custom-1",
+      title: "작업 이벤트",
+      detail: "Custom Tool Event · running",
+      status: "running"
+    });
+  });
 });

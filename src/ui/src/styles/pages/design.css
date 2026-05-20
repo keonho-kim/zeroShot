@@ -312,10 +312,6 @@
   width: min(100%, 576px);
 }
 
-.makeover-loading-card .codex-loading-log {
-  width: min(100%, 640px);
-}
-
 .design-inline-log {
   display: grid;
   gap: 0.45rem;
@@ -346,34 +342,6 @@
   font-weight: 900;
   line-height: 1.45;
   text-align: center;
-}
-
-.codex-loading-log {
-  display: grid;
-  gap: 0.5rem;
-  max-height: 12rem;
-  overflow: auto;
-  border: 2px solid var(--border);
-  border-radius: 2px;
-  background: var(--surface);
-  padding: 0.875rem;
-}
-
-.codex-loading-log div {
-  display: grid;
-  gap: 0.175rem;
-}
-
-.codex-loading-log strong {
-  color: var(--foreground);
-  font-size: 0.75rem;
-  font-weight: 900;
-}
-
-.codex-loading-log span {
-  color: var(--muted-foreground);
-  font-size: 0.75rem;
-  line-height: 1.45;
 }
 
 .design-resource-row label {

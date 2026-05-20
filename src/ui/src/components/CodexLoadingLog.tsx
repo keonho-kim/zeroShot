@@ -1,3 +1,5 @@
+import { useEffect, useRef } from "react";
+
 interface CodexLoadingProgressItem {
   id: string;
   title: string;
@@ -12,7 +14,7 @@ function compact(value: string, maxLength = 160): string {
 
 function messageItem(message: string, index: number) {
   const formatted = compact(message);
-  const match = /^(?<title>검색 중|도구 호출|명령 실행|파일 변경|Codex 응답|Search|Tool call|Command|File change):\s*(?<detail>.+)$/.exec(formatted);
+  const match = /^(?<title>검색 중|도구 호출|명령 실행|파일 변경|작업 이벤트|작업 로그|Codex 응답|Search|Tool call|Command|File change|Work event|Work log):\s*(?<detail>.+)$/.exec(formatted);
   if (match?.groups) {
     return {
       id: `message-${index}`,
@@ -32,6 +34,7 @@ export function CodexLoadingLog(props: {
   messages: string[];
   emptyMessage: string;
 }) {
+  const logRef = useRef<HTMLDivElement>(null);
   const messages = props.messages
     .map((message) => compact(message))
     .filter((message, index, items) => message && items[index - 1] !== message)
@@ -42,10 +45,18 @@ export function CodexLoadingLog(props: {
     title: item.title,
     detail: compact(item.detail)
   }));
-  const items = [...progressItems, ...messages].filter((item) => item.detail.trim());
+  const items = [...progressItems, ...messages].filter((item) => item.detail.trim()).slice(-30);
+
+  useEffect(() => {
+    const log = logRef.current;
+    if (!log) {
+      return;
+    }
+    log.scrollTop = log.scrollHeight;
+  }, [items.length]);
 
   return (
-    <div className="codex-loading-log" aria-label="Codex progress">
+    <div className="codex-loading-log" aria-label="Codex progress" ref={logRef}>
       {items.length ? (
         items.map((item) => (
           <div key={item.id}>

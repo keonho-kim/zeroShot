@@ -5,8 +5,7 @@ import { Navigate, useNavigate } from "react-router-dom";
 import { useAppStore } from "@/stores/app-store";
 import { useArchitectFlowStore } from "@/stores/architect-store";
 import { PageHeader } from "@/components/PageHeader";
-import { CodexLoadingLog } from "@/components/CodexLoadingLog";
-import { AgentLoadingStage } from "@/components/AgentLoadingStage";
+import { CodexLoadingPanel } from "@/components/CodexLoadingPanel";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useI18n } from "@/lib/i18n";
@@ -356,8 +355,8 @@ export function ArchitectProgressPage() {
         <section className={cn("architect-thread", decisionSet && "architect-decision-workspace")} aria-label="Architect conversation">
           {!decisionSet ? (
             <Card className="architect-loading-card" aria-label="Architect progress">
-              <AgentLoadingStage label={t("architect.analyzing")} />
-              <CodexLoadingLog
+              <CodexLoadingPanel
+                label={t("architect.analyzing")}
                 progressItems={timelineItems}
                 messages={streamMessages}
                 emptyMessage={t("architect.organizing")}
@@ -410,14 +409,12 @@ export function ArchitectProgressPage() {
                   <div className="architect-stage-panel">
                     <Card className="decision-card complete architect-blueprint-status">
                       {createBlueprintMutation.isPending ? (
-                        <>
-                          <AgentLoadingStage label={t("architect.writingBlueprint")} />
-                          <CodexLoadingLog
-                            progressItems={blueprintTimelineItems}
-                            messages={blueprintStreamMessages}
-                            emptyMessage={t("architect.blueprintLoadingMessage")}
-                          />
-                        </>
+                        <CodexLoadingPanel
+                          label={t("architect.writingBlueprint")}
+                          progressItems={blueprintTimelineItems}
+                          messages={blueprintStreamMessages}
+                          emptyMessage={t("architect.blueprintLoadingMessage")}
+                        />
                       ) : (
                         <>
                           <div className="decision-kicker">{t("architect.blueprintReady")}</div>

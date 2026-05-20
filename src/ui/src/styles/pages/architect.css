@@ -128,67 +128,6 @@
   box-shadow: var(--shadow-card);
 }
 
-.agent-loading-stage {
-  display: grid;
-  justify-items: center;
-  gap: 0.875rem;
-  text-align: center;
-}
-
-.agent-loading-stage h2 {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: clamp(2.5rem, 6vw, 5rem);
-  font-weight: 400;
-  letter-spacing: 0;
-  line-height: 0.95;
-}
-
-.agent-loading-stage + .codex-loading-log {
-  margin-top: clamp(2rem, 4vw, 3.5rem);
-}
-
-.agent-loading-stage + div + .codex-loading-log {
-  margin-top: clamp(1rem, 2vw, 2rem);
-}
-
-.agent-dot-wave {
-  display: inline-grid;
-  grid-template-columns: repeat(3, 0.7rem);
-  gap: 0.45rem;
-  align-items: end;
-  justify-content: center;
-  min-height: 1.4rem;
-}
-
-.agent-dot-wave i {
-  display: block;
-  width: 0.7rem;
-  height: 0.7rem;
-  border: 2px solid var(--border);
-  border-radius: 999px;
-  background: var(--primary);
-  box-shadow: 2px 2px 0 var(--border);
-  animation: agent-dot-wave 980ms ease-in-out infinite;
-}
-
-.agent-dot-wave i:nth-child(2) {
-  animation-delay: 140ms;
-}
-
-.agent-dot-wave i:nth-child(3) {
-  animation-delay: 280ms;
-}
-
-@keyframes agent-dot-wave {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  40% {
-    transform: translateY(-0.6rem);
-  }
-}
-
 .architect-decision-workspace {
   display: grid;
   grid-template-columns: minmax(144px, 0.58fr) minmax(344px, 1.38fr) minmax(300px, 1.04fr);

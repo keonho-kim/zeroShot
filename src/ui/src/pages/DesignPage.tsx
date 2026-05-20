@@ -29,8 +29,7 @@ import { ArtifactWorkbench } from "@/pages/design/artifact-workbench/ArtifactWor
 import type { ArtifactChatMessage, ArtifactCommentCapture } from "@/pages/design/artifact-workbench/types";
 import { DesignResult } from "@/pages/design/DesignResult";
 import { DesignRuntimeSetup } from "@/pages/design/DesignRuntimeSetup";
-import { CodexLoadingLog } from "@/components/CodexLoadingLog";
-import { AgentLoadingStage } from "@/components/AgentLoadingStage";
+import { CodexLoadingPanel } from "@/components/CodexLoadingPanel";
 import { useI18n } from "@/lib/i18n";
 import { type DesignTimelineItem, upsertTimelineItem } from "@/pages/design/design-page-model";
 import { cn } from "@/utils/cn";
@@ -527,8 +526,8 @@ export function DesignPage() {
 
         {makeoverStep === "loading" ? (
           <Card className="makeover-loading-card">
-            <AgentLoadingStage label={t("makeover.runtimeLoadingLabel")} />
-            <CodexLoadingLog
+            <CodexLoadingPanel
+              label={t("makeover.runtimeLoadingLabel")}
               progressItems={timelineItems}
               messages={runtimeMessages}
               emptyMessage={t("makeover.loadingMessage")}
