@@ -56,3 +56,9 @@
   --shadow-popover: 9px 9px 0 var(--border);
   --shadow-focus: 0 0 0 2px var(--background), 0 0 0 5px var(--accent);
 }
+
+@media (min-width: 1024px) {
+  :root {
+    --ui-scale: 1.2;
+  }
+}
