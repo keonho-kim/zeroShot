@@ -1,5 +1,7 @@
 import { AgentLoadingStage } from "@/components/AgentLoadingStage";
 import { CodexLoadingLog } from "@/components/CodexLoadingLog";
+import { hasCodexThreadStarted } from "@/entities/codex/codex-loading-log";
+import { useI18n } from "@/lib/i18n";
 
 interface CodexLoadingProgressItem {
   id: string;
@@ -16,9 +18,15 @@ export function CodexLoadingPanel(props: {
   noteTitle?: string;
   noteDetail?: string;
 }) {
+  const { t } = useI18n();
+  const threadStarted = hasCodexThreadStarted(props.messages);
+
   return (
     <div className="codex-loading-panel">
-      <AgentLoadingStage label={props.label} />
+      <AgentLoadingStage
+        label={threadStarted ? t("common.codexThreadRunning") : props.label}
+        phase={threadStarted ? "running" : "starting"}
+      />
       {props.noteTitle || props.noteDetail ? (
         <div className="codex-loading-panel-note">
           {props.noteTitle ? <p>{props.noteTitle}</p> : null}

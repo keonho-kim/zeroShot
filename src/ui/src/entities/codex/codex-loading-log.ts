@@ -22,11 +22,16 @@ const toolItemTypes = new Set([
   "web_search",
   "mcp_tool_call",
   "command_execution",
-  "file_change"
+  "file_change",
+  "image_view"
 ]);
 
 function readString(value: unknown): string {
   return typeof value === "string" ? value : "";
+}
+
+function readRecord(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === "object" ? value as Record<string, unknown> : null;
 }
 
 function compact(value: string, maxLength = 180): string {
@@ -67,15 +72,67 @@ function summarizeChanges(item: Record<string, unknown>): string {
     .join(", "));
 }
 
+function firstCommandToken(command: string): string {
+  return command.trim().split(/\s+/)[0]?.replace(/^.*\//, "") ?? "";
+}
+
+function commandLabel(command: string): { icon: string; title: string } {
+  const token = firstCommandToken(command);
+
+  if (["rg", "grep", "find", "fd", "ag"].includes(token)) {
+    return { icon: "🔎", title: "Search files" };
+  }
+  if (["ls", "tree", "pwd", "du"].includes(token)) {
+    return { icon: "📁", title: "Browse files" };
+  }
+  if (["cat", "sed", "awk", "head", "tail", "less", "nl"].includes(token)) {
+    return { icon: "📄", title: "Read file" };
+  }
+  if (["curl", "wget"].includes(token)) {
+    return { icon: "🌐", title: "Network request" };
+  }
+  if (token === "git") {
+    return { icon: "🌿", title: "Git" };
+  }
+  if (["bun", "npm", "pnpm", "yarn", "node"].includes(token)) {
+    return { icon: "📦", title: "JavaScript" };
+  }
+  if (["go", "cargo", "pytest", "vitest", "jest", "tsc"].includes(token)) {
+    return { icon: "✅", title: "Check" };
+  }
+  return { icon: "⌨️", title: "Command" };
+}
+
+function webSearchLabel(item: Record<string, unknown>): { icon: string; title: string; detail: string } {
+  const action = readRecord(item.action);
+  const actionType = readString(action?.type);
+
+  if (actionType === "open_page") {
+    return {
+      icon: "📄",
+      title: "Read web page",
+      detail: compact(readString(action?.url) || readString(item.query) || "Opening page")
+    };
+  }
+  if (actionType === "find_in_page") {
+    return {
+      icon: "🔎",
+      title: "Find in page",
+      detail: compact(readString(action?.pattern) || readString(item.query) || "Finding text")
+    };
+  }
+  return {
+    icon: "🌐",
+    title: "Web search",
+    detail: compact(readString(item.query) || readString(action?.query) || "Searching the web")
+  };
+}
+
 function toolLabelAndDetail(item: Record<string, unknown>): { icon: string; title: string; detail: string } | null {
   const type = readString(item.type);
 
   if (type === "web_search") {
-    return {
-      icon: "🔎",
-      title: "Web search",
-      detail: compact(readString(item.query) || readString(item.status) || "Preparing search")
-    };
+    return webSearchLabel(item);
   }
 
   if (type === "mcp_tool_call") {
@@ -90,10 +147,11 @@ function toolLabelAndDetail(item: Record<string, unknown>): { icon: string; titl
   }
 
   if (type === "command_execution") {
+    const command = readString(item.command) || readString(item.cmd);
+    const label = commandLabel(command);
     return {
-      icon: "⌨️",
-      title: "Command",
-      detail: compact(readString(item.command) || readString(item.cmd) || readString(item.status) || "Running")
+      ...label,
+      detail: compact(command || readString(item.status) || "Running")
     };
   }
 
@@ -102,6 +160,14 @@ function toolLabelAndDetail(item: Record<string, unknown>): { icon: string; titl
       icon: "📝",
       title: "File change",
       detail: summarizeChanges(item) || compact(readString(item.status) || "Inspecting changes")
+    };
+  }
+
+  if (type === "image_view") {
+    return {
+      icon: "🖼️",
+      title: "View image",
+      detail: compact(readString(item.path) || "Opening image")
     };
   }
 
@@ -173,4 +239,8 @@ export function buildCodexLoadingLogItems(
     .reduce(upsert, items);
 
   return nextItems.filter((item) => item.detail.trim()).slice(-50);
+}
+
+export function hasCodexThreadStarted(rawMessages: string[]): boolean {
+  return rawMessages.some((message) => parseRawCodexEvent(message)?.type === "thread.started");
 }

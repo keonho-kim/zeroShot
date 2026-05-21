@@ -42,6 +42,16 @@
   animation-delay: 280ms;
 }
 
+.agent-running-pulse {
+  width: 0.95rem;
+  height: 0.95rem;
+  border: 2px solid var(--foreground);
+  border-radius: 999px;
+  background: var(--primary);
+  box-shadow: 0 0 0 0 color-mix(in srgb, var(--primary) 46%, transparent);
+  animation: agent-running-pulse 1120ms ease-out infinite;
+}
+
 @keyframes agent-dot-wave {
   0%, 100% {
     transform: translateY(0);
@@ -49,6 +59,16 @@
 
   40% {
     transform: translateY(-0.6rem);
+  }
+}
+
+@keyframes agent-running-pulse {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--primary) 52%, transparent);
+  }
+
+  100% {
+    box-shadow: 0 0 0 0.75rem transparent;
   }
 }
 
