@@ -122,6 +122,10 @@ export function parseStreamEvent(raw: string): { event: string; data: unknown } 
   return { event, data: JSON.parse(data) as unknown };
 }
 
+export function formatRawCodexEvent(value: unknown): string {
+  return JSON.stringify(value, null, 2) ?? String(value);
+}
+
 export async function requestArchitectDecisionsStream(
   payload: {
     projectRoot: string;
@@ -132,7 +136,8 @@ export async function requestArchitectDecisionsStream(
     activeDesignSystemId?: string;
   },
   onProgress: (event: ArchitectProgressEvent) => void,
-  onMessage?: (message: string) => void
+  onMessage?: (message: string) => void,
+  onRaw?: (message: string) => void
 ) {
   const response = await fetch("/api/architect/decisions/stream", {
     method: "POST",
@@ -172,6 +177,9 @@ export async function requestArchitectDecisionsStream(
           onMessage?.(data.message);
         }
       }
+      if (parsed.event === "raw") {
+        onRaw?.(formatRawCodexEvent(parsed.data));
+      }
       if (parsed.event === "complete") {
         return (parsed.data as { decisions: ArchitectDecisionResponse }).decisions;
       }
@@ -195,7 +203,8 @@ export async function requestUpdateDecisionsStream(
     locale: string;
   },
   onProgress: (event: UpdateProgressEvent) => void,
-  onMessage?: (message: string) => void
+  onMessage?: (message: string) => void,
+  onRaw?: (message: string) => void
 ) {
   const response = await fetch("/api/update/decisions/stream", {
     method: "POST",
@@ -234,6 +243,9 @@ export async function requestUpdateDecisionsStream(
         if (typeof data.message === "string") {
           onMessage?.(data.message);
         }
+      }
+      if (parsed.event === "raw") {
+        onRaw?.(formatRawCodexEvent(parsed.data));
       }
       if (parsed.event === "complete") {
         return (parsed.data as { decisions: UpdateDecisionResponse }).decisions;
@@ -284,7 +296,8 @@ export async function createArchitectProductHtmlStream(
     activeDesignSystemId?: string;
   },
   onProgress: (event: ArchitectProgressEvent) => void,
-  onMessage?: (message: string) => void
+  onMessage?: (message: string) => void,
+  onRaw?: (message: string) => void
 ) {
   const response = await fetch("/api/architect/product-html/stream", {
     method: "POST",
@@ -324,6 +337,9 @@ export async function createArchitectProductHtmlStream(
           onMessage?.(data.message);
         }
       }
+      if (parsed.event === "raw") {
+        onRaw?.(formatRawCodexEvent(parsed.data));
+      }
       if (parsed.event === "complete") {
         return (parsed.data as { file: ProductArtifactFile }).file;
       }
@@ -351,7 +367,8 @@ export async function requestDesignRuntimeStream(
     activeDesignSystemId?: string;
   },
   onProgress: (event: DesignProgressEvent) => void,
-  onMessage?: (message: string) => void
+  onMessage?: (message: string) => void,
+  onRaw?: (message: string) => void
 ) {
   const response = await fetch("/api/design/runtime/stream", {
     method: "POST",
@@ -391,6 +408,9 @@ export async function requestDesignRuntimeStream(
           onMessage?.(data.message);
         }
       }
+      if (parsed.event === "raw") {
+        onRaw?.(formatRawCodexEvent(parsed.data));
+      }
       if (parsed.event === "complete") {
         return (parsed.data as { design: DesignRuntimeResponse }).design;
       }
@@ -413,7 +433,8 @@ export async function requestDesignRecommendationsStream(
     locale: string;
   },
   onProgress: (event: DesignProgressEvent) => void,
-  onMessage?: (message: string) => void
+  onMessage?: (message: string) => void,
+  onRaw?: (message: string) => void
 ) {
   const response = await fetch("/api/design/recommendations/stream", {
     method: "POST",
@@ -452,6 +473,9 @@ export async function requestDesignRecommendationsStream(
         if (typeof data.message === "string") {
           onMessage?.(data.message);
         }
+      }
+      if (parsed.event === "raw") {
+        onRaw?.(formatRawCodexEvent(parsed.data));
       }
       if (parsed.event === "complete") {
         return (parsed.data as { recommendations: DesignRecommendationResponse }).recommendations;

@@ -142,6 +142,7 @@ export function UpdatePage() {
       const nextDecisionSet = await requestUpdateDecisionsStream(
         { projectRoot, updateRequest: updateContent.trim(), locale },
         (event) => setProgressItems((items) => [...items.filter((item) => item.id !== event.id), event]),
+        undefined,
         (message) => setStreamMessages((messages) => messages.at(-1) === message ? messages : [...messages, message])
       );
       setDecisionSet(nextDecisionSet);

@@ -187,6 +187,7 @@ export async function buildUpdateDecisions(params: {
   additionalDirectories?: string[];
   onProgress?: (event: UpdateProgressEvent) => void | Promise<void>;
   onMessage?: (message: string) => void | Promise<void>;
+  onRaw?: (event: ThreadEvent) => void | Promise<void>;
 }): Promise<UpdateDecisionResponse> {
   const codex = new Codex();
   const threadOptions = {
@@ -212,7 +213,8 @@ export async function buildUpdateDecisions(params: {
     }),
     describeProgress: (event) => describeProgress(event, params.locale),
     onProgress: params.onProgress,
-    onMessage: params.onMessage
+    onMessage: params.onMessage,
+    onRaw: params.onRaw
   });
 
   const thread = codex.startThread(threadOptions);
@@ -223,6 +225,7 @@ export async function buildUpdateDecisions(params: {
   let lastMessage = "";
 
   for await (const event of events) {
+    await params.onRaw?.(event);
     const progress = describeProgress(event, params.locale);
     if (progress) {
       await params.onProgress?.(progress);

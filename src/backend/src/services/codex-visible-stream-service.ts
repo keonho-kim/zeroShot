@@ -46,11 +46,14 @@ export async function streamVisibleCodexPrelude(params: {
   describeProgress: (event: ThreadEvent) => VisibleCodexProgressEvent | null;
   onProgress?: (event: VisibleCodexProgressEvent) => void | Promise<void>;
   onMessage?: (message: string) => void | Promise<void>;
+  onRaw?: (event: ThreadEvent) => void | Promise<void>;
 }): Promise<void> {
   const { events } = await params.thread.runStreamed(params.prompt);
   let lastMessage = "";
 
   for await (const event of events) {
+    await params.onRaw?.(event);
+
     const progress = params.describeProgress(event);
     if (progress) {
       await params.onProgress?.(progress);

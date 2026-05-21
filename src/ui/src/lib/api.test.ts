@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { parseStreamEvent } from "@/lib/api";
+import { formatRawCodexEvent, parseStreamEvent } from "@/lib/api";
 
 describe("api stream parser", () => {
   test("parses progress, message, complete, and error SSE chunks", () => {
@@ -19,10 +19,21 @@ describe("api stream parser", () => {
       event: "error",
       data: { message: "failed" }
     });
+    expect(parseStreamEvent('event: raw\ndata: {"type":"item.updated","item":{"type":"agent_message","text":"hello"}}')).toEqual({
+      event: "raw",
+      data: { type: "item.updated", item: { type: "agent_message", text: "hello" } }
+    });
   });
 
   test("ignores incomplete SSE chunks", () => {
     expect(parseStreamEvent("event: message")).toBeNull();
     expect(parseStreamEvent('data: {"message":"missing event"}')).toBeNull();
+  });
+
+  test("formats raw codex events as readable JSON", () => {
+    expect(formatRawCodexEvent({
+      type: "item.updated",
+      item: { type: "agent_message", text: "hello" }
+    })).toContain('"type": "item.updated"');
   });
 });

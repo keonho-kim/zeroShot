@@ -383,7 +383,8 @@ router.post("/architect/decisions/stream", asyncHandler(async (req: Request, res
         includeCatalogSummary: true
       }),
       onProgress: (event: ArchitectProgressEvent) => stream.write("progress", event),
-      onMessage: (message) => stream.write("message", { message })
+      onMessage: (message) => stream.write("message", { message }),
+      onRaw: (event) => stream.write("raw", event)
     });
     await recordArchitectSession({
       projectRoot,
@@ -529,7 +530,8 @@ router.post("/architect/product-html/stream", asyncHandler(async (req: Request, 
         includeCatalogSummary: true
       }),
       onProgress: (event: ArchitectProgressEvent) => stream.write("progress", event),
-      onMessage: (message) => stream.write("message", { message })
+      onMessage: (message) => stream.write("message", { message }),
+      onRaw: (event) => stream.write("raw", event)
     });
     const file = await writeProductHtmlSnapshot(projectRoot, html);
     await upsertArtifactManifest(projectRoot, [{
@@ -659,7 +661,8 @@ router.post("/design/recommendations/stream", asyncHandler(async (req: Request, 
       locale: normalizeLocale(body.locale),
       model: typeof body.model === "string" && body.model.trim() ? body.model.trim() : undefined,
       onProgress: (event: DesignProgressEvent) => stream.write("progress", event),
-      onMessage: (message) => stream.write("message", { message })
+      onMessage: (message) => stream.write("message", { message }),
+      onRaw: (event) => stream.write("raw", event)
     });
     await stream.write("complete", { recommendations });
   } catch (error) {
@@ -708,7 +711,8 @@ router.post("/design/runtime/stream", asyncHandler(async (req: Request, res: Res
       activeDesignSystemId: body.activeDesignSystemId,
       model: typeof body.model === "string" && body.model.trim() ? body.model.trim() : undefined,
       onProgress: (event: DesignProgressEvent) => stream.write("progress", event),
-      onMessage: (message) => stream.write("message", { message })
+      onMessage: (message) => stream.write("message", { message }),
+      onRaw: (event) => stream.write("raw", event)
     });
     for (const file of design.files) {
       if (!file.path.startsWith("DESIGN/")) {
@@ -828,7 +832,8 @@ router.post("/update/decisions/stream", asyncHandler(async (req: Request, res: R
       model: typeof body.model === "string" && body.model.trim() ? body.model.trim() : undefined,
       additionalDirectories: [appConfig.resourceRoots.skills, appConfig.resourceRoots.designTemplates, appConfig.resourceRoots.designSystems],
       onProgress: (event: UpdateProgressEvent) => stream.write("progress", event),
-      onMessage: (message) => stream.write("message", { message })
+      onMessage: (message) => stream.write("message", { message }),
+      onRaw: (event) => stream.write("raw", event)
     });
     await appendAppEvent("update_decisions_created", {
       projectRoot,

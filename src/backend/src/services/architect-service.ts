@@ -310,6 +310,7 @@ export async function buildArchitectDecisions(params: {
   additionalDirectories?: string[];
   onProgress?: (event: ArchitectProgressEvent) => void | Promise<void>;
   onMessage?: (message: string) => void | Promise<void>;
+  onRaw?: (event: ThreadEvent) => void | Promise<void>;
 }): Promise<ArchitectDecisionResponse> {
   const codex = new Codex();
   const threadOptions = {
@@ -335,7 +336,8 @@ export async function buildArchitectDecisions(params: {
     }),
     describeProgress: (event) => describeProgress(event, params.locale),
     onProgress: params.onProgress,
-    onMessage: params.onMessage
+    onMessage: params.onMessage,
+    onRaw: params.onRaw
   });
 
   const thread = codex.startThread(threadOptions);
@@ -346,6 +348,7 @@ export async function buildArchitectDecisions(params: {
   let lastMessage = "";
 
   for await (const event of events) {
+    await params.onRaw?.(event);
     const progress = describeProgress(event, params.locale);
     if (progress) {
       await params.onProgress?.(progress);
@@ -388,6 +391,7 @@ export async function buildArchitectProductHtml(params: {
   additionalDirectories?: string[];
   onProgress?: (event: ArchitectProgressEvent) => void | Promise<void>;
   onMessage?: (message: string) => void | Promise<void>;
+  onRaw?: (event: ThreadEvent) => void | Promise<void>;
 }): Promise<string> {
   const codex = new Codex();
   const threadOptions = {
@@ -417,7 +421,8 @@ export async function buildArchitectProductHtml(params: {
     }),
     describeProgress: (event) => describeProductHtmlProgress(event, params.locale),
     onProgress: params.onProgress,
-    onMessage: params.onMessage
+    onMessage: params.onMessage,
+    onRaw: params.onRaw
   });
 
   const thread = codex.startThread(threadOptions);
@@ -428,6 +433,7 @@ export async function buildArchitectProductHtml(params: {
   let lastMessage = "";
 
   for await (const event of events) {
+    await params.onRaw?.(event);
     const progress = describeProductHtmlProgress(event, params.locale);
     if (progress) {
       await params.onProgress?.(progress);
