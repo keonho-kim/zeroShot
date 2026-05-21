@@ -47,9 +47,9 @@
   height: 0.95rem;
   border: 2px solid var(--foreground);
   border-radius: 999px;
-  background: var(--primary);
-  box-shadow: 0 0 0 0 color-mix(in srgb, var(--primary) 46%, transparent);
-  animation: agent-running-pulse 1120ms ease-out infinite;
+  background: var(--success);
+  box-shadow: 2px 2px 0 var(--border);
+  animation: agent-running-bounce 720ms cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
 }
 
 @keyframes agent-dot-wave {
@@ -62,13 +62,13 @@
   }
 }
 
-@keyframes agent-running-pulse {
-  0% {
-    box-shadow: 0 0 0 0 color-mix(in srgb, var(--primary) 52%, transparent);
+@keyframes agent-running-bounce {
+  0%, 100% {
+    transform: translateY(0);
   }
 
-  100% {
-    box-shadow: 0 0 0 0.75rem transparent;
+  45% {
+    transform: translateY(-0.7rem);
   }
 }
 
@@ -132,6 +132,34 @@
   color: var(--muted-foreground);
   font-size: 0.8125rem;
   line-height: 1.45;
+}
+
+.codex-loading-status {
+  width: fit-content;
+  border: 2px solid var(--border);
+  border-radius: 999px;
+  padding: 0.1rem 0.45rem;
+  background: var(--input);
+  color: var(--muted-foreground);
+  font-size: 0.6875rem;
+  font-weight: 900;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.codex-loading-status.running {
+  background: var(--success-surface);
+  color: var(--success-foreground);
+}
+
+.codex-loading-status.completed {
+  background: var(--panel);
+  color: var(--foreground);
+}
+
+.codex-loading-status.failed {
+  background: var(--danger-surface);
+  color: var(--danger-foreground);
 }
 
 .codex-loading-log-item.tool {

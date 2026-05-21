@@ -10,6 +10,7 @@ export type CodexLoadingLogItem = {
   kind: "progress" | "tool" | "agent" | "raw";
   title: string;
   detail: string;
+  status?: "running" | "completed" | "failed";
   icon?: string;
 };
 
@@ -55,6 +56,17 @@ function parseRawCodexEvent(value: string): RawCodexEvent | null {
 function rawEventTitle(event: RawCodexEvent | null, index: number): string {
   const itemType = event?.item ? readString(event.item.type) : "";
   return [readString(event?.type), itemType].filter(Boolean).join(" · ") || `raw ${index + 1}`;
+}
+
+function itemStatus(event: RawCodexEvent | null, item: Record<string, unknown>): CodexLoadingLogItem["status"] {
+  const raw = readString(item.status).toLowerCase();
+  if (raw === "failed" || raw === "error") {
+    return "failed";
+  }
+  if (event?.type === "item.completed" || raw === "completed" || raw === "succeeded") {
+    return "completed";
+  }
+  return "running";
 }
 
 function summarizeChanges(item: Record<string, unknown>): string {
@@ -187,6 +199,7 @@ function rawMessageItem(message: string, index: number): CodexLoadingLogItem {
         kind: "agent",
         title: "Agent message",
         detail: text,
+        status: itemStatus(parsed, item),
         icon: "💬"
       };
     }
@@ -200,6 +213,7 @@ function rawMessageItem(message: string, index: number): CodexLoadingLogItem {
         kind: "tool",
         title: tool.title,
         detail: tool.detail,
+        status: itemStatus(parsed, item),
         icon: tool.icon
       };
     }
@@ -229,7 +243,8 @@ export function buildCodexLoadingLogItems(
     id: `progress-${item.id}`,
     kind: "progress",
     title: item.title,
-    detail: item.detail.trim()
+    detail: item.detail.trim(),
+    status: item.status
   }));
 
   const nextItems = rawMessages

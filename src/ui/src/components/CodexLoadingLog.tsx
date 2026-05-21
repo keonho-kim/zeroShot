@@ -15,7 +15,15 @@ export function CodexLoadingLog(props: {
     if (!log) {
       return;
     }
-    log.scrollTop = log.scrollHeight;
+    const scrollToLatest = () => {
+      log.scrollTo({ top: log.scrollHeight, behavior: "smooth" });
+    };
+    const frame = requestAnimationFrame(scrollToLatest);
+    const timeout = window.setTimeout(scrollToLatest, 80);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.clearTimeout(timeout);
+    };
   }, [itemSignature]);
 
   return (
@@ -32,6 +40,7 @@ export function CodexLoadingLog(props: {
               <p>
                 <strong>{item.icon} {item.title}</strong>
                 <span>{item.detail}</span>
+                {item.status ? <span className={`codex-loading-status ${item.status}`}>{item.status}</span> : null}
               </p>
             ) : (
               <>

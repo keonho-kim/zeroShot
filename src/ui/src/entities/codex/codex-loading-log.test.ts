@@ -19,6 +19,7 @@ describe("codex loading log model", () => {
       kind: "agent",
       title: "Agent message",
       detail: "I checked the project and will create the first plan.",
+      status: "completed",
       icon: "💬"
     }]);
   });
@@ -42,8 +43,29 @@ describe("codex loading log model", () => {
       kind: "tool",
       title: "github.get_pull_request",
       detail: "repo=zeroShot pr=13",
+      status: "running",
       icon: "🛠️"
     }]);
+  });
+
+  test("updates the same item instead of appending duplicate status rows", () => {
+    const items = buildCodexLoadingLogItems([], [
+      JSON.stringify({
+        type: "item.updated",
+        item: { id: "cmd_1", type: "command_execution", command: "bun test", status: "in_progress" }
+      }),
+      JSON.stringify({
+        type: "item.completed",
+        item: { id: "cmd_1", type: "command_execution", command: "bun test", status: "completed" }
+      })
+    ]);
+
+    expect(items).toHaveLength(1);
+    expect(items[0]).toMatchObject({
+      id: "tool-cmd_1",
+      status: "completed",
+      detail: "bun test"
+    });
   });
 
   test("maps common shell commands to friendlier tool names", () => {
