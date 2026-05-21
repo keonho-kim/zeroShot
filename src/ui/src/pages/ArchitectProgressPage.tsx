@@ -169,6 +169,7 @@ export function ArchitectProgressPage() {
           activeDesignSystemId: activeDesignSystemId || undefined
         },
         addBlueprintProgress,
+        undefined,
         addBlueprintStreamMessage
       );
     },
@@ -296,6 +297,7 @@ export function ArchitectProgressPage() {
         activeDesignSystemId: activeDesignSystemId || undefined
       },
       addProgress,
+      undefined,
       addStreamMessage
     ).then((nextDecisionSet) => {
       completeRequest(nextDecisionSet);

@@ -177,8 +177,8 @@ export function DesignPage() {
         locale
       }, (event) => {
         setRecommendationTimelineItems((items) => upsertTimelineItem(items, event));
-      }, (message) => {
-        setRecommendationMessages((items) => items.at(-1) === message ? items : [...items.slice(-24), message]);
+      }, undefined, (message) => {
+        setRecommendationMessages((items) => items.at(-1) === message ? items : [...items.slice(-79), message]);
       });
     },
     onSuccess: (nextRecommendations) => {
@@ -219,13 +219,14 @@ export function DesignPage() {
             : message));
         }
       }, (message) => {
-        setRuntimeMessages((items) => items.at(-1) === message ? items : [...items.slice(-24), message]);
         if (!request.assistantMessageId) {
           return;
         }
         setArtifactChatMessages((messages) => messages.map((item) => item.id === request.assistantMessageId
           ? { ...item, content: message, isStreaming: true }
           : item));
+      }, (message) => {
+        setRuntimeMessages((items) => items.at(-1) === message ? items : [...items.slice(-79), message]);
       });
     },
     onSuccess: (design) => {

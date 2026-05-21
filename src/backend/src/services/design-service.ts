@@ -404,6 +404,7 @@ export async function recommendDesignResources(params: {
   model?: string;
   onProgress?: (event: DesignProgressEvent) => void | Promise<void>;
   onMessage?: (message: string) => void | Promise<void>;
+  onRaw?: (event: ThreadEvent) => void | Promise<void>;
 }): Promise<DesignRecommendationResponse> {
   const appConfig = await loadAppConfig();
   const productHtml = await readProductHtml(params.projectRoot).catch(() => "");
@@ -436,7 +437,8 @@ export async function recommendDesignResources(params: {
     }),
     describeProgress: (event) => describeRecommendationProgress(event, params.locale),
     onProgress: params.onProgress,
-    onMessage: params.onMessage
+    onMessage: params.onMessage,
+    onRaw: params.onRaw
   });
 
   const thread = codex.startThread(threadOptions);
@@ -452,6 +454,7 @@ export async function recommendDesignResources(params: {
   let lastMessage = "";
 
   for await (const event of events) {
+    await params.onRaw?.(event);
     const progress = describeRecommendationProgress(event, params.locale);
     if (progress) {
       await params.onProgress?.(progress);
@@ -531,6 +534,7 @@ export async function buildDesignRuntime(params: {
   model?: string;
   onProgress?: (event: DesignProgressEvent) => void | Promise<void>;
   onMessage?: (message: string) => void | Promise<void>;
+  onRaw?: (event: ThreadEvent) => void | Promise<void>;
 }): Promise<DesignRuntimeResponse> {
   const appConfig = await loadAppConfig();
   const productHtml = await readProductHtml(params.projectRoot).catch(() => "");
@@ -571,7 +575,8 @@ export async function buildDesignRuntime(params: {
     }),
     describeProgress: (event) => describeProgress(event, params.locale),
     onProgress: params.onProgress,
-    onMessage: params.onMessage
+    onMessage: params.onMessage,
+    onRaw: params.onRaw
   });
 
   const thread = codex.startThread(threadOptions);
@@ -589,6 +594,7 @@ export async function buildDesignRuntime(params: {
   let lastMessage = "";
 
   for await (const event of events) {
+    await params.onRaw?.(event);
     const progress = describeProgress(event, params.locale);
     if (progress) {
       await params.onProgress?.(progress);

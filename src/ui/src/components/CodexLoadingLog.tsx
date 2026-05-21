@@ -7,43 +7,21 @@ interface CodexLoadingProgressItem {
   status: "running" | "completed" | "failed";
 }
 
-function compact(value: string, maxLength = 160): string {
-  const normalized = value.replace(/\s+/g, " ").trim();
-  return normalized.length > maxLength ? `${normalized.slice(0, maxLength - 1)}…` : normalized;
+function rawEventTitle(value: string, index: number): string {
+  try {
+    const parsed = JSON.parse(value) as { type?: unknown; item?: { type?: unknown } };
+    return [parsed.type, parsed.item?.type].filter((item) => typeof item === "string").join(" · ") || `raw ${index + 1}`;
+  } catch {
+    return `raw ${index + 1}`;
+  }
 }
 
 function messageItem(message: string, index: number) {
-  const formatted = compact(message);
-  const match = /^(?<title>검색 중|도구 호출|명령 실행|파일 변경|작업 이벤트|작업 로그|Codex 응답|Search|Tool call|Command|File change|Work event|Work log):\s*(?<detail>.+)$/.exec(formatted);
-  if (match?.groups) {
-    return {
-      id: `message-${index}`,
-      title: match.groups.title,
-      detail: match.groups.detail
-    };
-  }
   return {
     id: `message-${index}`,
-    title: "Codex",
-    detail: formatted
+    title: rawEventTitle(message, index),
+    detail: message.trim()
   };
-}
-
-function mergeGrowingMessages(messages: string[]): string[] {
-  return messages.reduce<string[]>((items, message) => {
-    const trimmed = compact(message);
-    if (!trimmed) {
-      return items;
-    }
-    const previous = items.at(-1);
-    if (previous && trimmed.startsWith(previous)) {
-      return [...items.slice(0, -1), trimmed];
-    }
-    if (previous === trimmed) {
-      return items;
-    }
-    return [...items, trimmed];
-  }, []);
 }
 
 export function CodexLoadingLog(props: {
@@ -52,15 +30,16 @@ export function CodexLoadingLog(props: {
   emptyMessage: string;
 }) {
   const logRef = useRef<HTMLDivElement>(null);
-  const messages = mergeGrowingMessages(props.messages)
-    .slice(-20)
+  const messages = props.messages
+    .filter((message) => message.trim())
+    .slice(-40)
     .map(messageItem);
   const progressItems = props.progressItems.map((item) => ({
     id: `progress-${item.id}`,
     title: item.title,
-    detail: compact(item.detail)
+    detail: item.detail.trim()
   }));
-  const items = [...progressItems, ...messages].filter((item) => item.detail.trim()).slice(-30);
+  const items = [...progressItems, ...messages].filter((item) => item.detail.trim()).slice(-50);
   const itemSignature = items.map((item) => `${item.id}:${item.detail}`).join("\n");
 
   useEffect(() => {
@@ -77,12 +56,12 @@ export function CodexLoadingLog(props: {
         items.map((item) => (
           <div key={item.id}>
             <strong>{item.title}</strong>
-            <span>{item.detail}</span>
+            <pre>{item.detail}</pre>
           </div>
         ))
       ) : (
         <div>
-          <span>{props.emptyMessage}</span>
+          <pre>{props.emptyMessage}</pre>
         </div>
       )}
     </div>
