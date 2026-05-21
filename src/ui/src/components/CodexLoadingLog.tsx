@@ -1,28 +1,5 @@
 import { useEffect, useRef } from "react";
-
-interface CodexLoadingProgressItem {
-  id: string;
-  title: string;
-  detail: string;
-  status: "running" | "completed" | "failed";
-}
-
-function rawEventTitle(value: string, index: number): string {
-  try {
-    const parsed = JSON.parse(value) as { type?: unknown; item?: { type?: unknown } };
-    return [parsed.type, parsed.item?.type].filter((item) => typeof item === "string").join(" · ") || `raw ${index + 1}`;
-  } catch {
-    return `raw ${index + 1}`;
-  }
-}
-
-function messageItem(message: string, index: number) {
-  return {
-    id: `message-${index}`,
-    title: rawEventTitle(message, index),
-    detail: message.trim()
-  };
-}
+import { buildCodexLoadingLogItems, type CodexLoadingProgressItem } from "@/entities/codex/codex-loading-log";
 
 export function CodexLoadingLog(props: {
   progressItems: CodexLoadingProgressItem[];
@@ -30,16 +7,7 @@ export function CodexLoadingLog(props: {
   emptyMessage: string;
 }) {
   const logRef = useRef<HTMLDivElement>(null);
-  const messages = props.messages
-    .filter((message) => message.trim())
-    .slice(-40)
-    .map(messageItem);
-  const progressItems = props.progressItems.map((item) => ({
-    id: `progress-${item.id}`,
-    title: item.title,
-    detail: item.detail.trim()
-  }));
-  const items = [...progressItems, ...messages].filter((item) => item.detail.trim()).slice(-50);
+  const items = buildCodexLoadingLogItems(props.progressItems, props.messages);
   const itemSignature = items.map((item) => `${item.id}:${item.detail}`).join("\n");
 
   useEffect(() => {
@@ -54,13 +22,27 @@ export function CodexLoadingLog(props: {
     <div className="codex-loading-log" aria-label="Codex progress" ref={logRef}>
       {items.length ? (
         items.map((item) => (
-          <div key={item.id}>
-            <strong>{item.title}</strong>
-            <pre>{item.detail}</pre>
+          <div key={item.id} className={`codex-loading-log-item ${item.kind}`}>
+            {item.kind === "agent" ? (
+              <>
+                <span className="codex-loading-agent-icon" aria-hidden="true">{item.icon}</span>
+                <pre>{item.detail}</pre>
+              </>
+            ) : item.kind === "tool" ? (
+              <p>
+                <strong>{item.icon} {item.title}</strong>
+                <span>{item.detail}</span>
+              </p>
+            ) : (
+              <>
+                <strong>{item.title}</strong>
+                <pre>{item.detail}</pre>
+              </>
+            )}
           </div>
         ))
       ) : (
-        <div>
+        <div className="codex-loading-log-item raw">
           <pre>{props.emptyMessage}</pre>
         </div>
       )}

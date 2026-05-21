@@ -93,23 +93,58 @@
   scroll-behavior: smooth;
 }
 
-.codex-loading-log div {
+.codex-loading-log-item {
   display: grid;
   gap: 0.25rem;
   padding: 0.25rem 0;
 }
 
-.codex-loading-log strong {
+.codex-loading-log-item strong {
   color: var(--foreground);
   font-size: 0.8125rem;
   font-weight: 900;
 }
 
-.codex-loading-log pre {
+.codex-loading-log-item pre {
   margin: 0;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
   color: var(--muted-foreground);
   font-size: 0.8125rem;
   line-height: 1.45;
+}
+
+.codex-loading-log-item.tool {
+  border: 2px solid var(--border);
+  border-radius: 6px;
+  background: var(--panel);
+  padding: 0.75rem 0.85rem;
+}
+
+.codex-loading-log-item.tool p {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.55rem;
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+.codex-loading-log-item.agent {
+  width: min(100%, 46rem);
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel);
+  padding: 0.9rem 1rem;
+}
+
+.codex-loading-agent-icon {
+  color: var(--foreground);
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.codex-loading-log-item.agent pre {
+  color: var(--foreground);
 }
