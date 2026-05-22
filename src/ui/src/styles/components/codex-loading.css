@@ -183,12 +183,20 @@
 
 .codex-loading-log-item.tool p {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  align-items: center;
   gap: 0.35rem 0.55rem;
   margin: 0;
   color: var(--muted-foreground);
   font-size: 0.8125rem;
   line-height: 1.45;
+}
+
+.codex-loading-log-item.tool span:not(.codex-loading-status) {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .codex-loading-log-item.agent {

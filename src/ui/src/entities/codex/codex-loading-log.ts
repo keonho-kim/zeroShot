@@ -152,21 +152,6 @@ function itemStatus(event: RawCodexEvent | null, item: Record<string, unknown>):
   return "running";
 }
 
-function summarizeChanges(item: Record<string, unknown>): string {
-  const changes = Array.isArray(item.changes) ? item.changes : [];
-  return compact(changes
-    .map((change) => {
-      if (!change || typeof change !== "object") {
-        return "";
-      }
-      const record = change as Record<string, unknown>;
-      return [readString(record.kind), readString(record.path)].filter(Boolean).join(": ");
-    })
-    .filter(Boolean)
-    .slice(0, 4)
-    .join(", "));
-}
-
 function firstCommandToken(command: string): string {
   return command.trim().split(/\s+/)[0]?.replace(/^.*\//, "") ?? "";
 }
@@ -210,28 +195,37 @@ function commandLabel(command: string): { icon: string; title: string } {
   return { icon: "⌨️", title: "Command" };
 }
 
+function hostnameFromUrl(value: string): string {
+  try {
+    return new URL(value).hostname.replace(/^www\./, "");
+  } catch {
+    return compact(value);
+  }
+}
+
 function webSearchLabel(item: Record<string, unknown>): { icon: string; title: string; detail: string } {
   const action = readRecord(item.action);
   const actionType = readString(action?.type);
 
   if (actionType === "open_page") {
+    const url = readString(action?.url);
     return {
       icon: "📄",
       title: "Read web page",
-      detail: compact(readString(action?.url) || readString(item.query) || "Opening page")
+      detail: url ? hostnameFromUrl(url) : ""
     };
   }
   if (actionType === "find_in_page") {
     return {
       icon: "🔎",
       title: "Find in page",
-      detail: compact(readString(action?.pattern) || readString(item.query) || "Finding text")
+      detail: ""
     };
   }
   return {
     icon: "🌐",
     title: "Web search",
-    detail: compact(readString(item.query) || readString(action?.query) || "Searching the web")
+    detail: ""
   };
 }
 
@@ -245,11 +239,10 @@ function toolLabelAndDetail(item: Record<string, unknown>): { icon: string; titl
   if (type === "mcp_tool_call") {
     const server = readString(item.server);
     const tool = readString(item.tool) || readString(item.name) || "Tool";
-    const input = readString(item.input) || readString(item.arguments) || readString(item.status);
     return {
       icon: "🛠️",
       title: [server, tool].filter(Boolean).join("."),
-      detail: compact(input || "Running")
+      detail: ""
     };
   }
 
@@ -258,7 +251,7 @@ function toolLabelAndDetail(item: Record<string, unknown>): { icon: string; titl
     const label = commandLabel(command);
     return {
       ...label,
-      detail: compact(displayCommand(command) || readString(item.status) || "Running")
+      detail: ""
     };
   }
 
@@ -266,7 +259,7 @@ function toolLabelAndDetail(item: Record<string, unknown>): { icon: string; titl
     return {
       icon: "📝",
       title: "File change",
-      detail: summarizeChanges(item) || compact(readString(item.status) || "Inspecting changes")
+      detail: ""
     };
   }
 
@@ -274,7 +267,7 @@ function toolLabelAndDetail(item: Record<string, unknown>): { icon: string; titl
     return {
       icon: "🖼️",
       title: "View image",
-      detail: compact(readString(item.path) || "Opening image")
+      detail: ""
     };
   }
 
@@ -360,6 +353,10 @@ function upsert(items: CodexLoadingLogItem[], next: CodexLoadingLogItem): CodexL
   return items.map((item, index) => index === existingIndex ? next : item);
 }
 
+function hasVisibleContent(item: CodexLoadingLogItem): boolean {
+  return item.kind === "tool" || Boolean(item.detail.trim());
+}
+
 function progressForRawEvent(
   eventType: string,
   progressById: Map<string, CodexLoadingProgressItem>
@@ -400,7 +397,7 @@ export function buildCodexLoadingLogItems(
       .map((message, index) => rawMessageItem(message, index))
       .filter((item): item is CodexLoadingLogItem => Boolean(item))
       .reduce(upsert, items)
-      .filter((item) => item.detail.trim());
+      .filter(hasVisibleContent);
   }
 
   const progressById = new Map(progressItems.map((item) => [item.id, item]));
@@ -415,7 +412,7 @@ export function buildCodexLoadingLogItems(
     return rawItem ? upsert(withProgress, rawItem) : withProgress;
   }, []);
 
-  return nextItems.filter((item) => item.detail.trim());
+  return nextItems.filter(hasVisibleContent);
 }
 
 export function hasCodexThreadStarted(rawMessages: string[]): boolean {

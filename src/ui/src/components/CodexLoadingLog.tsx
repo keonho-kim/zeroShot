@@ -39,7 +39,7 @@ export function CodexLoadingLog(props: {
             ) : item.kind === "tool" ? (
               <p>
                 <strong>{item.icon} {item.title}</strong>
-                <span>{item.detail}</span>
+                {item.detail ? <span>{item.detail}</span> : null}
                 {item.status ? <span className={`codex-loading-status ${item.status}`}>{item.status}</span> : null}
               </p>
             ) : (

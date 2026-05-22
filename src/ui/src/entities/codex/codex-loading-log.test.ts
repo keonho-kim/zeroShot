@@ -123,10 +123,39 @@ describe("codex loading log model", () => {
       id: "tool-item_2",
       kind: "tool",
       title: "github.get_pull_request",
-      detail: "repo=zeroShot pr=13",
+      detail: "",
       status: "running",
       icon: "🛠️"
     }]);
+  });
+
+  test("shows only a site for opened web pages", () => {
+    const items = buildCodexLoadingLogItems([], [
+      JSON.stringify({
+        type: "item.completed",
+        item: {
+          id: "web_1",
+          type: "web_search",
+          action: {
+            type: "open_page",
+            url: "https://www.example.com/docs/codex"
+          }
+        }
+      }),
+      JSON.stringify({
+        type: "item.completed",
+        item: {
+          id: "web_2",
+          type: "web_search",
+          query: "codex sdk events"
+        }
+      })
+    ]);
+
+    expect(items.map((item) => [item.title, item.detail])).toEqual([
+      ["Read web page", "example.com"],
+      ["Web search", ""]
+    ]);
   });
 
   test("formats reasoning as a subdued user-facing item", () => {
@@ -167,7 +196,7 @@ describe("codex loading log model", () => {
     expect(items[0]).toMatchObject({
       id: "tool-cmd_1",
       status: "completed",
-      detail: "bun test"
+      detail: ""
     });
   });
 
@@ -256,8 +285,7 @@ describe("codex loading log model", () => {
       ["🔎", "Search files"],
       ["📁", "Browse files"]
     ]);
-    expect(items[2]?.detail).toBe("rg --files");
-    expect(items[3]?.detail).toBe("ls");
+    expect(items.every((item) => item.detail === "")).toBe(true);
   });
 
   test("detects when a Codex thread has started", () => {
