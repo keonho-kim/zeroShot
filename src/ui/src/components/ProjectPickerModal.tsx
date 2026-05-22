@@ -8,13 +8,14 @@ import { useI18n } from "@/lib/i18n";
 
 interface Props {
   open: boolean;
+  freshStart?: boolean;
   onClose: () => void;
   onProjectSelected?: (projectRoot: string) => void;
 }
 
-export function ProjectPickerModal({ open, onClose, onProjectSelected }: Props) {
+export function ProjectPickerModal({ open, freshStart = false, onClose, onProjectSelected }: Props) {
   const { t } = useI18n();
-  const tree = useProjectTreeController({ open, onClose, onProjectSelected });
+  const tree = useProjectTreeController({ open, freshStart, onClose, onProjectSelected });
   const browsingLabel = tree.currentPath ? t("projectPicker.browsing", { path: tree.currentPath }) : t("projectPicker.chooseStart");
 
   return (
@@ -66,7 +67,7 @@ export function ProjectPickerModal({ open, onClose, onProjectSelected }: Props) 
                   </span>
                 </div>
                 <ProjectTree
-                  projectRoot={tree.projectRoot}
+                  projectRoot={freshStart ? "" : tree.projectRoot}
                   currentPath={tree.currentPath}
                   entries={tree.currentEntries}
                   selectedPath={tree.selectedPath}

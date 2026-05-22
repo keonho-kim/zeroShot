@@ -11,10 +11,12 @@ function hasLoadedChildren(path: string): boolean {
 
 export function useProjectTreeController({
   open,
+  freshStart = false,
   onClose,
   onProjectSelected
 }: {
   open: boolean;
+  freshStart?: boolean;
   onClose: () => void;
   onProjectSelected?: (projectRoot: string) => void;
 }) {
@@ -60,21 +62,22 @@ export function useProjectTreeController({
     }
 
     setBootstrapRoots(settingsQuery.data.bootstrapRoots);
-    const initialPath = browserPath || settingsQuery.data.bootstrapRoots[0] || projectRoot || "";
+    const initialPath = browserPath || settingsQuery.data.bootstrapRoots[0] || (freshStart ? "" : projectRoot) || "";
     if (!browserPath && initialPath) {
       setProjectBrowserPath(initialPath);
-      setCandidateProjectPath(initialPath);
-      setSelectedBrowserEntryPath(candidateProjectPath || projectRoot || initialPath);
+      setCandidateProjectPath(freshStart ? "" : initialPath);
+      setSelectedBrowserEntryPath(freshStart ? "" : candidateProjectPath || projectRoot || initialPath);
       setProjectPickerHistory([initialPath]);
       setProjectPickerHistoryIndex(0);
       return;
     }
 
-    if (!selectedPath && (candidateProjectPath || projectRoot)) {
+    if (!freshStart && !selectedPath && (candidateProjectPath || projectRoot)) {
       setSelectedBrowserEntryPath(candidateProjectPath || projectRoot);
     }
   }, [
     open,
+    freshStart,
     settingsQuery.data,
     browserPath,
     candidateProjectPath,

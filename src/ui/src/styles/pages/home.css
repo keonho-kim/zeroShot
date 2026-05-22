@@ -15,8 +15,8 @@
   border: var(--border-strong) solid var(--border);
   border-radius: 1px;
   background:
-    linear-gradient(135deg, transparent 0 62%, rgb(255 79 163 / 72%) 62% 100%),
-    linear-gradient(90deg, var(--arcade-cyan) 0 42%, var(--arcade-yellow) 42% 78%, var(--arcade-green) 78% 100%);
+    linear-gradient(90deg, var(--arcade-cyan) 0 14px, transparent 14px calc(100% - 14px), var(--arcade-yellow) calc(100% - 14px) 100%),
+    linear-gradient(180deg, var(--panel) 0 calc(100% - 18px), var(--success-surface) calc(100% - 18px) 100%);
   box-shadow:
     calc(8px * var(--home-component-scale))
     calc(8px * var(--home-component-scale))
@@ -31,8 +31,8 @@
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(90deg, rgb(16 16 16 / 9%) 50%, transparent 50%),
-    linear-gradient(rgb(16 16 16 / 9%) 50%, transparent 50%);
+    linear-gradient(90deg, rgb(16 16 16 / 5%) 50%, transparent 50%),
+    linear-gradient(rgb(16 16 16 / 5%) 50%, transparent 50%);
   background-size: 10px 10px;
   pointer-events: none;
 }
@@ -73,8 +73,8 @@
   letter-spacing: 0;
   line-height: 0.88;
   text-shadow:
-    5px 5px 0 var(--panel),
-    9px 9px 0 var(--arcade-pink);
+    4px 4px 0 var(--warning-surface),
+    7px 7px 0 var(--arcade-cyan);
 }
 
 .landing-description {
@@ -110,27 +110,30 @@
 }
 
 .landing-action-button:nth-child(1):not(:disabled) {
-  background: var(--arcade-pink);
+  background: var(--info-surface);
   color: var(--foreground);
 }
 
 .landing-action-button:nth-child(2) {
-  background: var(--arcade-yellow);
+  background: var(--warning-surface);
   color: var(--foreground);
 }
 
 .landing-action-button:nth-child(3) {
-  background: var(--arcade-green);
+  background: var(--success-surface);
 }
 
 .landing-action-button:disabled {
-  background: var(--arcade-cyan);
-  color: var(--foreground);
-  opacity: 1;
+  border-color: rgb(16 16 16 / 55%);
+  background: color-mix(in srgb, var(--info-surface) 44%, var(--panel) 56%);
+  box-shadow: 2px 2px 0 rgb(16 16 16 / 38%);
+  color: color-mix(in srgb, var(--muted-foreground) 82%, var(--foreground) 18%);
+  cursor: not-allowed;
+  opacity: 0.68;
 }
 
 .landing-action-button:hover:not(:disabled) {
-  background: var(--arcade-pink);
+  background: var(--surface-hover);
   color: var(--foreground);
 }
 
@@ -140,10 +143,10 @@
 }
 
 .landing-login-check {
-  border: var(--border-strong) solid var(--border);
+  border: var(--border-strong) solid var(--arcade-cyan);
   border-radius: 999px;
   background: var(--panel);
-  color: var(--foreground);
+  color: #006fba;
   padding: 0.15rem;
 }
 

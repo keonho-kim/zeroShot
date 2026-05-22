@@ -10,23 +10,23 @@ export function HomePage() {
   const { t } = useI18n();
   const navigate = useNavigate();
   const authStatus = useAppStore((state) => state.authStatus);
-  const projectRoot = useAppStore((state) => state.projectRoot);
   const isProjectPickerOpen = useAppStore((state) => state.isProjectPickerOpen);
-  const candidateProjectPath = useAppStore((state) => state.candidateProjectPath);
-  const projectBrowserPath = useAppStore((state) => state.projectBrowserPath);
   const setProjectPickerOpen = useAppStore((state) => state.setProjectPickerOpen);
   const setProjectBrowserPath = useAppStore((state) => state.setProjectBrowserPath);
   const setCandidateProjectPath = useAppStore((state) => state.setCandidateProjectPath);
   const setSelectedBrowserEntryPath = useAppStore((state) => state.setSelectedBrowserEntryPath);
+  const setProjectPickerHistory = useAppStore((state) => state.setProjectPickerHistory);
+  const setProjectPickerHistoryIndex = useAppStore((state) => state.setProjectPickerHistoryIndex);
 
   useBodyClass("home-page");
 
   const authValid = authStatus?.valid === true;
   const openProjectPicker = () => {
-    const initialPath = projectRoot || candidateProjectPath;
     setProjectBrowserPath("");
-    setCandidateProjectPath(initialPath);
-    setSelectedBrowserEntryPath(initialPath);
+    setCandidateProjectPath("");
+    setSelectedBrowserEntryPath("");
+    setProjectPickerHistory([]);
+    setProjectPickerHistoryIndex(-1);
     setProjectPickerOpen(true);
   };
 
@@ -66,12 +66,10 @@ export function HomePage() {
       </section>
       <ProjectPickerModal
         open={isProjectPickerOpen}
+        freshStart
         onProjectSelected={() => navigate("/workspace")}
         onClose={() => {
           setProjectPickerOpen(false);
-          if (!projectBrowserPath) {
-            setCandidateProjectPath(projectRoot);
-          }
         }}
       />
     </div>
