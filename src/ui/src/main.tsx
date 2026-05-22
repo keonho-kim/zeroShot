@@ -12,6 +12,7 @@ import { translate, detectLocale } from "@/lib/i18n";
 import "@/styles/globals.css";
 
 const HomePage = lazy(() => import("@/pages/HomePage").then((module) => ({ default: module.HomePage })));
+const WorkspacePage = lazy(() => import("@/pages/WorkspacePage").then((module) => ({ default: module.WorkspacePage })));
 const LoginPage = lazy(() => import("@/pages/LoginPage").then((module) => ({ default: module.LoginPage })));
 const LogsPage = lazy(() => import("@/pages/LogsPage").then((module) => ({ default: module.LogsPage })));
 const ArchitectPage = lazy(() => import("@/pages/ArchitectPage").then((module) => ({ default: module.ArchitectPage })));
@@ -47,6 +48,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
               <Route index element={<Navigate to="/home" replace />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/home" element={<HomePage />} />
+              <Route path="/workspace" element={<WorkspacePage />} />
               <Route path="/build" element={<BuildPage />} />
               <Route path="/update" element={<UpdatePage />} />
               <Route path="/architect" element={<ArchitectPage />} />

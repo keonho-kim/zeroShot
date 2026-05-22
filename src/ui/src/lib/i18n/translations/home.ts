@@ -2,6 +2,16 @@ import { defineTranslations } from "@/lib/i18n/define-translations";
 
 export const homeTranslations = defineTranslations({
   en: {
+    "home.landingAria": "ZeroShot landing",
+    "home.landingKicker": "Codex workbench",
+    "home.landingDescription": "Pick a workspace, shape the product blueprint, and hand the build to Codex from one compact control deck.",
+    "home.primaryActions": "Primary actions",
+    "home.login": "Log in",
+    "home.loginNeeded": "Login needed",
+    "home.loginReady": "Logged in",
+    "home.loginComplete": "Logged in",
+    "home.start": "Start",
+    "home.workHistory": "Work history",
     "home.projectSlot": "Project",
     "home.noProject": "No project selected",
     "home.selectWorkspace": "Choose a workspace to start Architect, Makeover, Build, and Update.",
@@ -31,6 +41,16 @@ export const homeTranslations = defineTranslations({
     "home.logsReady": "Review project conversations, run reports, and rendered artifacts."
   },
   ko: {
+    "home.landingAria": "ZeroShot 랜딩",
+    "home.landingKicker": "Codex 워크벤치",
+    "home.landingDescription": "워크스페이스를 고르고, 제품 블루프린트를 만들고, Codex 빌드까지 한 화면에서 시작합니다.",
+    "home.primaryActions": "주요 작업",
+    "home.login": "로그인",
+    "home.loginNeeded": "로그인 필요",
+    "home.loginReady": "로그인됨",
+    "home.loginComplete": "로그인됨",
+    "home.start": "시작하기",
+    "home.workHistory": "작업 기록",
     "home.projectSlot": "프로젝트",
     "home.noProject": "선택된 프로젝트가 없습니다",
     "home.selectWorkspace": "워크스페이스를 선택하면 Architect, Makeover, Build, Update를 시작할 수 있습니다.",
@@ -59,6 +79,16 @@ export const homeTranslations = defineTranslations({
     "home.logsReady": "프로젝트별 대화, 실행 보고서, 렌더링 산출물을 확인합니다."
   },
   zh: {
+    "home.landingAria": "ZeroShot 首页",
+    "home.landingKicker": "Codex 工作台",
+    "home.landingDescription": "选择工作区，整理产品蓝图，并从同一个控制台启动 Codex 构建。",
+    "home.primaryActions": "主要操作",
+    "home.login": "登录",
+    "home.loginNeeded": "需要登录",
+    "home.loginReady": "已登录",
+    "home.loginComplete": "已登录",
+    "home.start": "开始",
+    "home.workHistory": "工作记录",
     "home.projectSlot": "项目",
     "home.noProject": "尚未选择项目",
     "home.selectWorkspace": "选择一个工作区后，就可以开始 Architect、Makeover、Build 和 Update。",
