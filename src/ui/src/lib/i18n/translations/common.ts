@@ -31,7 +31,7 @@ export const commonTranslations = defineTranslations({
     "common.selected": "Selected",
     "common.retry": "Try again",
     "common.codexThreadRunning": "Working on your request",
-    "app.loadingAuth": "Checking your Codex sign-in...",
+    "app.loadingAuth": "Checking your sign-in...",
     "app.routeLoading": "Loading...",
     "route.loading": "Loading..."
   },
@@ -64,7 +64,7 @@ export const commonTranslations = defineTranslations({
     "common.select": "선택",
     "common.selected": "선택됨",
     "common.codexThreadRunning": "요청을 처리하고 있어요",
-    "app.loadingAuth": "Codex 로그인 상태를 확인하고 있습니다..."
+    "app.loadingAuth": "로그인 상태를 확인하고 있습니다..."
   },
   zh: {
     "common.home": "首页",
@@ -94,7 +94,7 @@ export const commonTranslations = defineTranslations({
     "common.select": "选择",
     "common.selected": "已选择",
     "common.codexThreadRunning": "正在处理你的请求",
-    "app.loadingAuth": "正在检查 Codex 登录状态..."
+    "app.loadingAuth": "正在检查登录状态..."
   },
   ja: {
     "common.home": "ホーム",
