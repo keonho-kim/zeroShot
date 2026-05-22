@@ -9,7 +9,15 @@ function hasLoadedChildren(path: string): boolean {
   return Object.hasOwn(useAppStore.getState().treeChildrenByPath, path);
 }
 
-export function useProjectTreeController({ open, onClose }: { open: boolean; onClose: () => void }) {
+export function useProjectTreeController({
+  open,
+  onClose,
+  onProjectSelected
+}: {
+  open: boolean;
+  onClose: () => void;
+  onProjectSelected?: (projectRoot: string) => void;
+}) {
   const [loadErrors, setLoadErrors] = useState<Record<string, string>>({});
   const projectRoot = useAppStore((state) => state.projectRoot);
   const candidateProjectPath = useAppStore((state) => state.candidateProjectPath);
@@ -123,6 +131,7 @@ export function useProjectTreeController({ open, onClose }: { open: boolean; onC
       setProjectRoot(path);
       setProjectState(null);
       onClose();
+      onProjectSelected?.(path);
     }
   });
 

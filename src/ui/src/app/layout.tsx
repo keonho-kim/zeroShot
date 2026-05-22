@@ -41,13 +41,14 @@ export function AppLayout() {
 
   const authValid = authQuery.data?.valid === true;
   const isLoginRoute = location.pathname === "/login";
+  const isHomeRoute = location.pathname === "/home";
   const isRootRoute = location.pathname === "/";
 
   if (isRootRoute) {
-    return <Navigate to={authValid ? "/home" : "/login"} replace />;
+    return <Navigate to="/home" replace />;
   }
 
-  if (!authValid && !isLoginRoute) {
+  if (!authValid && !isLoginRoute && !isHomeRoute) {
     return <Navigate to="/login" replace />;
   }
 
