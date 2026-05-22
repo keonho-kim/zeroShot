@@ -319,7 +319,7 @@ function describeProductHtmlProgress(event: ThreadEvent, locale: string): Archit
     reasoningTitle: progressText(locale, "제품 문서 구조 설계", "Structuring the product document"),
     reasoningDetail: progressText(locale, "선택한 답변을 기능 명세, 화면 흐름, 수용 기준 섹션으로 나누고 있습니다.", "Turning selected answers into feature specs, screen flows, and acceptance criteria."),
     agentTitle: progressText(locale, "PRODUCT.html 응답 작성", "Writing PRODUCT.html response"),
-    agentDetail: progressText(locale, "MAKEOVER와 BUILD가 참고할 제품 블루프린트 HTML과 상태 메시지를 작성하고 있습니다.", "Writing the product blueprint HTML and status message for Makeover and Build.")
+    agentDetail: progressText(locale, "DESIGN과 BUILD가 참고할 제품 블루프린트 HTML과 상태 메시지를 작성하고 있습니다.", "Writing the product blueprint HTML and status message for Design and Build.")
   });
 }
 

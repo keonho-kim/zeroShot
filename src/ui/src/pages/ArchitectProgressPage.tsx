@@ -564,7 +564,7 @@ export function ArchitectProgressPage() {
                 disabled={createBlueprintMutation.isPending}
                 onClick={() => navigate("/makeover", { state: { fromArchitect: true } })}
               >
-                MAKEOVER
+                DESIGN
               </Button>
               <Button variant="outline" onClick={() => setContinuePromptOpen(false)}>{t("common.cancel")}</Button>
             </div>

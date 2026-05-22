@@ -14,7 +14,9 @@
   gap: calc(2rem * var(--home-component-scale));
   border: var(--border-strong) solid var(--border);
   border-radius: 1px;
-  background: var(--arcade-yellow);
+  background:
+    linear-gradient(135deg, transparent 0 62%, rgb(255 79 163 / 72%) 62% 100%),
+    linear-gradient(90deg, var(--arcade-cyan) 0 42%, var(--arcade-yellow) 42% 78%, var(--arcade-green) 78% 100%);
   box-shadow:
     calc(8px * var(--home-component-scale))
     calc(8px * var(--home-component-scale))
@@ -29,8 +31,8 @@
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(90deg, rgb(16 16 16 / 10%) 50%, transparent 50%),
-    linear-gradient(rgb(16 16 16 / 10%) 50%, transparent 50%);
+    linear-gradient(90deg, rgb(16 16 16 / 9%) 50%, transparent 50%),
+    linear-gradient(rgb(16 16 16 / 9%) 50%, transparent 50%);
   background-size: 10px 10px;
   pointer-events: none;
 }
@@ -64,16 +66,22 @@
   font-weight: 950;
   letter-spacing: 0;
   line-height: 0.88;
-  text-shadow: 5px 5px 0 var(--arcade-cyan);
+  text-shadow:
+    5px 5px 0 var(--panel),
+    9px 9px 0 var(--arcade-pink);
 }
 
 .landing-description {
+  border: var(--border-strong) solid var(--border);
+  background: var(--panel);
+  box-shadow: var(--shadow-button);
   color: var(--foreground);
   font-size: 1rem;
   font-weight: 750;
   line-height: 1.65;
   margin-top: 1.25rem;
   max-width: 42rem;
+  padding: 1rem;
 }
 
 .landing-actions {
@@ -87,6 +95,20 @@
   justify-content: flex-start;
   min-height: 3.6rem;
   width: 100%;
+}
+
+.landing-action-button:nth-child(1):not(:disabled) {
+  background: var(--arcade-pink);
+  color: var(--foreground);
+}
+
+.landing-action-button:nth-child(2) {
+  background: var(--foreground);
+  color: var(--background);
+}
+
+.landing-action-button:nth-child(3) {
+  background: var(--arcade-green);
 }
 
 .landing-login-check {

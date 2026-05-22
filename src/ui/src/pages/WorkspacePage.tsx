@@ -161,7 +161,7 @@ export function WorkspacePage() {
           onClick={() => navigate("/architect")}
         />
         <ActionCard
-          title="MAKEOVER"
+          title="DESIGN"
           eyebrow={t("home.designRuntime")}
           description={designDisabled
             ? t("home.designNoProduct")

@@ -479,11 +479,11 @@ export function DesignPage() {
 
   return (
     <div className={cn("builder-shell design-page", makeoverStep === "workbench" && "design-page-workbench-wide")}>
-      <PageHeader title="MAKEOVER" projectRoot={projectRoot} />
+      <PageHeader title="DESIGN" projectRoot={projectRoot} />
 
       <div className="design-workbench">
         {makeoverStep !== "loading" ? (
-          <div className="makeover-step-tabs" role="tablist" aria-label="Makeover pages">
+          <div className="makeover-step-tabs" role="tablist" aria-label="Design pages">
             <Button variant={makeoverStep === "brief" ? "default" : "outline"} onClick={() => setMakeoverStep("brief")}>1. REQUEST</Button>
             <Button variant={makeoverStep === "workbench" ? "default" : "outline"} disabled={!hasDesignHtml} onClick={() => setMakeoverStep("workbench")}>2. DESIGN WORKBENCH</Button>
             <Button variant={makeoverStep === "preview" ? "default" : "outline"} disabled={!designResult} onClick={() => setMakeoverStep("preview")}>3. BRIEF PREVIEW</Button>

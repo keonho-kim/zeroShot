@@ -37,7 +37,7 @@ describe("design service", () => {
     expect(prompt).toContain("Do not inspect bootstrap scaffold, source code, DESIGN output, runs, or unrelated project folders");
   });
 
-  test("starts design runtime prompt as a goal and keeps MAKEOVER scoped to ARCHITECT plus selected resources", () => {
+  test("starts design runtime prompt as a goal and keeps DESIGN scoped to ARCHITECT plus selected resources", () => {
     const prompt = buildDesignPrompt({
       mode: "codex",
       goal: "Make it feel more polished.",
@@ -77,11 +77,11 @@ describe("design service", () => {
         { label: "Implement", detail: "Apply the component states in code.", owner: "codex" }
       ],
       artifacts: [
-        { path: "DESIGN/index.html", type: "text/html", title: "Makeover entry", description: "Interactive UI." },
+        { path: "DESIGN/index.html", type: "text/html", title: "Design entry", description: "Interactive UI." },
         { path: "DESIGN/components/cards.html", type: "text/html", title: "Cards", description: "Component partial." }
       ],
       files: [
-        { path: "DESIGN/index.html", type: "text/html", title: "Makeover entry", content: "<!doctype html><html><body>Design</body></html>" }
+        { path: "DESIGN/index.html", type: "text/html", title: "Design entry", content: "<!doctype html><html><body>Design</body></html>" }
       ]
     };
 

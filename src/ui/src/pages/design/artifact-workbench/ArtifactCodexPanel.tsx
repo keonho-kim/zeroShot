@@ -24,7 +24,7 @@ export function ArtifactCodexPanel(props: {
       <div className="design-codex-chat">
         <span>Codex</span>
         <strong>{t("artifact.chatTitle")}</strong>
-        <div className="design-chat-thread" role="log" aria-live="polite" aria-label="Makeover chat messages">
+        <div className="design-chat-thread" role="log" aria-live="polite" aria-label="Design chat messages">
           {props.chatMessages.length ? props.chatMessages.map((message) => (
             <article className={`design-chat-message ${message.role}`} key={message.id}>
               <div className="design-chat-message-meta">

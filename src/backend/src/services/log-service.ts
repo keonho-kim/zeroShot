@@ -130,7 +130,7 @@ export async function listWorkLogEntries(projectRoot: string): Promise<WorkLogEn
   }));
   const designEntries = designSessions.map((session) => ({
     id: entryId("makeover", session.id),
-    label: "MAKEOVER" as const,
+    label: "DESIGN" as const,
     title: session.title,
     summary: session.summary,
     createdAt: session.createdAt
@@ -191,20 +191,20 @@ export async function readWorkLogEntryDetail(projectRoot: string, id: string): P
 
   const session = (await listStoredDesignSessions(projectRoot)).find((item) => item.id === value);
   if (!session) {
-    throw Object.assign(new Error("MAKEOVER log entry not found."), { statusCode: 404 });
+    throw Object.assign(new Error("DESIGN log entry not found."), { statusCode: 404 });
   }
   const designHtml = await readFile(join(projectRoot, designEntryPath), "utf8").catch(() => "");
   const response = JSON.parse(session.responseJson) as { chatMessage?: string; designMarkdown?: string };
   return {
     summary: {
       id,
-      label: "MAKEOVER",
+      label: "DESIGN",
       title: session.title,
       summary: session.summary,
       createdAt: session.createdAt
     },
     documents: {
-      "conversation.html": sessionHtml("MAKEOVER", session.title, session.summary, [
+      "conversation.html": sessionHtml("DESIGN", session.title, session.summary, [
         ["Assistant message", response.chatMessage ?? ""],
         ["Design brief", response.designMarkdown ?? ""]
       ]),

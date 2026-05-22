@@ -12,7 +12,7 @@ export function DesignTimeline({ items }: { items: DesignTimelineItem[] }) {
     <Card className="architect-timeline" aria-label="Design runtime progress">
       <div className="timeline-heading">
         <p className="decision-kicker">Progress</p>
-        <h2>MAKEOVER를 실행하고 있습니다.</h2>
+        <h2>DESIGN을 실행하고 있습니다.</h2>
         <div className="design-wave-heading" aria-hidden="true"><i /><i /><i /></div>
       </div>
       <div className="timeline-list">

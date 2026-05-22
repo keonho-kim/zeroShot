@@ -121,7 +121,7 @@ export interface RunDetail {
   documents: Record<string, string>;
 }
 
-export type WorkLogLabel = "ARCHITECT" | "MAKEOVER" | "BUILD" | "UPDATE";
+export type WorkLogLabel = "ARCHITECT" | "DESIGN" | "BUILD" | "UPDATE";
 
 export interface WorkLogProjectSummary {
   projectRoot: string;

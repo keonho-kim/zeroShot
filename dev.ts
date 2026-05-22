@@ -1,6 +1,7 @@
 #!/usr/bin/env bun
 import { spawn, spawnSync, type ChildProcess } from "node:child_process";
 import { mkdir, readFile, rm, stat, writeFile } from "node:fs/promises";
+import { createConnection } from "node:net";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 
@@ -20,6 +21,11 @@ const devResourceRoots = {
   design_systems: join(repoRoot, "system-asseets", "design", "source-files", "design-systems")
 };
 
+interface DevServerEndpoint {
+  host: string;
+  port: number;
+}
+
 async function pathExists(path: string): Promise<boolean> {
   return readFile(path).then(() => true).catch(() => false);
 }
@@ -32,6 +38,16 @@ function readResourceRoot(raw: string, key: keyof typeof devResourceRoots): stri
   const section = /(?:^|\n)\[resource_roots\]\n(?<body>[\s\S]*?)(?=\n\[|$)/.exec(raw)?.groups?.body ?? "";
   const value = new RegExp(`^\\s*${key}\\s*=\\s*["'](?<value>[^"']*)["']`, "m").exec(section)?.groups?.value;
   return value ?? "";
+}
+
+function readDevServerEndpoint(raw: string): DevServerEndpoint {
+  const host = /^host\s*=\s*["'](?<value>[^"']+)["']/m.exec(raw)?.groups?.value ?? "127.0.0.1";
+  const rawPort = /^port\s*=\s*(?<value>[0-9_]+)/m.exec(raw)?.groups?.value?.replaceAll("_", "") ?? "32575";
+  const port = Number.parseInt(rawPort, 10);
+  return {
+    host,
+    port: Number.isFinite(port) ? port : 32575
+  };
 }
 
 function quoteTomlString(value: string): string {
@@ -150,7 +166,7 @@ function stopAll(signal: NodeJS.Signals = "SIGTERM") {
   }
 }
 
-function start(spec: ProcSpec) {
+function start(spec: ProcSpec): ChildProcess {
   const child = spawn(spec.command, spec.args, {
     stdio: ["ignore", "pipe", "pipe"],
     env: process.env
@@ -173,6 +189,42 @@ function start(spec: ProcSpec) {
     stopAll();
     process.exitCode = 1;
   });
+
+  return child;
+}
+
+async function canConnect(endpoint: DevServerEndpoint): Promise<boolean> {
+  return new Promise((resolve) => {
+    const socket = createConnection(endpoint, () => {
+      socket.end();
+      resolve(true);
+    });
+    socket.once("error", () => {
+      socket.destroy();
+      resolve(false);
+    });
+    socket.setTimeout(250, () => {
+      socket.destroy();
+      resolve(false);
+    });
+  });
+}
+
+async function waitForBackend(endpoint: DevServerEndpoint): Promise<void> {
+  const startedAt = Date.now();
+  const timeoutMs = 15_000;
+
+  while (!shuttingDown) {
+    if (await canConnect(endpoint)) {
+      return;
+    }
+
+    if (Date.now() - startedAt > timeoutMs) {
+      stopAll();
+      throw new Error(`backend did not start on ${endpoint.host}:${endpoint.port}`);
+    }
+    await new Promise((resolve) => setTimeout(resolve, 150));
+  }
 }
 
 process.on("SIGINT", () => {
@@ -185,6 +237,7 @@ process.on("SIGTERM", () => {
 
 const devConfigPath = await ensureDevConfig();
 const localCliEntry = await ensureLocalCliEntry();
+const devServerEndpoint = readDevServerEndpoint(await readFile(devConfigPath, "utf8"));
 process.env.ZEROSHOT_APP_CONFIG = devConfigPath;
 process.env.ZEROSHOT_APP_CLI_ENTRY = localCliEntry;
 process.stdout.write(`[dev] using config: ${devConfigPath}\n`);
@@ -196,6 +249,8 @@ start({
   command: "bun",
   args: ["run", "dev:server"]
 });
+
+await waitForBackend(devServerEndpoint);
 
 start({
   name: "frontend",

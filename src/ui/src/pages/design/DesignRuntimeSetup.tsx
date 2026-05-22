@@ -150,7 +150,7 @@ export function DesignRuntimeSetup(props: {
     <>
       <Card className="design-console">
         <div className="home-console-topline">
-          <span>MAKEOVER</span>
+          <span>DESIGN</span>
           <span>{designResultStatus(props.designResult)}</span>
         </div>
         <div className="agent-panel-heading">

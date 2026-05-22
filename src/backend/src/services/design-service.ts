@@ -277,7 +277,7 @@ function describeProgress(event: ThreadEvent, locale: string): DesignProgressEve
     return {
       id: "complete",
       title: progressText(locale, "완료", "Done"),
-      detail: progressText(locale, "INTERACTIVE CANVAS로 저장할 MAKEOVER 산출물을 준비했습니다.", "Prepared the MAKEOVER artifact for INTERACTIVE CANVAS."),
+      detail: progressText(locale, "INTERACTIVE CANVAS로 저장할 DESIGN 산출물을 준비했습니다.", "Prepared the DESIGN artifact for INTERACTIVE CANVAS."),
       status: "completed"
     };
   }
@@ -434,7 +434,7 @@ export async function recommendDesignResources(params: {
     thread: codex.startThread({ ...threadOptions, modelReasoningEffort: "low" satisfies ModelReasoningEffort }),
     prompt: visiblePreludePrompt({
       locale: params.locale,
-      workflow: "MAKEOVER recommendation",
+      workflow: "DESIGN recommendation",
       toolGuidance: makeoverArchitectOnlyToolGuidance,
       reviewGuidance: makeoverArchitectOnlyReviewGuidance,
       task: [
@@ -571,7 +571,7 @@ export async function buildDesignRuntime(params: {
     thread: codex.startThread({ ...threadOptions, modelReasoningEffort: "low" satisfies ModelReasoningEffort }),
     prompt: visiblePreludePrompt({
       locale: params.locale,
-      workflow: "MAKEOVER runtime",
+      workflow: "DESIGN runtime",
       toolGuidance: makeoverArchitectOnlyToolGuidance,
       reviewGuidance: makeoverArchitectOnlyReviewGuidance,
       task: [

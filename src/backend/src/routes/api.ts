@@ -618,7 +618,7 @@ router.put("/projects/design-artifact", asyncHandler(async (req: Request, res: R
     await upsertArtifactManifest(projectRoot, [{
       path: file.path,
       type: "text/html",
-      title: "DESIGN MAKEOVER",
+      title: "DESIGN",
       entry: true
     }]);
     await appendAppEvent("design_artifact_saved", {
