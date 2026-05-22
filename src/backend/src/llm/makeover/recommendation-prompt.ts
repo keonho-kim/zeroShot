@@ -34,6 +34,8 @@ export function buildRecommendationPrompt(params: {
     "",
     "Recommendation criteria:",
     "- Use ARCHITECT/PRODUCT.html as the primary product contract.",
+    "- Use optional supporting files under ARCHITECT/ only when they clarify product planning.",
+    "- Do not inspect bootstrap scaffold, source code, DESIGN output, runs, or unrelated project folders.",
     "- Match the product's target user, workflow density, interaction style, and content shape.",
     "- Prefer polished, modern product-grade UI/UX over generic templates.",
     "- Skills are available read-only context, but are not user-selectable.",

@@ -7,6 +7,15 @@ import { textByLocale } from "@backend/i18n/locale.js";
 import { describeCodexProgress } from "@backend/services/codex-progress-service.js";
 import { compactVisibleContext, streamVisibleCodexPrelude, visiblePreludePrompt } from "@backend/services/codex-visible-stream-service.js";
 
+const architectEmptyProjectToolGuidance = [
+  "This ARCHITECT workflow is for a completely empty project.",
+  "Do not inspect local workspace files, browse local directories, or run local file/search commands such as pwd, ls, find, rg, cat, sed, head, or tree.",
+  "There are no existing source files, README files, PRODUCT/ARCHITECT/DESIGN files, or package metadata to review.",
+  "Use the user's brief directly, and actively use web search or web page reading when external product-planning context can improve the decisions."
+].join(" ");
+
+const architectEmptyProjectReviewGuidance = "Describe the user brief, external product references, workflow similarities, product-planning strengths, or decision axis you reviewed. Do not mention local files or workspace inspection.";
+
 const architectDecisionSchema = {
   type: "object",
   properties: {
@@ -74,16 +83,38 @@ const architectProductHtmlSchema = {
   type: "object",
   properties: {
     chatMessage: { type: "string" },
-    html: { type: "string" }
+    files: {
+      type: "array",
+      minItems: 1,
+      maxItems: 8,
+      items: {
+        type: "object",
+        properties: {
+          path: { type: "string" },
+          type: { type: "string" },
+          title: { type: "string" },
+          content: { type: "string" }
+        },
+        required: ["path", "type", "title", "content"],
+        additionalProperties: false
+      }
+    }
   },
-  required: ["chatMessage", "html"],
+  required: ["chatMessage", "files"],
   additionalProperties: false
 };
 
 const architectProductHtmlResponseSchema = z.object({
   chatMessage: z.string().trim().min(1),
-  html: z.string().trim().min(1)
+  files: z.array(z.object({
+    path: z.string().trim().min(1),
+    type: z.string().trim().min(1),
+    title: z.string().trim().min(1),
+    content: z.string().trim().min(1)
+  })).min(1).max(8)
 });
+
+export type ArchitectProductFile = z.infer<typeof architectProductHtmlResponseSchema>["files"][number];
 
 function omakaseOption(locale: string): ArchitectDecisionResponse["decisions"][number]["options"][number] {
   return {
@@ -328,7 +359,7 @@ export async function buildArchitectDecisions(params: {
       workflow: "ARCHITECT empty workspace check",
       task: [
         "This ARCHITECT run is for a completely empty project. There are no existing source, README, PRODUCT, ARCHITECT, DESIGN, or package files to inspect.",
-        "Use at most lightweight read-only local commands to confirm the empty workspace, then move on from the user's brief.",
+        "Do not run local file or directory inspection commands. Continue from the user's brief and external product-planning research.",
         "",
         compactVisibleContext(params.goal)
       ].join("\n")
@@ -351,7 +382,9 @@ export async function buildArchitectDecisions(params: {
       prompt: visiblePreludePrompt({
         locale: params.locale,
         workflow: workNote.workflow,
-        task: workNote.task
+        task: workNote.task,
+        toolGuidance: architectEmptyProjectToolGuidance,
+        reviewGuidance: architectEmptyProjectReviewGuidance
       }),
       describeProgress: (event) => event.type === "turn.completed" ? null : describeProgress(event, params.locale),
       onProgress: params.onProgress,
@@ -412,7 +445,7 @@ export async function buildArchitectProductHtml(params: {
   onProgress?: (event: ArchitectProgressEvent) => void | Promise<void>;
   onMessage?: (message: string) => void | Promise<void>;
   onRaw?: (event: ThreadEvent) => void | Promise<void>;
-}): Promise<string> {
+}): Promise<ArchitectProductFile[]> {
   const codex = new Codex();
   const threadOptions = {
     workingDirectory: params.projectRoot,
@@ -431,6 +464,8 @@ export async function buildArchitectProductHtml(params: {
     prompt: visiblePreludePrompt({
       locale: params.locale,
       workflow: "ARCHITECT PRODUCT.html",
+      toolGuidance: architectEmptyProjectToolGuidance,
+      reviewGuidance: architectEmptyProjectReviewGuidance,
       task: [
         "Write the product blueprint HTML from the user's brief and selected decisions.",
         "",
@@ -481,5 +516,8 @@ export async function buildArchitectProductHtml(params: {
   }
 
   const parsed = architectProductHtmlResponseSchema.parse(JSON.parse(finalResponse));
-  return parsed.html;
+  if (!parsed.files.some((file) => file.path === "ARCHITECT/PRODUCT.html")) {
+    throw new Error("Architect product response did not return ARCHITECT/PRODUCT.html.");
+  }
+  return parsed.files;
 }

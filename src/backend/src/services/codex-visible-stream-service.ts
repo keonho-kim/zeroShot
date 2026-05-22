@@ -17,6 +17,8 @@ export function visiblePreludePrompt(params: {
   locale: string;
   workflow: string;
   task: string;
+  toolGuidance?: string;
+  reviewGuidance?: string;
 }): string {
   const language = textByLocale(params.locale, {
     ko: "Korean",
@@ -30,11 +32,11 @@ export function visiblePreludePrompt(params: {
   return [
     `You are starting the ${params.workflow} workflow.`,
     `Respond in ${language}.`,
-    "Use available read-only tools broadly when they can improve accuracy: inspect workspace files, product/design documents, source structure, provided resource context, or web/search tools available to you.",
+    params.toolGuidance ?? "Use available read-only tools broadly when they can improve accuracy: inspect workspace files, product/design documents, source structure, provided resource context, or web/search tools available to you.",
     "Do not edit files or make persistent changes.",
     "Write one short user-facing work note after any useful inspection.",
     "Keep the note to one or two sentences. Do not list final choices or full option sets in this note.",
-    "Describe the concrete product files, UI artifacts, implementation context, or decision axis you just reviewed.",
+    params.reviewGuidance ?? "Describe the concrete product files, UI artifacts, implementation context, or decision axis you just reviewed.",
     "Do not include local absolute paths or Markdown links. Refer to files by short names such as README.md.",
     "Do not output JSON, code fences, final artifacts, or hidden reasoning.",
     "Keep the note concise and natural.",

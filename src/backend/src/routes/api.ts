@@ -6,7 +6,7 @@ import { loadCodexSettings, readProjectCodexSettings, saveCodexSettings, savePro
 import { assertPathWithinRoots, assertProjectRootWithinRoots, isWithin, listDirectoryEntries } from "@backend/core/path-guards.js";
 import { createSseStream } from "@backend/core/sse.js";
 import { readAuthStatus, saveAuthFile } from "@backend/services/auth-service.js";
-import { buildArchitectDecisions, buildArchitectProductHtml, type ArchitectProgressEvent } from "@backend/services/architect-service.js";
+import { buildArchitectDecisions, buildArchitectProductHtml, type ArchitectProductFile, type ArchitectProgressEvent } from "@backend/services/architect-service.js";
 import { readLatestDesignSession, readProjectSettings, recordArchitectSession, recordDesignSession, saveProjectSettings } from "@backend/services/app-storage-service.js";
 import { inferBootstrapRequest, runBootstrap } from "@backend/services/bootstrap-service.js";
 import { buildDesignRuntime, recommendDesignResources } from "@backend/services/design-service.js";
@@ -26,6 +26,32 @@ const router: Router = express.Router();
 
 function asyncHandler(handler: RequestHandler): RequestHandler {
   return (req: Request, res: Response, next: NextFunction) => Promise.resolve(handler(req, res, next)).catch(next);
+}
+
+async function saveArchitectProductFiles(projectRoot: string, files: ArchitectProductFile[]) {
+  for (const file of files) {
+    if (file.path !== "ARCHITECT/PRODUCT.html"
+      && !file.path.startsWith("ARCHITECT/pages/")
+      && !file.path.startsWith("ARCHITECT/components/")
+      && !file.path.startsWith("ARCHITECT/assets/")) {
+      throw new Error(`Architect product returned a file outside ARCHITECT/: ${file.path}`);
+    }
+    await writeArtifactFile(projectRoot, file.path, file.content);
+  }
+
+  const entry = await readProductHtmlSnapshot(projectRoot);
+  await upsertArtifactManifest(projectRoot, files.map((file) => ({
+    path: file.path,
+    type: file.type,
+    title: file.title,
+    entry: file.path === "ARCHITECT/PRODUCT.html"
+  })));
+  await appendAppEvent("product_artifact_saved", {
+    projectRoot,
+    path: entry.path,
+    etag: entry.etag
+  });
+  return entry;
 }
 
 async function getValidatedProjectRoot(projectRoot: string): Promise<string> {
@@ -451,7 +477,7 @@ router.post("/architect/product-html", asyncHandler(async (req: Request, res: Re
 
   try {
     const appConfig = await loadAppConfig();
-    const html = await buildArchitectProductHtml({
+    const files = await buildArchitectProductHtml({
       projectRoot,
       userBrief: body.userBrief.trim(),
       decisionSet: body.decisionSet as Parameters<typeof buildArchitectProductHtml>[0]["decisionSet"],
@@ -467,18 +493,7 @@ router.post("/architect/product-html", asyncHandler(async (req: Request, res: Re
         includeCatalogSummary: true
       })
     });
-    const file = await writeProductHtmlSnapshot(projectRoot, html);
-    await upsertArtifactManifest(projectRoot, [{
-      path: file.path,
-      type: "text/html",
-      title: "PRODUCT BLUEPRINT",
-      entry: true
-    }]);
-    await appendAppEvent("product_artifact_saved", {
-      projectRoot,
-      path: file.path,
-      etag: file.etag
-    });
+    const file = await saveArchitectProductFiles(projectRoot, files);
     res.json(file);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -514,7 +529,7 @@ router.post("/architect/product-html/stream", asyncHandler(async (req: Request, 
 
   try {
     const appConfig = await loadAppConfig();
-    const html = await buildArchitectProductHtml({
+    const files = await buildArchitectProductHtml({
       projectRoot,
       userBrief: body.userBrief.trim(),
       decisionSet: body.decisionSet as Parameters<typeof buildArchitectProductHtml>[0]["decisionSet"],
@@ -533,18 +548,7 @@ router.post("/architect/product-html/stream", asyncHandler(async (req: Request, 
       onMessage: (message) => stream.write("message", { message }),
       onRaw: (event) => stream.write("raw", event)
     });
-    const file = await writeProductHtmlSnapshot(projectRoot, html);
-    await upsertArtifactManifest(projectRoot, [{
-      path: file.path,
-      type: "text/html",
-      title: "PRODUCT BLUEPRINT",
-      entry: true
-    }]);
-    await appendAppEvent("product_artifact_saved", {
-      projectRoot,
-      path: file.path,
-      etag: file.etag
-    });
+    const file = await saveArchitectProductFiles(projectRoot, files);
     await stream.write("complete", { file });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

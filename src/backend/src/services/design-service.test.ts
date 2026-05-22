@@ -1,4 +1,6 @@
 import { describe, expect, test } from "bun:test";
+import { buildDesignPrompt } from "@backend/llm/makeover/prompt";
+import { buildRecommendationPrompt } from "@backend/llm/makeover/recommendation-prompt";
 import { composeDesignMarkdown, extractDesignChatMessage, validateDesignRecommendations } from "@backend/services/design-service";
 import type { DesignRuntimeResponse, ResourceManifest } from "@backend/types";
 
@@ -16,6 +18,44 @@ function resource(id: string): ResourceManifest {
 }
 
 describe("design service", () => {
+  test("keeps recommendation prompt as question flow and limits product evidence to ARCHITECT outputs", () => {
+    const catalog = {
+      skills: [resource("skill-a")],
+      designSystems: ["system-a", "system-b", "system-c", "system-d", "system-e"].map(resource),
+      designTemplates: ["template-a", "template-b", "template-c", "template-d", "template-e"].map(resource)
+    };
+    const prompt = buildRecommendationPrompt({
+      locale: "en",
+      productHtml: "<html>Product</html>",
+      architectContext: "ARCHITECT/pages/workflow.html",
+      catalog
+    });
+
+    expect(prompt.startsWith("/goal")).toBe(false);
+    expect(prompt).toContain("Use ARCHITECT/PRODUCT.html as the primary product contract");
+    expect(prompt).toContain("Use optional supporting files under ARCHITECT/");
+    expect(prompt).toContain("Do not inspect bootstrap scaffold, source code, DESIGN output, runs, or unrelated project folders");
+  });
+
+  test("starts design runtime prompt as a goal and keeps MAKEOVER scoped to ARCHITECT plus selected resources", () => {
+    const prompt = buildDesignPrompt({
+      mode: "codex",
+      goal: "Make it feel more polished.",
+      locale: "en",
+      productHtml: "<html>Product</html>",
+      architectContext: "ARCHITECT/PRODUCT.html",
+      resourceContext: "selected resources"
+    });
+
+    expect(prompt.startsWith("/goal")).toBe(true);
+    expect(prompt).toContain("Use only ARCHITECT/PRODUCT.html, optional supporting files under ARCHITECT/, and selected resource context");
+    expect(prompt).toContain("Do not inspect bootstrap scaffold, source code, or unrelated project folders");
+    expect(prompt).toContain("DESIGN/index.html is required");
+    expect(prompt).toContain("DESIGN/pages/");
+    expect(prompt).toContain("DESIGN/components/");
+    expect(prompt).toContain("DESIGN/assets/");
+  });
+
   test("composes DESIGN runtime markdown from runtime output", () => {
     const response: DesignRuntimeResponse = {
       id: "design-1",
