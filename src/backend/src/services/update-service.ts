@@ -146,11 +146,7 @@ function describeProgress(event: ThreadEvent, locale: string): UpdateProgressEve
     return {
       id: "validation",
       title: progressText(locale, "업데이트 선택지 준비 완료", "Update choices prepared"),
-      detail: progressText(
-        locale,
-        `입력 ${event.usage.input_tokens} 토큰, 출력 ${event.usage.output_tokens} 토큰으로 질문을 정리했습니다.`,
-        `Prepared questions using ${event.usage.input_tokens} input tokens and ${event.usage.output_tokens} output tokens.`
-      ),
+      detail: progressText(locale, "변경 범위를 고를 수 있도록 업데이트 질문을 정리했습니다.", "Prepared update questions for choosing the change scope."),
       status: "completed"
     };
   }

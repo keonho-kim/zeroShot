@@ -90,6 +90,49 @@ describe("codex loading log model", () => {
     });
   });
 
+  test("orders progress and raw Codex items by raw event sequence", () => {
+    const items = buildCodexLoadingLogItems([
+      {
+        id: "session",
+        title: "Product analysis started",
+        detail: "The brief entered the planning flow.",
+        status: "completed"
+      },
+      {
+        id: "analysis",
+        title: "Analyzing requirements",
+        detail: "Separating the core requirements.",
+        status: "running"
+      },
+      {
+        id: "validation",
+        title: "Product direction reviewed",
+        detail: "Prepared the product direction options.",
+        status: "completed"
+      }
+    ], [
+      JSON.stringify({ type: "thread.started" }),
+      JSON.stringify({ type: "turn.started" }),
+      JSON.stringify({
+        type: "item.completed",
+        item: {
+          id: "item_1",
+          type: "agent_message",
+          text: "I checked the project and will create the first plan."
+        }
+      }),
+      JSON.stringify({ type: "turn.completed", usage: { input_tokens: 1, cached_input_tokens: 0, output_tokens: 1, reasoning_output_tokens: 0 } })
+    ]);
+
+    expect(items.map((item) => item.id)).toEqual([
+      "progress-session",
+      "progress-analysis",
+      "agent-item_1",
+      "progress-validation"
+    ]);
+    expect(items.at(-1)?.detail).toBe("Prepared the product direction options.");
+  });
+
   test("maps common shell commands to friendlier tool names", () => {
     const items = buildCodexLoadingLogItems([], [
       JSON.stringify({

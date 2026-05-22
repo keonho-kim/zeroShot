@@ -255,6 +255,16 @@ function rawMessageItem(message: string, index: number): CodexLoadingLogItem | n
   };
 }
 
+function progressItem(item: CodexLoadingProgressItem): CodexLoadingLogItem {
+  return {
+    id: `progress-${item.id}`,
+    kind: "progress",
+    title: item.title,
+    detail: item.detail.trim(),
+    status: item.status
+  };
+}
+
 function upsert(items: CodexLoadingLogItem[], next: CodexLoadingLogItem): CodexLoadingLogItem[] {
   const existingIndex = items.findIndex((item) => item.id === next.id);
   if (existingIndex === -1) {
@@ -263,24 +273,58 @@ function upsert(items: CodexLoadingLogItem[], next: CodexLoadingLogItem): CodexL
   return items.map((item, index) => index === existingIndex ? next : item);
 }
 
+function progressForRawEvent(
+  eventType: string,
+  progressById: Map<string, CodexLoadingProgressItem>
+): CodexLoadingProgressItem | null {
+  const candidatesByEvent: Record<string, string[]> = {
+    "thread.started": ["session", "product-session"],
+    "turn.started": ["analysis", "product-writing"],
+    "turn.completed": ["validation", "product-validation", "complete"]
+  };
+
+  const candidates = candidatesByEvent[eventType] ?? [];
+  for (const id of candidates) {
+    const progress = progressById.get(id);
+    if (progress) {
+      return progress;
+    }
+  }
+
+  return null;
+}
+
 export function buildCodexLoadingLogItems(
   progressItems: CodexLoadingProgressItem[],
   rawMessages: string[]
 ): CodexLoadingLogItem[] {
-  const items = progressItems.map((item): CodexLoadingLogItem => ({
-    id: `progress-${item.id}`,
-    kind: "progress",
-    title: item.title,
-    detail: item.detail.trim(),
-    status: item.status
+  const latestMessages = rawMessages
+    .filter((message) => message.trim())
+    .slice(-40);
+  const parsedMessages = latestMessages.map((message, index) => ({
+    message,
+    event: parseRawCodexEvent(message),
+    index
   }));
 
-  const nextItems = rawMessages
-    .filter((message) => message.trim())
-    .slice(-40)
-    .map(rawMessageItem)
-    .filter((item): item is CodexLoadingLogItem => Boolean(item))
-    .reduce(upsert, items);
+  if (!parsedMessages.some(({ event }) => readString(event?.type))) {
+    const items = progressItems.map(progressItem);
+
+    return latestMessages
+      .map(rawMessageItem)
+      .filter((item): item is CodexLoadingLogItem => Boolean(item))
+      .reduce(upsert, items)
+      .filter((item) => item.detail.trim())
+      .slice(-50);
+  }
+
+  const progressById = new Map(progressItems.map((item) => [item.id, item]));
+  const nextItems = parsedMessages.reduce<CodexLoadingLogItem[]>((items, { message, event, index }) => {
+    const progress = progressForRawEvent(readString(event?.type), progressById);
+    const withProgress = progress ? upsert(items, progressItem(progress)) : items;
+    const rawItem = rawMessageItem(message, index);
+    return rawItem ? upsert(withProgress, rawItem) : withProgress;
+  }, []);
 
   return nextItems.filter((item) => item.detail.trim()).slice(-50);
 }

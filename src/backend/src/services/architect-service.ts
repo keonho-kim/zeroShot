@@ -213,11 +213,7 @@ function describeProgress(event: ThreadEvent, locale: string): ArchitectProgress
     return {
       id: "validation",
       title: progressText(locale, "제품 방향 검토 완료", "Product direction reviewed"),
-      detail: progressText(
-        locale,
-        `입력 ${event.usage.input_tokens} 토큰, 출력 ${event.usage.output_tokens} 토큰으로 선택지를 정리했습니다.`,
-        `Prepared options using ${event.usage.input_tokens} input tokens and ${event.usage.output_tokens} output tokens.`
-      ),
+      detail: progressText(locale, "사용자가 고를 수 있는 제품 방향 선택지를 정리했습니다.", "Prepared the product direction options."),
       status: "completed"
     };
   }
@@ -267,11 +263,7 @@ function describeProductHtmlProgress(event: ThreadEvent, locale: string): Archit
     return {
       id: "product-validation",
       title: progressText(locale, "PRODUCT.html 검토 완료", "PRODUCT.html reviewed"),
-      detail: progressText(
-        locale,
-        `입력 ${event.usage.input_tokens} 토큰, 출력 ${event.usage.output_tokens} 토큰으로 제품 문서를 작성했습니다.`,
-        `Prepared the product document using ${event.usage.input_tokens} input tokens and ${event.usage.output_tokens} output tokens.`
-      ),
+      detail: progressText(locale, "제품 블루프린트 문서를 작성하고 결과를 검토했습니다.", "Prepared and reviewed the product blueprint document."),
       status: "completed"
     };
   }
