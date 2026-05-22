@@ -30,7 +30,7 @@ export const commonTranslations = defineTranslations({
     "common.select": "Select",
     "common.selected": "Selected",
     "common.retry": "Try again",
-    "common.codexThreadRunning": "Codex is working",
+    "common.codexThreadRunning": "Working on your request",
     "app.loadingAuth": "Checking your Codex sign-in...",
     "app.routeLoading": "Loading...",
     "route.loading": "Loading..."
@@ -63,7 +63,7 @@ export const commonTranslations = defineTranslations({
     "common.recommended": "추천",
     "common.select": "선택",
     "common.selected": "선택됨",
-    "common.codexThreadRunning": "Codex가 작업 중입니다",
+    "common.codexThreadRunning": "요청을 처리하고 있어요",
     "app.loadingAuth": "Codex 로그인 상태를 확인하고 있습니다..."
   },
   zh: {
@@ -93,7 +93,7 @@ export const commonTranslations = defineTranslations({
     "common.recommended": "推荐",
     "common.select": "选择",
     "common.selected": "已选择",
-    "common.codexThreadRunning": "Codex 正在处理",
+    "common.codexThreadRunning": "正在处理你的请求",
     "app.loadingAuth": "正在检查 Codex 登录状态..."
   },
   ja: {
@@ -107,7 +107,7 @@ export const commonTranslations = defineTranslations({
     "common.none": "なし",
     "common.back": "戻る",
     "common.next": "次へ",
-    "common.codexThreadRunning": "Codex が作業中です"
+    "common.codexThreadRunning": "リクエストを処理しています"
   },
   es: {
     "common.home": "Inicio",
@@ -120,7 +120,7 @@ export const commonTranslations = defineTranslations({
     "common.none": "Ninguno",
     "common.back": "Atrás",
     "common.next": "Siguiente",
-    "common.codexThreadRunning": "Codex está trabajando"
+    "common.codexThreadRunning": "Procesando tu solicitud"
   },
   de: {
     "common.home": "Start",
@@ -133,6 +133,6 @@ export const commonTranslations = defineTranslations({
     "common.none": "Keine",
     "common.back": "Zurück",
     "common.next": "Weiter",
-    "common.codexThreadRunning": "Codex arbeitet"
+    "common.codexThreadRunning": "Deine Anfrage wird bearbeitet"
   }
 });
