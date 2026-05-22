@@ -325,10 +325,10 @@ export async function buildArchitectDecisions(params: {
       ].join("\n")
     },
     {
-      workflow: "ARCHITECT workspace scan",
+      workflow: "ARCHITECT empty workspace check",
       task: [
-        "Use available read-only tools to inspect the current project root and any relevant README, PRODUCT, ARCHITECT, DESIGN, package, or source files.",
-        "If the workspace is empty, say that briefly and continue from the brief.",
+        "This ARCHITECT run is for a completely empty project. There are no existing source, README, PRODUCT, ARCHITECT, DESIGN, or package files to inspect.",
+        "Use at most lightweight read-only local commands to confirm the empty workspace, then move on from the user's brief.",
         "",
         compactVisibleContext(params.goal)
       ].join("\n")
@@ -337,6 +337,7 @@ export async function buildArchitectDecisions(params: {
       workflow: "ARCHITECT decision shaping",
       task: [
         "Turn the brief and workspace context into the main decision axes the user should choose before implementation.",
+        "Actively use web search and web page reading to compare existing apps or programs in the same category, then derive product-planning strengths, workflow similarities, and useful implications.",
         "Focus on product workflow, screens, data, stack, persistence, integrations, and validation.",
         "",
         compactVisibleContext(params.goal)

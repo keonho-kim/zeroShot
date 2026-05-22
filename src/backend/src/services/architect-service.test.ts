@@ -56,6 +56,10 @@ describe("architect service", () => {
 
     expect(prompt).toContain("Final bootstrap instruction:");
     expect(prompt).toContain("chatMessage");
+    expect(prompt).toContain("completely empty project");
+    expect(prompt).toContain("no existing product files, source files, README files, or package metadata");
+    expect(prompt).toContain("Actively use web search and web page reading");
+    expect(prompt).toContain("compare existing apps or programs");
     expect(prompt).toContain("zeroshot bootstrap");
     expect(prompt).toContain("--type <backend|frontend|fullstack|library|script>");
     expect(prompt).toContain("typescript, javascript, python, go, rust, java, ruby, zig");

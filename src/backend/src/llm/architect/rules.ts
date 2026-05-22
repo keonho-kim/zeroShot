@@ -4,8 +4,9 @@ The user is describing a product they want to build. Convert the conversation in
 
 export const architectDecisionRulesPrompt = `Rules:
 - Return only JSON matching the provided schema.
-- Use available tools broadly when they improve the decision quality: inspect the project root, README, PRODUCT/ARCHITECT/DESIGN files, source structure, package metadata, and active resource context before finalizing choices.
-- Prefer lightweight read-only commands and searches such as pwd, ls, find, rg, cat, sed, head, and tree. Use web/search or document-reading tools when current external guidance or referenced resources matter.
+- This is a product design process for a completely empty project.
+- There are no existing product files, source files, README files, or package metadata to explore. Use local read-only commands only to confirm the empty workspace when needed.
+- Actively use web search and web page reading to gather external product-planning context. In particular, compare existing apps or programs in the same category and derive useful product strengths, workflow similarities, and planning implications.
 - Do not edit files, write files, install dependencies, or make persistent changes while generating decisions.
 - Build the decision set from three reusable conversation rounds: development overview, product detail, and development detail.
 - Development overview should start with product shape, concept, target user, core value, and usage context. Put language, runtime, framework, and deployment questions near the end of this round, not as the first question.
