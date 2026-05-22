@@ -38,7 +38,7 @@ export function HomePage() {
           <span>{authValid ? t("home.loginReady") : t("home.loginNeeded")}</span>
         </div>
         <div className="landing-hero-body">
-          <div>
+          <div className="landing-hero-copy">
             <h1 className="landing-title">ZERO SHOT</h1>
             <p className="landing-description">{t("home.landingDescription")}</p>
           </div>

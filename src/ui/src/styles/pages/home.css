@@ -55,8 +55,14 @@
 .landing-hero-body {
   position: relative;
   z-index: 1;
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: calc(2rem * var(--home-component-scale));
+}
+
+.landing-hero-copy {
+  flex: 2 1 28rem;
+  min-width: 0;
 }
 
 .landing-title {
@@ -86,15 +92,21 @@
 
 .landing-actions {
   align-self: end;
-  display: grid;
-  gap: 0.85rem;
-  min-width: min(100%, 24rem);
+  display: flex;
+  flex: 1 1 22rem;
+  flex-direction: column;
+  gap: 1.25rem;
+  min-width: 0;
+  width: 100%;
 }
 
 .landing-action-button {
+  flex: 1 1 auto;
+  gap: 0.85rem;
   justify-content: flex-start;
-  min-height: 3.6rem;
-  width: 100%;
+  padding: 1.35rem 1.45rem;
+  font-size: 1rem;
+  line-height: 1.25;
 }
 
 .landing-action-button:nth-child(1):not(:disabled) {
@@ -103,18 +115,34 @@
 }
 
 .landing-action-button:nth-child(2) {
-  background: var(--foreground);
-  color: var(--background);
+  background: var(--arcade-yellow);
+  color: var(--foreground);
 }
 
 .landing-action-button:nth-child(3) {
   background: var(--arcade-green);
 }
 
+.landing-action-button:disabled {
+  background: var(--arcade-cyan);
+  color: var(--foreground);
+  opacity: 1;
+}
+
+.landing-action-button:hover:not(:disabled) {
+  background: var(--arcade-pink);
+  color: var(--foreground);
+}
+
+.landing-action-button svg {
+  height: 1.25rem;
+  width: 1.25rem;
+}
+
 .landing-login-check {
   border: var(--border-strong) solid var(--border);
   border-radius: 999px;
-  background: var(--arcade-cyan);
+  background: var(--panel);
   color: var(--foreground);
   padding: 0.15rem;
 }
@@ -328,8 +356,12 @@
   }
 
   .landing-hero-body {
-    grid-template-columns: minmax(0, 1fr) minmax(16rem, 24rem);
     align-items: end;
+    flex-direction: row;
+  }
+
+  .landing-actions {
+    max-width: 34rem;
   }
 
   .home-console {
