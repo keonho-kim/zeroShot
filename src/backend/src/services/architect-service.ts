@@ -1,11 +1,25 @@
-import { Codex, type ApprovalMode, type ModelReasoningEffort, type SandboxMode, type ThreadEvent } from "@openai/codex-sdk";
+import { Codex, type ApprovalMode, type ModelReasoningEffort, type SandboxMode, type ThreadEvent, type ThreadOptions } from "@openai/codex-sdk";
 import { z } from "zod";
-import { buildArchitectPrompt } from "@backend/prompts/architect/decision-prompt.js";
-import { ensureDevelopmentLanguageDecision } from "@backend/prompts/architect/development-stack-decision.js";
+import { buildArchitectPrompt } from "@backend/llm/architect/prompt.js";
+import { buildArchitectProductHtmlPrompt } from "@backend/llm/architect/product-html-prompt.js";
+import { ensureDevelopmentLanguageDecision } from "@backend/llm/architect/development-stack-decision.js";
+import { textByLocale } from "@backend/i18n/locale.js";
+import { describeCodexProgress } from "@backend/services/codex-progress-service.js";
+import { compactVisibleContext, streamVisibleCodexPrelude, visiblePreludePrompt } from "@backend/services/codex-visible-stream-service.js";
+
+const architectEmptyProjectToolGuidance = [
+  "This ARCHITECT workflow is for a completely empty project.",
+  "Do not inspect local workspace files, browse local directories, or run local file/search commands such as pwd, ls, find, rg, cat, sed, head, or tree.",
+  "There are no existing source files, README files, PRODUCT/ARCHITECT/DESIGN files, or package metadata to review.",
+  "Use the user's brief directly, and actively use web search or web page reading when external product-planning context can improve the decisions."
+].join(" ");
+
+const architectEmptyProjectReviewGuidance = "Describe the user brief, external product references, workflow similarities, product-planning strengths, or decision axis you reviewed. Do not mention local files or workspace inspection.";
 
 const architectDecisionSchema = {
   type: "object",
   properties: {
+    chatMessage: { type: "string" },
     title: { type: "string" },
     summary: { type: "string" },
     decisions: {
@@ -41,11 +55,12 @@ const architectDecisionSchema = {
       }
     }
   },
-  required: ["title", "summary", "decisions"],
+  required: ["chatMessage", "title", "summary", "decisions"],
   additionalProperties: false
 };
 
 const architectDecisionResponseSchema = z.object({
+  chatMessage: z.string().trim().min(1),
   title: z.string().trim().min(1),
   summary: z.string().trim().min(1),
   decisions: z.array(z.object({
@@ -67,30 +82,61 @@ export type ArchitectDecisionResponse = z.infer<typeof architectDecisionResponse
 const architectProductHtmlSchema = {
   type: "object",
   properties: {
-    html: { type: "string" }
+    chatMessage: { type: "string" },
+    files: {
+      type: "array",
+      minItems: 1,
+      maxItems: 8,
+      items: {
+        type: "object",
+        properties: {
+          path: { type: "string" },
+          type: { type: "string" },
+          title: { type: "string" },
+          content: { type: "string" }
+        },
+        required: ["path", "type", "title", "content"],
+        additionalProperties: false
+      }
+    }
   },
-  required: ["html"],
+  required: ["chatMessage", "files"],
   additionalProperties: false
 };
 
 const architectProductHtmlResponseSchema = z.object({
-  html: z.string().trim().min(1)
+  chatMessage: z.string().trim().min(1),
+  files: z.array(z.object({
+    path: z.string().trim().min(1),
+    type: z.string().trim().min(1),
+    title: z.string().trim().min(1),
+    content: z.string().trim().min(1)
+  })).min(1).max(8)
 });
 
+export type ArchitectProductFile = z.infer<typeof architectProductHtmlResponseSchema>["files"][number];
+
 function omakaseOption(locale: string): ArchitectDecisionResponse["decisions"][number]["options"][number] {
-  return locale === "ko"
-    ? {
-      id: "omakase",
-      label: "알아서 해주세요",
-      detail: "Codex 추천안을 그대로 사용합니다.",
-      productRequirement: "Use the recommended first option for this decision."
-    }
-    : {
-      id: "omakase",
-      label: "Let Codex choose",
-      detail: "Use the recommended option as-is.",
-      productRequirement: "Use the recommended first option for this decision."
-    };
+  return {
+    id: "omakase",
+    label: textByLocale(locale, {
+      ko: "알아서 해주세요",
+      en: "Let Codex choose",
+      zh: "让 Codex 决定",
+      ja: "Codex に任せる",
+      es: "Que Codex elija",
+      de: "Codex entscheiden lassen"
+    }),
+    detail: textByLocale(locale, {
+      ko: "Codex 추천안을 그대로 사용합니다.",
+      en: "Use the recommended option as-is.",
+      zh: "直接使用推荐方案。",
+      ja: "おすすめの案をそのまま使います。",
+      es: "Usar la opción recomendada tal cual.",
+      de: "Die empfohlene Option unverändert verwenden."
+    }),
+    productRequirement: "Use the recommended first option for this decision."
+  };
 }
 
 function normalizeArchitectDecisions(response: ArchitectDecisionResponse, locale: string): ArchitectDecisionResponse {
@@ -122,10 +168,59 @@ function asReasoningEffort(value: string): ModelReasoningEffort {
   throw new Error(`Unsupported reasoning effort: ${value}`);
 }
 
-export { ensureDevelopmentLanguageDecision } from "@backend/prompts/architect/development-stack-decision.js";
+export { ensureDevelopmentLanguageDecision } from "@backend/llm/architect/development-stack-decision.js";
 
 function progressText(locale: string, ko: string, en: string): string {
-  return locale === "ko" ? ko : en;
+  return textByLocale(locale, { ko, en, zh: en, ja: en, es: en, de: en });
+}
+
+function decodeJsonStringContent(value: string): string {
+  return value
+    .replace(/\\\\/g, "\\")
+    .replace(/\\"/g, "\"")
+    .replace(/\\n/g, "\n")
+    .replace(/\\r/g, "\r")
+    .replace(/\\t/g, "\t");
+}
+
+export function extractArchitectChatMessage(raw: string): string {
+  const fieldIndex = raw.indexOf("\"chatMessage\"");
+  if (fieldIndex < 0) {
+    return "";
+  }
+  const colonIndex = raw.indexOf(":", fieldIndex + "\"chatMessage\"".length);
+  if (colonIndex < 0) {
+    return "";
+  }
+  const quoteIndex = raw.indexOf("\"", colonIndex + 1);
+  if (quoteIndex < 0) {
+    return "";
+  }
+
+  let escaped = false;
+  let content = "";
+  for (let index = quoteIndex + 1; index < raw.length; index += 1) {
+    const char = raw[index];
+    if (escaped) {
+      content += `\\${char}`;
+      escaped = false;
+      continue;
+    }
+    if (char === "\\") {
+      escaped = true;
+      continue;
+    }
+    if (char === "\"") {
+      try {
+        return JSON.parse(`"${content}"`) as string;
+      } catch {
+        return decodeJsonStringContent(content);
+      }
+    }
+    content += char;
+  }
+
+  return decodeJsonStringContent(content);
 }
 
 function describeProgress(event: ThreadEvent, locale: string): ArchitectProgressEvent | null {
@@ -149,11 +244,7 @@ function describeProgress(event: ThreadEvent, locale: string): ArchitectProgress
     return {
       id: "validation",
       title: progressText(locale, "제품 방향 검토 완료", "Product direction reviewed"),
-      detail: progressText(
-        locale,
-        `입력 ${event.usage.input_tokens} 토큰, 출력 ${event.usage.output_tokens} 토큰으로 선택지를 정리했습니다.`,
-        `Prepared options using ${event.usage.input_tokens} input tokens and ${event.usage.output_tokens} output tokens.`
-      ),
+      detail: progressText(locale, "사용자가 고를 수 있는 제품 방향 선택지를 정리했습니다.", "Prepared the product direction options."),
       status: "completed"
     };
   }
@@ -174,34 +265,62 @@ function describeProgress(event: ThreadEvent, locale: string): ArchitectProgress
     };
   }
 
-  const item = event.item;
-  if (item.type === "reasoning") {
+  return describeCodexProgress(event, locale, {
+    reasoningTitle: progressText(locale, "제품 선택 기준 검토", "Reviewing product decision criteria"),
+    reasoningDetail: progressText(locale, "입력 설명에서 사용자를 나누고 선택이 필요한 제품 축을 추리고 있습니다.", "Separating users from the brief and finding product axes that need a decision."),
+    agentTitle: progressText(locale, "선택지 응답 작성", "Writing product options"),
+    agentDetail: progressText(locale, "사용자가 바로 고를 수 있는 선택지와 구현 요구사항을 JSON 응답으로 작성하고 있습니다.", "Writing selectable options and implementation requirements into the JSON response.")
+  });
+}
+
+function describeProductHtmlProgress(event: ThreadEvent, locale: string): ArchitectProgressEvent | null {
+  if (event.type === "thread.started") {
     return {
-      id: "reasoning",
-      title: progressText(locale, "제품 구조 정리 중", "Structuring product decisions"),
-      detail: progressText(locale, "설명에서 선택이 필요한 제품 축을 추려내고 있습니다.", "Finding the product choices that need a user decision."),
-      status: event.type === "item.completed" ? "completed" : "running"
+      id: "product-session",
+      title: progressText(locale, "PRODUCT.html 생성 시작", "PRODUCT.html generation started"),
+      detail: progressText(locale, "선택한 답변과 제품 방향을 문서 작성 작업으로 넘겼습니다.", "Your choices and product direction are being prepared for the document."),
+      status: "completed"
     };
   }
-  if (item.type === "agent_message") {
+  if (event.type === "turn.started") {
     return {
-      id: "draft",
-      title: progressText(locale, "선택지 작성 중", "Writing product options"),
-      detail: progressText(locale, "바로 고를 수 있는 제품 선택지와 구현 요구사항을 작성하고 있습니다.", "Writing concrete options and implementation-ready requirements."),
-      status: event.type === "item.completed" ? "completed" : "running"
+      id: "product-writing",
+      title: progressText(locale, "제품 블루프린트 작성 중", "Writing the product blueprint"),
+      detail: progressText(locale, "제품 구조, 핵심 기능, 화면 흐름을 PRODUCT.html로 정리하고 있습니다.", "Organizing product structure, core features, and screen flows into PRODUCT.html."),
+      status: "running"
     };
   }
-  if (item.type === "command_execution") {
-    return null;
+  if (event.type === "turn.completed") {
+    return {
+      id: "product-validation",
+      title: progressText(locale, "PRODUCT.html 검토 완료", "PRODUCT.html reviewed"),
+      detail: progressText(locale, "제품 블루프린트 문서를 작성하고 결과를 검토했습니다.", "Prepared and reviewed the product blueprint document."),
+      status: "completed"
+    };
   }
-  if (item.type === "mcp_tool_call") {
-    return null;
+  if (event.type === "turn.failed") {
+    return {
+      id: "product-failed",
+      title: progressText(locale, "PRODUCT.html 생성 실패", "PRODUCT.html generation failed"),
+      detail: event.error.message,
+      status: "failed"
+    };
   }
-  if (item.type === "web_search") {
-    return null;
+  if (event.type === "error") {
+    return {
+      id: "product-failed",
+      title: progressText(locale, "스트림 오류", "Stream error"),
+      detail: event.message,
+      status: "failed"
+    };
   }
 
-  return null;
+  return describeCodexProgress(event, locale, {
+    reasoningTitle: progressText(locale, "제품 문서 구조 설계", "Structuring the product document"),
+    reasoningDetail: progressText(locale, "선택한 답변을 기능 명세, 화면 흐름, 수용 기준 섹션으로 나누고 있습니다.", "Turning selected answers into feature specs, screen flows, and acceptance criteria."),
+    agentTitle: progressText(locale, "PRODUCT.html 응답 작성", "Writing PRODUCT.html response"),
+    agentDetail: progressText(locale, "MAKEOVER와 BUILD가 참고할 제품 블루프린트 HTML과 상태 메시지를 작성하고 있습니다.", "Writing the product blueprint HTML and status message for Makeover and Build.")
+  });
 }
 
 export async function buildArchitectDecisions(params: {
@@ -212,10 +331,12 @@ export async function buildArchitectDecisions(params: {
   model?: string;
   resourceContext?: string;
   additionalDirectories?: string[];
-  onProgress?: (event: ArchitectProgressEvent) => void;
+  onProgress?: (event: ArchitectProgressEvent) => void | Promise<void>;
+  onMessage?: (message: string) => void | Promise<void>;
+  onRaw?: (event: ThreadEvent) => void | Promise<void>;
 }): Promise<ArchitectDecisionResponse> {
   const codex = new Codex();
-  const thread = codex.startThread({
+  const threadOptions = {
     workingDirectory: params.projectRoot,
     skipGitRepoCheck: true,
     approvalPolicy: "never" satisfies ApprovalMode,
@@ -223,17 +344,74 @@ export async function buildArchitectDecisions(params: {
     modelReasoningEffort: asReasoningEffort(params.reasoning),
     additionalDirectories: params.additionalDirectories ?? [],
     ...(params.model ? { model: params.model } : {})
-  });
+  } satisfies ThreadOptions;
 
+  const visibleWorkNotes = [
+    {
+      workflow: "ARCHITECT brief review",
+      task: [
+        "Review the user's product brief and identify the target user, core value, and first user action.",
+        "",
+        compactVisibleContext(params.goal)
+      ].join("\n")
+    },
+    {
+      workflow: "ARCHITECT empty workspace check",
+      task: [
+        "This ARCHITECT run is for a completely empty project. There are no existing source, README, PRODUCT, ARCHITECT, DESIGN, or package files to inspect.",
+        "Do not run local file or directory inspection commands. Continue from the user's brief and external product-planning research.",
+        "",
+        compactVisibleContext(params.goal)
+      ].join("\n")
+    },
+    {
+      workflow: "ARCHITECT decision shaping",
+      task: [
+        "Turn the brief and workspace context into the main decision axes the user should choose before implementation.",
+        "Actively use web search and web page reading to compare existing apps or programs in the same category, then derive product-planning strengths, workflow similarities, and useful implications.",
+        "Focus on product workflow, screens, data, stack, persistence, integrations, and validation.",
+        "",
+        compactVisibleContext(params.goal)
+      ].join("\n")
+    }
+  ];
+
+  for (const workNote of visibleWorkNotes) {
+    await streamVisibleCodexPrelude({
+      thread: codex.startThread({ ...threadOptions, modelReasoningEffort: "low" satisfies ModelReasoningEffort }),
+      prompt: visiblePreludePrompt({
+        locale: params.locale,
+        workflow: workNote.workflow,
+        task: workNote.task,
+        toolGuidance: architectEmptyProjectToolGuidance,
+        reviewGuidance: architectEmptyProjectReviewGuidance
+      }),
+      describeProgress: (event) => event.type === "turn.completed" ? null : describeProgress(event, params.locale),
+      onProgress: params.onProgress,
+      onMessage: params.onMessage,
+      onRaw: params.onRaw
+    });
+  }
+
+  const thread = codex.startThread(threadOptions);
   const { events } = await thread.runStreamed(buildArchitectPrompt(params.goal, params.locale, params.resourceContext ?? ""), {
     outputSchema: architectDecisionSchema
   });
   let finalResponse = "";
+  let lastMessage = "";
 
   for await (const event of events) {
+    await params.onRaw?.(event);
     const progress = describeProgress(event, params.locale);
     if (progress) {
-      params.onProgress?.(progress);
+      await params.onProgress?.(progress);
+    }
+    if ((event.type === "item.updated" || event.type === "item.completed") && event.item.type === "agent_message") {
+      const nextMessage = extractArchitectChatMessage(event.item.text).trim();
+      if (nextMessage && nextMessage !== lastMessage) {
+        lastMessage = nextMessage;
+        await params.onMessage?.(nextMessage);
+      }
     }
     if (event.type === "item.completed" && event.item.type === "agent_message") {
       finalResponse = event.item.text;
@@ -264,19 +442,12 @@ export async function buildArchitectProductHtml(params: {
   model?: string;
   resourceContext?: string;
   additionalDirectories?: string[];
-}): Promise<string> {
-  const selectedRequirements = params.decisionSet.decisions.map((decision) => {
-    const answerId = params.answers[decision.id];
-    const selected = decision.options.find((option) => option.id === answerId) ?? decision.options[0];
-    return [
-      `Question: ${decision.title}`,
-      `Selected: ${selected?.label ?? "Not selected"}`,
-      `Requirement: ${selected?.productRequirement ?? selected?.detail ?? ""}`
-    ].join("\n");
-  }).join("\n\n");
-
+  onProgress?: (event: ArchitectProgressEvent) => void | Promise<void>;
+  onMessage?: (message: string) => void | Promise<void>;
+  onRaw?: (event: ThreadEvent) => void | Promise<void>;
+}): Promise<ArchitectProductFile[]> {
   const codex = new Codex();
-  const thread = codex.startThread({
+  const threadOptions = {
     workingDirectory: params.projectRoot,
     skipGitRepoCheck: true,
     approvalPolicy: "never" satisfies ApprovalMode,
@@ -284,36 +455,51 @@ export async function buildArchitectProductHtml(params: {
     modelReasoningEffort: asReasoningEffort(params.reasoning),
     additionalDirectories: params.additionalDirectories ?? [],
     ...(params.model ? { model: params.model } : {})
+  } satisfies ThreadOptions;
+
+  const prompt = buildArchitectProductHtmlPrompt(params);
+
+  await streamVisibleCodexPrelude({
+    thread: codex.startThread({ ...threadOptions, modelReasoningEffort: "low" satisfies ModelReasoningEffort }),
+    prompt: visiblePreludePrompt({
+      locale: params.locale,
+      workflow: "ARCHITECT PRODUCT.html",
+      toolGuidance: architectEmptyProjectToolGuidance,
+      reviewGuidance: architectEmptyProjectReviewGuidance,
+      task: [
+        "Write the product blueprint HTML from the user's brief and selected decisions.",
+        "",
+        `User brief:\n${compactVisibleContext(params.userBrief)}`,
+        "",
+        `Selected answers:\n${compactVisibleContext(JSON.stringify(params.answers, null, 2))}`
+      ].join("\n")
+    }),
+    describeProgress: (event) => describeProductHtmlProgress(event, params.locale),
+    onProgress: params.onProgress,
+    onMessage: params.onMessage,
+    onRaw: params.onRaw
   });
 
-  const prompt = [
-    "Create ARCHITECT/PRODUCT.html for this ZeroShot project.",
-    "",
-    "Return only JSON matching the schema. The html field must contain a complete interactive HTML document.",
-    "Do not create files or run commands. Do not return Markdown.",
-    "The HTML must be a product planning document, not implementation code. It should be useful later for DESIGN, BUILD, and UPDATE.",
-    "Use self-contained CSS and lightweight JavaScript only when it improves interactive review.",
-    "Use compact 80% density in the generated planning document: smaller controls, tighter section spacing, shorter cards, and restrained heading scale while keeping the document readable.",
-    "Include product concept, target users, key workflows, core screens, data model, integrations, build constraints, and acceptance criteria.",
-    "Write user-facing content in the requested locale.",
-    "",
-    `Locale: ${params.locale}`,
-    "",
-    "Initial user brief:",
-    params.userBrief,
-    "",
-    "Selected architect decisions:",
-    selectedRequirements,
-    "",
-    params.resourceContext ? ["Active resources:", params.resourceContext].join("\n") : ""
-  ].filter(Boolean).join("\n");
-
+  const thread = codex.startThread(threadOptions);
   const { events } = await thread.runStreamed(prompt, {
     outputSchema: architectProductHtmlSchema
   });
   let finalResponse = "";
+  let lastMessage = "";
 
   for await (const event of events) {
+    await params.onRaw?.(event);
+    const progress = describeProductHtmlProgress(event, params.locale);
+    if (progress) {
+      await params.onProgress?.(progress);
+    }
+    if ((event.type === "item.updated" || event.type === "item.completed") && event.item.type === "agent_message") {
+      const nextMessage = extractArchitectChatMessage(event.item.text).trim();
+      if (nextMessage && nextMessage !== lastMessage) {
+        lastMessage = nextMessage;
+        await params.onMessage?.(nextMessage);
+      }
+    }
     if (event.type === "item.completed" && event.item.type === "agent_message") {
       finalResponse = event.item.text;
     }
@@ -330,5 +516,8 @@ export async function buildArchitectProductHtml(params: {
   }
 
   const parsed = architectProductHtmlResponseSchema.parse(JSON.parse(finalResponse));
-  return parsed.html;
+  if (!parsed.files.some((file) => file.path === "ARCHITECT/PRODUCT.html")) {
+    throw new Error("Architect product response did not return ARCHITECT/PRODUCT.html.");
+  }
+  return parsed.files;
 }

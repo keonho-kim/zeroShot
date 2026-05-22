@@ -53,6 +53,29 @@ export interface RunDetail {
   documents: Record<string, string>;
 }
 
+export type WorkLogLabel = "ARCHITECT" | "MAKEOVER" | "BUILD" | "UPDATE";
+
+export interface WorkLogProjectSummary {
+  projectRoot: string;
+  name: string;
+  runsCount: number;
+  conversationsCount: number;
+  lastActivityAt?: string;
+}
+
+export interface WorkLogEntrySummary {
+  id: string;
+  label: WorkLogLabel;
+  title: string;
+  summary: string;
+  createdAt?: string;
+}
+
+export interface WorkLogEntryDetail {
+  summary: WorkLogEntrySummary;
+  documents: Record<string, string>;
+}
+
 export interface AppConfig {
   bootstrapRoots: string[];
   allowedRoots: string[];
@@ -194,6 +217,7 @@ export interface DesignRecommendationOption {
 }
 
 export interface DesignRecommendationResponse {
+  chatMessage: string;
   title: string;
   summary: string;
   designSystems: DesignRecommendationOption[];
@@ -234,6 +258,7 @@ export interface ArchitectDecision {
 }
 
 export interface ArchitectDecisionResponse {
+  chatMessage: string;
   title: string;
   summary: string;
   decisions: ArchitectDecision[];
@@ -252,3 +277,8 @@ export interface ArchitectProgressEvent {
   detail: string;
   status: "running" | "completed" | "failed";
 }
+
+export type UpdateDecisionOption = ArchitectDecisionOption;
+export type UpdateDecision = ArchitectDecision;
+export type UpdateDecisionResponse = ArchitectDecisionResponse;
+export type UpdateProgressEvent = ArchitectProgressEvent;

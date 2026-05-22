@@ -14,8 +14,6 @@ export function ArtifactWorkbench(props: ArtifactWorkbenchProps) {
         hasProductHtml={props.hasProductHtml}
         artifactEtag={props.artifactEtag}
         artifactUpdatedAt={props.artifactUpdatedAt}
-        artifactMode={props.artifactMode}
-        setArtifactMode={props.setArtifactMode}
         onReload={props.onReload}
       />
 
@@ -47,9 +45,13 @@ export function ArtifactWorkbench(props: ArtifactWorkbenchProps) {
               artifactZoom={props.artifactZoom}
               artifactFrameRef={props.artifactFrameRef}
               artifactSrcDoc={props.artifactSrcDoc}
+              commentToolOpen={props.commentToolOpen}
               sourceDraft={props.sourceDraft}
               setSourceDraft={props.setSourceDraft}
               onOpenCommentTool={props.onOpenCommentTool}
+              onCloseCommentTool={props.onCloseCommentTool}
+              onCaptureComment={props.onCaptureComment}
+              targetIds={props.selectedTargets.map((target) => target.id)}
             />
           </div>
         </>

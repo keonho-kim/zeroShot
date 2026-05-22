@@ -121,6 +121,29 @@ export interface RunDetail {
   documents: Record<string, string>;
 }
 
+export type WorkLogLabel = "ARCHITECT" | "MAKEOVER" | "BUILD" | "UPDATE";
+
+export interface WorkLogProjectSummary {
+  projectRoot: string;
+  name: string;
+  runsCount: number;
+  conversationsCount: number;
+  lastActivityAt?: string;
+}
+
+export interface WorkLogEntrySummary {
+  id: string;
+  label: WorkLogLabel;
+  title: string;
+  summary: string;
+  createdAt?: string;
+}
+
+export interface WorkLogEntryDetail {
+  summary: WorkLogEntrySummary;
+  documents: Record<string, string>;
+}
+
 export interface PipelineOptions {
   model?: string;
   approval?: string;
@@ -201,6 +224,7 @@ export interface DesignRecommendationOption {
 }
 
 export interface DesignRecommendationResponse {
+  chatMessage: string;
   title: string;
   summary: string;
   designSystems: DesignRecommendationOption[];

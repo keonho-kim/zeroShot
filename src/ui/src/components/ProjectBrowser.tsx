@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { fetchProjectTree } from "@/lib/api";
+import { useI18n } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/utils/cn";
@@ -12,6 +13,7 @@ interface Props {
 }
 
 export function ProjectBrowser({ value, onChange, className }: Props) {
+  const { t } = useI18n();
   const [path, setPath] = useState<string>("");
   const query = useQuery({
     queryKey: ["project-tree", path],
@@ -22,12 +24,12 @@ export function ProjectBrowser({ value, onChange, className }: Props) {
     <Card className={cn("flex flex-col gap-4 bg-[var(--panel)]", className)}>
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-lg font-semibold">Project Cards</p>
-          <p className="text-sm text-[var(--muted-foreground)]">{path || "Allowed roots"}</p>
+          <p className="text-lg font-semibold">{t("common.project")}</p>
+          <p className="text-sm text-[var(--muted-foreground)]">{path || t("settings.allowedRoots")}</p>
         </div>
         <div className="flex gap-2">
-          {path ? <Button variant="outline" onClick={() => onChange(path)}>현재 경로 선택</Button> : null}
-          {path ? <Button variant="outline" onClick={() => setPath("")}>루트 목록</Button> : null}
+          {path ? <Button variant="outline" onClick={() => onChange(path)}>{t("projectBrowser.currentPath")}</Button> : null}
+          {path ? <Button variant="outline" onClick={() => setPath("")}>{t("projectBrowser.rootList")}</Button> : null}
         </div>
       </div>
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
@@ -39,12 +41,12 @@ export function ProjectBrowser({ value, onChange, className }: Props) {
             </button>
             <div className="mt-4 flex justify-end">
               <Button variant={value === entry.path ? "default" : "outline"} onClick={() => onChange(entry.path)}>
-                {value === entry.path ? "선택됨" : "선택"}
+                {value === entry.path ? t("projectBrowser.selected") : t("projectBrowser.select")}
               </Button>
             </div>
           </div>
         ))}
-        {!query.data?.entries.length ? <p className="text-sm text-[var(--muted-foreground)]">표시할 디렉터리가 없습니다.</p> : null}
+        {!query.data?.entries.length ? <p className="text-sm text-[var(--muted-foreground)]">{t("projectBrowser.noDirectories")}</p> : null}
       </div>
     </Card>
   );

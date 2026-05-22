@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
@@ -18,23 +18,19 @@ import {
 } from "@/lib/api";
 import type { DesignRecommendationResponse, DesignRuntimeMode, DesignRuntimeResponse } from "@/types/api";
 import {
-  applyArtifactSourcePatch,
   buildArtifactSrcDoc,
   isArtifactBridgeMessage,
-  nextTextFromKey,
-  patchLabel,
-  translatedStyle,
   type ArtifactBridgeMessage,
   type ArtifactEditorMode,
   type ArtifactEditTarget,
-  type ArtifactHistoryEntry,
-  type ArtifactSourcePatch
+  type ArtifactHistoryEntry
 } from "@/entities/design/artifact-editor";
 import { ArtifactWorkbench } from "@/pages/design/artifact-workbench/ArtifactWorkbench";
-import { ArtifactCommentModal } from "@/pages/design/artifact-workbench/ArtifactCommentModal";
 import type { ArtifactChatMessage, ArtifactCommentCapture } from "@/pages/design/artifact-workbench/types";
 import { DesignResult } from "@/pages/design/DesignResult";
 import { DesignRuntimeSetup } from "@/pages/design/DesignRuntimeSetup";
+import { CodexLoadingPanel } from "@/components/CodexLoadingPanel";
+import { useI18n } from "@/lib/i18n";
 import { type DesignTimelineItem, upsertTimelineItem } from "@/pages/design/design-page-model";
 import { cn } from "@/utils/cn";
 
@@ -43,26 +39,14 @@ type DesignResourceSelectionMode = "manual" | "omakase";
 type DesignRunRequest = {
   goal: string;
   assistantMessageId?: string;
+  source: "request" | "workbench";
 };
 
-function AgentLoadingStage(props: { label: string }) {
-  return (
-    <div className="agent-loading-stage" role="status" aria-live="polite">
-      <span className="agent-dot-wave" aria-hidden="true">
-        <i />
-        <i />
-        <i />
-      </span>
-      <h2>{props.label}</h2>
-    </div>
-  );
-}
-
 export function DesignPage() {
+  const { locale, t } = useI18n();
   const queryClient = useQueryClient();
   const artifactFrameRef = useRef<HTMLIFrameElement>(null);
   const projectRoot = useAppStore((state) => state.projectRoot);
-  const locale = useMemo(() => navigator.language.toLowerCase().startsWith("ko") ? "ko" : "en", []);
   const [mode, setMode] = useState<DesignRuntimeMode>("codex");
   const [goal, setGoal] = useState("");
   const [activeDesignTemplateId, setActiveDesignTemplateId] = useState("");
@@ -71,8 +55,10 @@ export function DesignPage() {
   const [activeDesignSystemSelectionMode, setActiveDesignSystemSelectionMode] = useState<DesignResourceSelectionMode>("manual");
   const [recommendations, setRecommendations] = useState<DesignRecommendationResponse | null>(null);
   const [recommendationTimelineItems, setRecommendationTimelineItems] = useState<DesignTimelineItem[]>([]);
+  const [recommendationMessages, setRecommendationMessages] = useState<string[]>([]);
   const [recommendationError, setRecommendationError] = useState("");
   const [timelineItems, setTimelineItems] = useState<DesignTimelineItem[]>([]);
+  const [runtimeMessages, setRuntimeMessages] = useState<string[]>([]);
   const [runtimeError, setRuntimeError] = useState("");
   const [designResult, setDesignResult] = useState<DesignRuntimeResponse | null>(null);
   const [makeoverStep, setMakeoverStep] = useState<MakeoverStep>("brief");
@@ -85,7 +71,6 @@ export function DesignPage() {
   const [artifactChatMessages, setArtifactChatMessages] = useState<ArtifactChatMessage[]>([]);
   const [artifactSource, setArtifactSource] = useState("");
   const [artifactTargets, setArtifactTargets] = useState<ArtifactEditTarget[]>([]);
-  const [selectedTarget, setSelectedTarget] = useState<ArtifactEditTarget | null>(null);
   const [selectedTargetIds, setSelectedTargetIds] = useState<string[]>([]);
   const [artifactError, setArtifactError] = useState("");
   const [artifactEtag, setArtifactEtag] = useState("");
@@ -139,7 +124,6 @@ export function DesignPage() {
     setArtifactSource(designArtifactQuery.data?.content.trim() ? designArtifactQuery.data.content : "");
     setArtifactEtag(designArtifactQuery.data?.etag ?? "");
     setArtifactTargets([]);
-    setSelectedTarget(null);
     setSelectedTargetIds([]);
     setSourceHistory([]);
     setRedoHistory([]);
@@ -152,6 +136,8 @@ export function DesignPage() {
     setMakeoverComplete(false);
     setRecommendations(null);
     setRecommendationTimelineItems([]);
+    setRecommendationMessages([]);
+    setRuntimeMessages([]);
     setRecommendationError("");
     setActiveDesignTemplateSelectionMode("manual");
     setActiveDesignSystemSelectionMode("manual");
@@ -185,16 +171,18 @@ export function DesignPage() {
     mutationFn: async () => {
       setRecommendationError("");
       setRecommendationTimelineItems([]);
+      setRecommendationMessages([]);
       return requestDesignRecommendationsStream({
         projectRoot,
         locale
       }, (event) => {
         setRecommendationTimelineItems((items) => upsertTimelineItem(items, event));
+      }, undefined, (message) => {
+        setRecommendationMessages((items) => items.at(-1) === message ? items : [...items, message]);
       });
     },
     onSuccess: (nextRecommendations) => {
       setRecommendations(nextRecommendations);
-      setRecommendationTimelineItems([]);
       setRecommendationError("");
       setActiveDesignSystemId((current) => nextRecommendations.designSystems.some((option) => option.resourceId === current) ? current : "");
       setActiveDesignTemplateId((current) => nextRecommendations.designTemplates.some((option) => option.resourceId === current) ? current : "");
@@ -210,14 +198,12 @@ export function DesignPage() {
   const designMutation = useMutation({
     mutationFn: async (request: DesignRunRequest) => {
       if (!productArtifactQuery.data?.content.trim()) {
-        throw new Error("PRODUCT BLUEPRINT를 먼저 만들어야 DESIGN을 실행할 수 있습니다.");
+        throw new Error(t("makeover.requiresProduct"));
       }
-      const nextGoal = request.goal.trim();
-      if (!nextGoal) {
-        throw new Error("MAKEOVER 요청을 입력하거나 알아서 해주세요를 선택해야 합니다.");
-      }
+      const nextGoal = request.goal.trim() || t("makeover.defaultGoal");
       setRuntimeError("");
       setTimelineItems([]);
+      setRuntimeMessages([]);
       return requestDesignRuntimeStream({
         projectRoot,
         mode,
@@ -239,10 +225,17 @@ export function DesignPage() {
         setArtifactChatMessages((messages) => messages.map((item) => item.id === request.assistantMessageId
           ? { ...item, content: message, isStreaming: true }
           : item));
+      }, (message) => {
+        setRuntimeMessages((items) => items.at(-1) === message ? items : [...items, message]);
       });
     },
     onSuccess: (design) => {
       setDesignResult(design);
+      const nextDesignHtml = design.files.find((file) => file.path === "DESIGN/index.html")?.content;
+      if (nextDesignHtml) {
+        setArtifactSource(nextDesignHtml);
+        setSourceDraft(nextDesignHtml);
+      }
       setArtifactChatMessages((messages) => {
         const updated = messages.map((message) => message.isStreaming
           ? { ...message, content: design.chatMessage, isStreaming: false }
@@ -258,7 +251,6 @@ export function DesignPage() {
           isStreaming: false
         }];
       });
-      setTimelineItems([]);
       setMakeoverComplete(true);
       setMakeoverStep("workbench");
       setArtifactMode("preview");
@@ -267,9 +259,11 @@ export function DesignPage() {
       void queryClient.invalidateQueries({ queryKey: ["design-artifact", projectRoot] });
       void queryClient.invalidateQueries({ queryKey: ["project-state", projectRoot] });
     },
-    onError: (error) => {
+    onError: (error, request) => {
       setRuntimeError(error instanceof Error ? error.message : String(error));
-      setMakeoverStep("brief");
+      if (request.source === "request") {
+        setMakeoverStep("brief");
+      }
     }
   });
 
@@ -293,80 +287,6 @@ export function DesignPage() {
   });
 
   const artifactSrcDoc = useMemo(() => buildArtifactSrcDoc(artifactSource, artifactMode), [artifactSource, artifactMode]);
-  const selectedTargets = useMemo(() => {
-    const ids = new Set(selectedTargetIds);
-    return artifactTargets.filter((target) => ids.has(target.id));
-  }, [artifactTargets, selectedTargetIds]);
-
-  const commitArtifactPatch = (patch: ArtifactSourcePatch, target: ArtifactEditTarget | null = selectedTarget) => {
-    try {
-      const nextSource = applyArtifactSourcePatch(artifactSource, patch);
-      const entry: ArtifactHistoryEntry = {
-        id: crypto.randomUUID(),
-        label: patchLabel(patch, target),
-        patch,
-        beforeSource: artifactSource,
-        afterSource: nextSource,
-        createdAt: Date.now()
-      };
-      setSourceHistory((items) => [...items.slice(-24), entry]);
-      setRedoHistory([]);
-      setArtifactSource(nextSource);
-      setSourceDraft(nextSource);
-      setArtifactError("");
-      if ("id" in patch) {
-        setSelectedTarget((currentTarget) => {
-          if (!currentTarget || currentTarget.id !== patch.id) {
-            return target;
-          }
-          if (patch.kind === "set-text") {
-            return {
-              ...currentTarget,
-              text: patch.value,
-              fields: { ...currentTarget.fields, text: patch.value }
-            };
-          }
-          if (patch.kind === "set-link") {
-            return {
-              ...currentTarget,
-              text: patch.text,
-              fields: { ...currentTarget.fields, text: patch.text, href: patch.href }
-            };
-          }
-          if (patch.kind === "set-image") {
-            return {
-              ...currentTarget,
-              fields: { ...currentTarget.fields, src: patch.src, alt: patch.alt },
-              attributes: { ...currentTarget.attributes, src: patch.src, alt: patch.alt }
-            };
-          }
-          if (patch.kind === "set-attributes") {
-            const attributes = { ...currentTarget.attributes };
-            for (const [name, value] of Object.entries(patch.attributes)) {
-              if (!value) {
-                delete attributes[name];
-              } else {
-                attributes[name] = value;
-              }
-            }
-            return { ...currentTarget, attributes };
-          }
-          if (patch.kind === "set-style") {
-            return {
-              ...currentTarget,
-              styles: { ...currentTarget.styles, ...patch.styles }
-            };
-          }
-          if (patch.kind === "set-outer-html") {
-            return { ...currentTarget, outerHtml: patch.html };
-          }
-          return currentTarget;
-        });
-      }
-    } catch (error) {
-      setArtifactError(error instanceof Error ? error.message : String(error));
-    }
-  };
 
   const undoArtifactChange = () => {
     const entry = sourceHistory.at(-1);
@@ -377,7 +297,6 @@ export function DesignPage() {
     setSourceHistory((items) => items.slice(0, -1));
     setArtifactSource(entry.beforeSource);
     setSourceDraft(entry.beforeSource);
-    setSelectedTarget(null);
     setSelectedTargetIds([]);
   };
 
@@ -390,14 +309,13 @@ export function DesignPage() {
     setRedoHistory((items) => items.slice(1));
     setArtifactSource(entry.afterSource);
     setSourceDraft(entry.afterSource);
-    setSelectedTarget(null);
     setSelectedTargetIds([]);
   };
 
-  const clearTargetSelection = useCallback(() => {
-    setSelectedTarget(null);
-    setSelectedTargetIds([]);
-  }, []);
+  const selectedTargets = useMemo(() => {
+    const ids = new Set(selectedTargetIds);
+    return artifactTargets.filter((target) => ids.has(target.id));
+  }, [artifactTargets, selectedTargetIds]);
 
   useEffect(() => {
     artifactFrameRef.current?.contentWindow?.postMessage({
@@ -425,7 +343,6 @@ export function DesignPage() {
         setArtifactTargets(message.targets);
       }
       if (message.type === "od-edit-select") {
-        setSelectedTarget(message.target);
         setSelectedTargetIds((ids) => {
           if (message.additive) {
             return ids.includes(message.target.id)
@@ -434,29 +351,12 @@ export function DesignPage() {
           }
           return [message.target.id];
         });
-        setArtifactMode((currentMode) => currentMode === "preview" ? "manual-edit" : currentMode);
-      }
-      if (message.type === "od-edit-drag") {
-        commitArtifactPatch({
-          kind: "set-style",
-          id: message.target.id,
-          styles: {
-            transform: translatedStyle(message.target.styles.transform || message.target.attributes.style, message.deltaX, message.deltaY)
-          }
-        }, message.target);
-      }
-      if (message.type === "od-edit-key-input") {
-        commitArtifactPatch({
-          kind: "set-text",
-          id: message.target.id,
-          value: nextTextFromKey(message.target.fields.text ?? message.target.text, message.key)
-        }, message.target);
       }
     };
 
     window.addEventListener("message", handleMessage);
     return () => window.removeEventListener("message", handleMessage);
-  }, [artifactSource]);
+  }, []);
 
   const resources = resourcesQuery.data ?? { skills: [], designTemplates: [], designSystems: [] };
   const hasProductHtml = Boolean(productArtifactQuery.data?.content.trim());
@@ -493,43 +393,33 @@ export function DesignPage() {
   };
 
   const runMakeover = (requestedGoal: string) => {
-    const nextGoal = requestedGoal.trim();
-    if (!nextGoal) {
-      return;
-    }
+    const nextGoal = requestedGoal.trim() || t("makeover.defaultGoal");
     setMode("codex");
     setArtifactError("");
     setRuntimeError("");
+    setRuntimeMessages([]);
     setMakeoverStep("loading");
-    designMutation.mutate({ goal: nextGoal });
+    designMutation.mutate({ goal: nextGoal, source: "request" });
   };
 
   const applySelectedTargetAiInstruction = () => {
-    if (!aiInstruction.trim()) {
-      if (!commentCapture) {
-        return;
-      }
-    }
     const targetContext = selectedTargets.length
       ? [
-        "Selected layers:",
-        ...selectedTargets.map((target) => [
-          `- @${target.label} (${target.id}, ${target.tagName}, ${target.kind})`,
-          target.text ? `  Visible text: ${target.text}` : ""
-        ].filter(Boolean).join("\n"))
+        "Selected canvas targets:",
+        ...selectedTargets.map((target, index) => [
+          `Target ${index + 1}:`,
+          `- id: ${target.id}`,
+          `- label: ${target.label}`,
+          `- kind: ${target.kind}`,
+          `- text: ${target.text}`,
+          `- rect: x ${target.rect.x}, y ${target.rect.y}, width ${target.rect.width}, height ${target.rect.height}`,
+          `- outerHtml: ${target.outerHtml.slice(0, 1200)}`
+        ].join("\n"))
       ].join("\n")
-      : selectedTarget
-        ? [
-          `Selected target: ${selectedTarget.label} (${selectedTarget.id}, ${selectedTarget.tagName})`,
-          "",
-          "Current outerHTML:",
-          selectedTarget.outerHtml || "(not available)"
-        ].join("\n")
-        : "";
+      : "";
     const commentContext = commentCapture
       ? [
         "Canvas comment capture:",
-        `- selected target ids: ${commentCapture.targetIds.join(", ") || "(none)"}`,
         commentCapture.note ? `- comment text: ${commentCapture.note}` : "",
         "- Clean interactive canvas screenshot is attached below as a data URL.",
         commentCapture.cleanImage,
@@ -540,21 +430,22 @@ export function DesignPage() {
     if (!aiInstruction.trim() && !commentContext) {
       return;
     }
-    const nextGoal = targetContext || commentContext
-      ? [
-        targetContext,
-        commentContext,
-        "Active resource instruction:",
-        "Load and apply the active skill, design template, and design system context already configured for this project before making the change.",
-        "Requested design change:",
-        aiInstruction.trim()
-      ].filter(Boolean).join("\n\n")
-      : aiInstruction.trim();
+    const nextGoal = [
+      "Update the existing DESIGN/index.html as one coherent interactive canvas.",
+      "Do not wait for a selected element. Interpret the user's request against the full current canvas.",
+      "Active resource instruction:",
+      "Load and apply the active skill, design template, and design system context already configured for this project before making the change.",
+      targetContext,
+      commentContext,
+      "Requested design change:",
+      aiInstruction.trim(),
+      "Current DESIGN/index.html source:",
+      artifactSource || "(not available)"
+    ].filter(Boolean).join("\n\n");
     setGoal(nextGoal);
     setMode("codex");
     setArtifactError("");
     const userMessage = aiInstruction.trim() || "Annotated canvas comment";
-    const mentions = selectedTargets.map((target) => target.label);
     const assistantMessageId = crypto.randomUUID();
     setArtifactChatMessages((messages) => [
       ...messages,
@@ -563,7 +454,7 @@ export function DesignPage() {
         role: "user",
         content: userMessage,
         createdAt: Date.now(),
-        mentions,
+        mentions: selectedTargets.map((target) => target.label),
         hasCommentCapture: Boolean(commentCapture),
         progress: []
       },
@@ -580,8 +471,10 @@ export function DesignPage() {
     ]);
     setAiInstruction("");
     setCommentCapture(null);
+    setCommentToolOpen(false);
     setRuntimeError("");
-    designMutation.mutate({ goal: nextGoal, assistantMessageId });
+    setRuntimeMessages([]);
+    designMutation.mutate({ goal: nextGoal, assistantMessageId, source: "workbench" });
   };
 
   return (
@@ -603,6 +496,7 @@ export function DesignPage() {
             resources={resources}
             recommendations={recommendations}
             recommendationTimelineItems={recommendationTimelineItems}
+            recommendationMessages={recommendationMessages}
             recommendationError={recommendationError}
             isLoadingRecommendations={recommendationMutation.isPending}
             designResult={designResult}
@@ -624,28 +518,18 @@ export function DesignPage() {
               setRecommendationError("");
               recommendationMutation.mutate();
             }}
-            onAutoRun={() => {
-              const autoGoal = "알아서 해주세요. 제품 기획서에 가장 잘 맞는 세련된 디자인 방향으로 구성해주세요.";
-              setGoal(autoGoal);
-              runMakeover(autoGoal);
-            }}
             onRun={() => runMakeover(goal)}
           />
         ) : null}
 
         {makeoverStep === "loading" ? (
           <Card className="makeover-loading-card">
-            <AgentLoadingStage label="MAKING OVER" />
-            {timelineItems.length ? (
-              <div className="design-inline-log" aria-label="Makeover progress">
-                {timelineItems.map((item) => (
-                  <div key={item.id}>
-                    <strong>{item.title}</strong>
-                    <span>{item.detail}</span>
-                  </div>
-                ))}
-              </div>
-            ) : null}
+            <CodexLoadingPanel
+              label={t("makeover.runtimeLoadingLabel")}
+              progressItems={timelineItems}
+              messages={runtimeMessages}
+              emptyMessage={t("makeover.loadingMessage")}
+            />
           </Card>
         ) : null}
 
@@ -657,18 +541,15 @@ export function DesignPage() {
             artifactFrameRef={artifactFrameRef}
             artifactSrcDoc={artifactSrcDoc}
             artifactMode={artifactMode}
-            setArtifactMode={setArtifactMode}
             artifactViewport={artifactViewport}
             setArtifactViewport={setArtifactViewport}
             artifactZoom={artifactZoom}
             setArtifactZoom={setArtifactZoom}
-            selectedTargets={selectedTargets}
-            selectedTargetIds={selectedTargetIds}
-            onClearTargetSelection={clearTargetSelection}
             sourceDraft={sourceDraft}
             setSourceDraft={setSourceDraft}
             aiInstruction={aiInstruction}
             setAiInstruction={setAiInstruction}
+            selectedTargets={selectedTargets}
             commentCapture={commentCapture}
             chatMessages={artifactChatMessages}
             isRunning={designMutation.isPending}
@@ -678,10 +559,13 @@ export function DesignPage() {
             isSaving={saveArtifactMutation.isPending}
             onReload={() => {
               void designArtifactQuery.refetch();
-              artifactFrameRef.current?.contentWindow?.postMessage({ __zeroshotArtifact: true, type: "od-refresh-targets" }, "*");
             }}
+            commentToolOpen={commentToolOpen}
             onOpenCommentTool={() => setCommentToolOpen(true)}
+            onCloseCommentTool={() => setCommentToolOpen(false)}
+            onCaptureComment={setCommentCapture}
             onRemoveCommentCapture={() => setCommentCapture(null)}
+            onClearTargetSelection={() => setSelectedTargetIds([])}
             onApplySelectedTargetAiInstruction={applySelectedTargetAiInstruction}
             onUndo={undoArtifactChange}
             onRedo={redoArtifactChange}
@@ -691,13 +575,6 @@ export function DesignPage() {
 
         {makeoverStep === "preview" && designResult ? <DesignResult design={designResult} artifactHtml={artifactSource} /> : null}
       </div>
-      <ArtifactCommentModal
-        open={commentToolOpen}
-        frameRef={artifactFrameRef}
-        selectedTargets={selectedTargets}
-        onClose={() => setCommentToolOpen(false)}
-        onCapture={setCommentCapture}
-      />
     </div>
   );
 }

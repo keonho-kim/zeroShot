@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import type { ArtifactEditTarget } from "@/entities/design/artifact-editor";
 import type { ArtifactChatMessage, ArtifactCommentCapture } from "@/pages/design/artifact-workbench/types";
+import { useI18n } from "@/lib/i18n";
 
 export function ArtifactCodexPanel(props: {
   aiInstruction: string;
@@ -15,13 +16,14 @@ export function ArtifactCodexPanel(props: {
   onClearTargetSelection: () => void;
   onRemoveCommentCapture: () => void;
 }) {
+  const { t } = useI18n();
   const canSubmit = Boolean(props.aiInstruction.trim() || props.commentCapture) && !props.isRunning;
 
   return (
     <aside className="design-codex-panel" aria-label="Codex design chat">
       <div className="design-codex-chat">
-        <span>CODEX CHAT</span>
-        <strong>챗 UI</strong>
+        <span>Codex</span>
+        <strong>{t("artifact.chatTitle")}</strong>
         <div className="design-chat-thread" role="log" aria-live="polite" aria-label="Makeover chat messages">
           {props.chatMessages.length ? props.chatMessages.map((message) => (
             <article className={`design-chat-message ${message.role}`} key={message.id}>
@@ -36,8 +38,8 @@ export function ArtifactCodexPanel(props: {
                   ))}
                 </div>
               ) : null}
-              {message.hasCommentCapture ? <span className="design-chat-attachment">Annotated canvas</span> : null}
-              {message.content ? <p>{message.content}</p> : <p className="design-chat-stream-placeholder">응답 준비 중</p>}
+              {message.hasCommentCapture ? <span className="design-chat-attachment">{t("artifact.annotatedCanvas")}</span> : null}
+              {message.content ? <p>{message.content}</p> : <p className="design-chat-stream-placeholder">{t("artifact.responsePending")}</p>}
               {message.progress.length ? (
                 <div className="design-chat-progress">
                   {message.progress.map((item) => (
@@ -51,7 +53,7 @@ export function ArtifactCodexPanel(props: {
               <div className="design-chat-message-meta">
                 <span>CODEX</span>
               </div>
-              <p>INTERACTIVE CANVAS 준비 완료.</p>
+              <p>{t("artifact.ready")}</p>
             </article>
           )}
         </div>
@@ -61,23 +63,23 @@ export function ArtifactCodexPanel(props: {
               {props.selectedTargets.map((target) => (
                 <span className="design-chat-mention" key={target.id}>@{target.label}</span>
               ))}
-              <button type="button" className="design-chat-clear" onClick={props.onClearTargetSelection}>Clear</button>
+              <button type="button" className="design-chat-clear" onClick={props.onClearTargetSelection}>{t("common.clear")}</button>
             </div>
           ) : null}
           {props.commentCapture ? (
             <div className="design-comment-chip">
-              <span>Annotated canvas attached</span>
-              <button type="button" onClick={props.onRemoveCommentCapture}>Remove</button>
+              <span>{t("artifact.annotatedCanvas")}</span>
+              <button type="button" onClick={props.onRemoveCommentCapture}>{t("artifact.remove")}</button>
             </div>
           ) : null}
           <Textarea
             value={props.aiInstruction}
             onChange={(event) => props.setAiInstruction(event.target.value)}
-            placeholder="예: 선택한 카드의 밀도를 높이고 CTA를 더 선명하게 만들어줘."
+            placeholder={t("artifact.placeholder")}
           />
           <Button variant="outline" disabled={!canSubmit} onClick={props.onApplySelectedTargetAiInstruction}>
             <SendHorizontal aria-hidden="true" />
-            제출
+            {t("architect.send")}
           </Button>
         </div>
       </div>

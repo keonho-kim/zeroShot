@@ -23,13 +23,15 @@ describe("history service", () => {
     const root = await makeTempProject();
     const runDir = join(root, "runs", "260516-001");
     await mkdir(runDir, { recursive: true });
-    await writeFile(join(runDir, "work-log.html"), "<h1>Work</h1>");
+    await writeFile(join(runDir, "work-log.html"), "<h1>Work</h1><span>Mode: <code>update</code></span>");
     await writeFile(join(runDir, "result-report.html"), "<h1>Result</h1>");
 
     const runs = await listRuns(root);
     expect(runs.map((run) => run.name)).toEqual(["260516-001"]);
+    expect(runs[0]?.mode).toBe("update");
 
     const detail = await readRunDetail(root, "260516-001");
+    expect(detail.summary.mode).toBe("update");
     expect(detail.documents["work-log.html"]).toContain("Work");
     expect(detail.documents["result-report.html"]).toContain("Result");
     expect(Object.keys(detail.documents).sort()).toEqual(["result-report.html", "work-log.html"]);

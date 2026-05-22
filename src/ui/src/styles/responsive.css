@@ -34,6 +34,10 @@
 }
 
 @media (max-width: 980px) {
+  .architect-existing-product-chat {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   .design-page-workbench-wide {
     width: min(100%, calc(100vw - 2rem));
   }
@@ -75,5 +79,13 @@
   .product-html-preview,
   .product-html-preview iframe {
     min-height: 368px;
+  }
+
+  .codex-loading-panel {
+    height: auto;
+  }
+
+  .codex-loading-log {
+    height: clamp(18rem, 48vh, 28rem);
   }
 }

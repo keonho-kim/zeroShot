@@ -33,11 +33,27 @@ export function workspaceContractBlock(): string {
 
 export function workingMemoryContractBlock(): string {
   return `Working memory contract:
-- ARCHITECT/PRODUCT.html is the source truth for intended product direction.
+- ARCHITECT/PRODUCT.html is the product planning, requirements, behavior, and acceptance-criteria source of truth.
+- DESIGN/index.html is the visual and interaction design source of truth when it exists.
 - UPDATE.md is the change request in update mode.
 - Use the compact pipeline state above instead of markdown run documents.
+- Preserve the PRODUCT and DESIGN direction as much as practical. If implementation constraints require a deviation, record it in open_issues or validation.
 - Keep summaries short and concrete.
 - Do not generate HTML. The runner renders fixed templates.`;
+}
+
+export function bootstrapEnvironmentContractBlock(): string {
+  return `Bootstrap language and environment contract:
+- Treat .agents/PROJECT_CONTEXT.md as the current project language, framework, runtime, and environment context when it exists.
+- Follow the bootstrapped language and environment before choosing new dependencies, commands, or source layout.
+- If the project context is missing, infer the environment from existing repository files before adding new tooling.`;
+}
+
+export function sourceFileHeaderContractBlock(): string {
+  return `Source file documentation contract:
+- For every new or substantially modified source file, include a short top-of-file comment that explains the file's purpose and role.
+- Keep the comment concrete and useful to a developer reading the file later.
+- Do not add a top-of-file comment only when the file syntax or generated-file convention makes comments inappropriate.`;
 }
 
 export function backendArchitectureBlock(): string {
@@ -83,6 +99,10 @@ export function commonContractBlock(ctx: PipelineContext): string {
     workspaceContractBlock(),
     "",
     workingMemoryContractBlock(),
+    "",
+    bootstrapEnvironmentContractBlock(),
+    "",
+    sourceFileHeaderContractBlock(),
     "",
     backendArchitectureBlock(),
     ctx.mode === "update" ? `\n${updateRefactoringGuidanceBlock()}` : "",

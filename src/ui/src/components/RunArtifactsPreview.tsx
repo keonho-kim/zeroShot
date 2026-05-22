@@ -5,12 +5,14 @@ import type { JobSnapshot } from "@/types/api";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { DocumentPreview, titleFromFilename } from "@/components/DocumentPreview";
+import { useI18n } from "@/lib/i18n";
 
 interface Props {
   job: JobSnapshot | null;
 }
 
 export function RunArtifactsPreview({ job }: Props) {
+  const { t } = useI18n();
   const [selectedFile, setSelectedFile] = useState("");
   const completed = job?.status === "completed";
 
@@ -48,11 +50,11 @@ export function RunArtifactsPreview({ job }: Props) {
   return (
     <Card className="flex flex-col gap-4 bg-[var(--panel)]">
       <div>
-        <p className="text-sm font-semibold">Run artifacts</p>
-        <p className="text-xs text-[var(--muted-foreground)]">완료된 {job.mode.toUpperCase()} 산출물을 HTML 프리뷰로 확인합니다.</p>
+        <p className="text-sm font-semibold">{t("runArtifacts.title")}</p>
+        <p className="text-xs text-[var(--muted-foreground)]">{t("runArtifacts.detail", { mode: job.mode.toUpperCase() })}</p>
       </div>
       {detailQuery.isLoading || runsQuery.isLoading ? (
-        <p className="text-sm text-[var(--muted-foreground)]">산출물을 불러오는 중입니다.</p>
+        <p className="text-sm text-[var(--muted-foreground)]">{t("runArtifacts.loading")}</p>
       ) : null}
       {fileNames.length ? (
         <>
@@ -74,7 +76,7 @@ export function RunArtifactsPreview({ job }: Props) {
           />
         </>
       ) : !detailQuery.isLoading && !runsQuery.isLoading ? (
-        <p className="text-sm text-[var(--muted-foreground)]">표시할 HTML 산출물이 없습니다.</p>
+        <p className="text-sm text-[var(--muted-foreground)]">{t("runArtifacts.empty")}</p>
       ) : null}
     </Card>
   );

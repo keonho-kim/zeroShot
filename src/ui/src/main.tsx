@@ -8,6 +8,7 @@ import "@fontsource/noto-sans-kr/korean-400.css";
 import "@fontsource/noto-sans-kr/korean-700.css";
 import { AppLayout } from "@/app/layout";
 import { initClientObservability } from "@/observability/sentry";
+import { translate, detectLocale } from "@/lib/i18n";
 import "@/styles/globals.css";
 
 const HomePage = lazy(() => import("@/pages/HomePage").then((module) => ({ default: module.HomePage })));
@@ -33,7 +34,7 @@ const queryClient = new QueryClient({
 initClientObservability();
 
 function RouteFallback() {
-  return <div className="builder-shell">Loading...</div>;
+  return <div className="builder-shell">{translate(detectLocale(), "route.loading")}</div>;
 }
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
@@ -50,7 +51,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
               <Route path="/update" element={<UpdatePage />} />
               <Route path="/architect" element={<ArchitectPage />} />
               <Route path="/architect/progress" element={<ArchitectProgressPage />} />
-              <Route path="/design" element={<DesignPage />} />
+              <Route path="/makeover" element={<DesignPage />} />
               <Route path="/logs" element={<LogsPage />} />
               <Route path="/history" element={<Navigate to="/logs" replace />} />
               <Route path="/settings" element={<SettingsPage />} />

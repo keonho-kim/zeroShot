@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/components/PageHeader";
+import { useI18n } from "@/lib/i18n";
 import { cn } from "@/utils/cn";
 
 const approvalOptions = ["never", "on-request", "untrusted"];
@@ -24,6 +25,7 @@ function SettingsSelect({
   options: string[];
   onChange: (value: string) => void;
 }) {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
 
   return (
@@ -34,7 +36,7 @@ function SettingsSelect({
         className="flex w-full items-center justify-between rounded-[1px] border-2 border-[var(--border)] bg-[var(--input)] px-2.5 py-1.5 font-mono text-xs font-bold text-[var(--foreground)] outline-none transition focus-visible:shadow-[var(--shadow-focus)]"
         onClick={() => setOpen((value) => !value)}
       >
-        <span className="truncate">{value || "Not set"}</span>
+        <span className="truncate">{value || t("common.notSet")}</span>
         <span aria-hidden="true">⌄</span>
       </button>
       {open ? (
@@ -62,6 +64,7 @@ function SettingsSelect({
 }
 
 export function SettingsPage() {
+  const { t, languageLabel } = useI18n();
   const projectRoot = useAppStore((state) => state.projectRoot);
   const appQuery = useQuery({ queryKey: ["app-settings"], queryFn: fetchAppSettings });
   const codexQuery = useQuery({ queryKey: ["codex-settings"], queryFn: fetchCodexSettings });
@@ -127,11 +130,11 @@ export function SettingsPage() {
       <PageHeader title="CONFIG" />
       <div className="grid gap-6 xl:grid-cols-2">
         <Card className="flex flex-col gap-4 bg-[var(--panel)]">
-          <h2 className="text-xl font-bold">App Settings</h2>
+          <h2 className="text-xl font-bold">{t("settings.app")}</h2>
           {appSettings ? (
             <>
               <div>
-                <label className="mb-2 block text-sm font-medium">Allowed Roots (comma separated)</label>
+                <label className="mb-2 block text-sm font-medium">{t("settings.allowedRoots")}</label>
                 <Input
                   value={appSettings.allowedRoots.join(",")}
                   onChange={(event) => setAppSettings({ ...appSettings, allowedRoots: event.target.value.split(",").map((entry) => entry.trim()).filter(Boolean) })}
@@ -139,7 +142,7 @@ export function SettingsPage() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="mb-2 block text-sm font-medium">Skills Root</label>
+                  <label className="mb-2 block text-sm font-medium">{t("settings.skillsRoot")}</label>
                   <Input
                     value={appSettings.resourceRoots.skills}
                     onChange={(event) => setAppSettings({
@@ -149,7 +152,7 @@ export function SettingsPage() {
                   />
                 </div>
                 <div>
-                  <label className="mb-2 block text-sm font-medium">Design Systems Root</label>
+                  <label className="mb-2 block text-sm font-medium">{t("settings.designSystemsRoot")}</label>
                   <Input
                     value={appSettings.resourceRoots.designSystems}
                     onChange={(event) => setAppSettings({
@@ -161,7 +164,7 @@ export function SettingsPage() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="mb-2 block text-sm font-medium">Design Templates Root</label>
+                  <label className="mb-2 block text-sm font-medium">{t("settings.designTemplatesRoot")}</label>
                   <Input
                     value={appSettings.resourceRoots.designTemplates}
                     onChange={(event) => setAppSettings({
@@ -173,14 +176,14 @@ export function SettingsPage() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="mb-2 block text-sm font-medium">Host</label>
+                  <label className="mb-2 block text-sm font-medium">{t("settings.host")}</label>
                   <Input
                     value={appSettings.server.host}
                     onChange={(event) => setAppSettings({ ...appSettings, server: { ...appSettings.server, host: event.target.value } })}
                   />
                 </div>
                 <div>
-                  <label className="mb-2 block text-sm font-medium">Port</label>
+                  <label className="mb-2 block text-sm font-medium">{t("settings.port")}</label>
                   <Input
                     value={String(appSettings.server.port)}
                     onChange={(event) => setAppSettings({ ...appSettings, server: { ...appSettings.server, port: Number(event.target.value) || 0 } })}
@@ -189,66 +192,67 @@ export function SettingsPage() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="mb-2 block text-sm font-medium">Max Iterations</label>
+                  <label className="mb-2 block text-sm font-medium">{t("settings.maxIterations")}</label>
                   <Input value={String(appSettings.defaults.maxIters)} onChange={(event) => setAppSettings({ ...appSettings, defaults: { ...appSettings.defaults, maxIters: Number(event.target.value) || 0 } })} />
                 </div>
                 <div>
-                  <label className="mb-2 block text-sm font-medium">Stall Limit</label>
+                  <label className="mb-2 block text-sm font-medium">{t("settings.stallLimit")}</label>
                   <Input value={String(appSettings.defaults.stallLimit)} onChange={(event) => setAppSettings({ ...appSettings, defaults: { ...appSettings.defaults, stallLimit: Number(event.target.value) || 0 } })} />
                 </div>
-                <SettingsSelect label="Default Approval" value={appSettings.defaults.approval} options={approvalOptions} onChange={(approval) => setAppSettings({ ...appSettings, defaults: { ...appSettings.defaults, approval } })} />
-                <SettingsSelect label="Default Sandbox" value={appSettings.defaults.sandbox} options={sandboxOptions} onChange={(sandbox) => setAppSettings({ ...appSettings, defaults: { ...appSettings.defaults, sandbox } })} />
+                <SettingsSelect label={t("settings.defaultApproval")} value={appSettings.defaults.approval} options={approvalOptions} onChange={(approval) => setAppSettings({ ...appSettings, defaults: { ...appSettings.defaults, approval } })} />
+                <SettingsSelect label={t("settings.defaultSandbox")} value={appSettings.defaults.sandbox} options={sandboxOptions} onChange={(sandbox) => setAppSettings({ ...appSettings, defaults: { ...appSettings.defaults, sandbox } })} />
               </div>
-              <Button className="self-start" onClick={() => saveAppMutation.mutate()}>앱 설정 저장</Button>
+              <p className="text-sm text-[var(--muted-foreground)]">{t("settings.uiLanguage")}: {languageLabel}</p>
+              <Button className="self-start" onClick={() => saveAppMutation.mutate()}>{t("settings.saveApp")}</Button>
             </>
           ) : null}
         </Card>
         <Card className="flex flex-col gap-4 bg-[var(--panel)]">
-          <h2 className="text-xl font-bold">Codex Settings</h2>
+          <h2 className="text-xl font-bold">{t("settings.codex")}</h2>
           {codexSettings ? (
             <>
               <section className="grid gap-3 border-2 border-[var(--border)] bg-[var(--panel)] p-3">
-                <h3 className="text-base font-bold">Global Codex Settings</h3>
+                <h3 className="text-base font-bold">{t("settings.globalCodex")}</h3>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="mb-2 block text-sm font-medium">Default Model</label>
+                    <label className="mb-2 block text-sm font-medium">{t("settings.defaultModel")}</label>
                     <Input value={codexSettings.defaults.model ?? ""} placeholder="gpt-5.5" onChange={(event) => updateCodexDefaults({ model: event.target.value })} />
                   </div>
-                  <SettingsSelect label="Reasoning Effort" value={codexSettings.defaults.modelReasoningEffort ?? ""} options={reasoningOptions} onChange={(modelReasoningEffort) => updateCodexDefaults({ modelReasoningEffort })} />
-                  <SettingsSelect label="Approval Policy" value={codexSettings.defaults.approvalPolicy ?? ""} options={approvalOptions} onChange={(approvalPolicy) => updateCodexDefaults({ approvalPolicy })} />
-                  <SettingsSelect label="Sandbox Mode" value={codexSettings.defaults.sandboxMode ?? ""} options={sandboxOptions} onChange={(sandboxMode) => updateCodexDefaults({ sandboxMode })} />
+                  <SettingsSelect label={t("settings.reasoning")} value={codexSettings.defaults.modelReasoningEffort ?? ""} options={reasoningOptions} onChange={(modelReasoningEffort) => updateCodexDefaults({ modelReasoningEffort })} />
+                  <SettingsSelect label={t("settings.approvalPolicy")} value={codexSettings.defaults.approvalPolicy ?? ""} options={approvalOptions} onChange={(approvalPolicy) => updateCodexDefaults({ approvalPolicy })} />
+                  <SettingsSelect label={t("settings.sandboxMode")} value={codexSettings.defaults.sandboxMode ?? ""} options={sandboxOptions} onChange={(sandboxMode) => updateCodexDefaults({ sandboxMode })} />
                   <div>
-                    <label className="mb-2 block text-sm font-medium">Approvals Reviewer</label>
+                    <label className="mb-2 block text-sm font-medium">{t("settings.approvalsReviewer")}</label>
                     <Input value={codexSettings.defaults.approvalsReviewer ?? ""} placeholder="user" onChange={(event) => updateCodexDefaults({ approvalsReviewer: event.target.value })} />
                   </div>
-                  <SettingsSelect label="Experimental Goals" value={codexSettings.defaults.goalsEnabled ? "enabled" : "disabled"} options={["enabled", "disabled"]} onChange={(value) => updateCodexDefaults({ goalsEnabled: value === "enabled" })} />
+                  <SettingsSelect label={t("settings.experimentalGoals")} value={codexSettings.defaults.goalsEnabled ? "enabled" : "disabled"} options={["enabled", "disabled"]} onChange={(value) => updateCodexDefaults({ goalsEnabled: value === "enabled" })} />
                 </div>
               </section>
               <section className="grid gap-3 border-2 border-[var(--border)] bg-[var(--surface)] p-3">
-                <h3 className="text-base font-bold">Project Codex Settings</h3>
+                <h3 className="text-base font-bold">{t("settings.projectCodex")}</h3>
                 <div className="grid gap-2 text-sm">
-                  <p><strong>Selected Project:</strong> {projectRoot || "No project selected"}</p>
-                  <p><strong>Config Path:</strong> {projectCodexStatus?.configPath ?? (projectRoot ? `${projectRoot}/.codex/config.toml` : "No project selected")}</p>
-                  <p><strong>Status:</strong> {projectCodexStatus?.exists ? "project config exists" : "project config not created"} / {projectCodexStatus?.trusted ? "trusted" : "not trusted"}</p>
-                  <p><strong>Defaults:</strong> gpt-5.5 · high · danger-full-access · never · goals enabled</p>
+                  <p><strong>{t("settings.selectedProject")}:</strong> {projectRoot || t("settings.noProject")}</p>
+                  <p><strong>{t("settings.configPath")}:</strong> {projectCodexStatus?.configPath ?? (projectRoot ? `${projectRoot}/.codex/config.toml` : t("settings.noProject"))}</p>
+                  <p><strong>{t("settings.status")}:</strong> {projectCodexStatus?.exists ? t("settings.configExists") : t("settings.configMissing")} / {projectCodexStatus?.trusted ? t("settings.trusted") : t("settings.notTrusted")}</p>
+                  <p><strong>{t("settings.defaults")}:</strong> gpt-5.5 · high · danger-full-access · never · {t("settings.goalsEnabled")}</p>
                 </div>
                 <Button className="self-start" disabled={!projectRoot || saveProjectCodexMutation.isPending} onClick={() => saveProjectCodexMutation.mutate()}>
-                  프로젝트 Codex 설정 생성
+                  {t("settings.createProjectCodex")}
                 </Button>
-                {saveProjectCodexMutation.isSuccess ? <p className="text-sm font-bold text-[var(--success-foreground)]">프로젝트 config 생성됨 / trusted 등록됨</p> : null}
-                {saveProjectCodexMutation.isError ? <p className="text-sm font-bold text-[var(--danger-foreground)]">{saveProjectCodexMutation.error instanceof Error ? saveProjectCodexMutation.error.message : "프로젝트 Codex 설정을 저장하지 못했습니다."}</p> : null}
+                {saveProjectCodexMutation.isSuccess ? <p className="text-sm font-bold text-[var(--success-foreground)]">{t("settings.projectCodexCreated")}</p> : null}
+                {saveProjectCodexMutation.isError ? <p className="text-sm font-bold text-[var(--danger-foreground)]">{saveProjectCodexMutation.error instanceof Error ? saveProjectCodexMutation.error.message : t("settings.projectCodexError")}</p> : null}
               </section>
               <div className="grid gap-4">
-                <h3 className="text-base font-bold">Model Providers</h3>
+                <h3 className="text-base font-bold">{t("settings.providers")}</h3>
                 {codexSettings.modelProviders.map((provider, index) => (
                   <div key={provider.id} className="rounded-md bg-[var(--surface)] p-4">
-                    <label className="mb-2 block text-sm font-medium">Provider ID</label>
+                    <label className="mb-2 block text-sm font-medium">{t("settings.providerId")}</label>
                     <Input value={provider.id} onChange={(event) => {
                       const next = structuredClone(codexSettings);
                       next.modelProviders[index].id = event.target.value;
                       setCodexSettings(next);
                     }} />
-                    <label className="mb-2 mt-3 block text-sm font-medium">Base URL</label>
+                    <label className="mb-2 mt-3 block text-sm font-medium">{t("settings.baseUrl")}</label>
                     <Input className="mt-2" value={provider.baseUrl} onChange={(event) => {
                       const next = structuredClone(codexSettings);
                       next.modelProviders[index].baseUrl = event.target.value;
@@ -258,22 +262,22 @@ export function SettingsPage() {
                 ))}
               </div>
               <div className="grid gap-4">
-                <h3 className="text-base font-bold">Profiles</h3>
+                <h3 className="text-base font-bold">{t("settings.profiles")}</h3>
                 {codexSettings.profiles.map((profile, index) => (
                   <div key={profile.id} className="rounded-md bg-[var(--surface)] p-4">
-                    <label className="mb-2 block text-sm font-medium">Profile ID</label>
+                    <label className="mb-2 block text-sm font-medium">{t("settings.profileId")}</label>
                     <Input value={profile.id} onChange={(event) => {
                       const next = structuredClone(codexSettings);
                       next.profiles[index].id = event.target.value;
                       setCodexSettings(next);
                     }} />
-                    <label className="mb-2 mt-3 block text-sm font-medium">Model Provider</label>
+                    <label className="mb-2 mt-3 block text-sm font-medium">{t("settings.modelProvider")}</label>
                     <Input className="mt-2" value={profile.modelProvider} onChange={(event) => {
                       const next = structuredClone(codexSettings);
                       next.profiles[index].modelProvider = event.target.value;
                       setCodexSettings(next);
                     }} />
-                    <label className="mb-2 mt-3 block text-sm font-medium">Model</label>
+                    <label className="mb-2 mt-3 block text-sm font-medium">{t("settings.model")}</label>
                     <Input className="mt-2" value={profile.model} onChange={(event) => {
                       const next = structuredClone(codexSettings);
                       next.profiles[index].model = event.target.value;
@@ -282,7 +286,7 @@ export function SettingsPage() {
                   </div>
                 ))}
               </div>
-              <Button className="self-start" onClick={() => saveCodexMutation.mutate()}>Codex 설정 저장</Button>
+              <Button className="self-start" onClick={() => saveCodexMutation.mutate()}>{t("settings.saveCodex")}</Button>
             </>
           ) : null}
         </Card>

@@ -6,6 +6,26 @@ import type { DesignRuntimeResponse, ProjectSettings } from "@backend/types.js";
 
 let database: Database | null = null;
 
+export interface StoredArchitectSession {
+  id: string;
+  projectRoot: string;
+  goal: string;
+  title: string;
+  summary: string;
+  decisionsJson: string;
+  createdAt: string;
+}
+
+export interface StoredDesignSession {
+  id: string;
+  projectRoot: string;
+  mode: string;
+  title: string;
+  summary: string;
+  responseJson: string;
+  createdAt: string;
+}
+
 async function getDatabase(): Promise<Database> {
   if (database) {
     return database;
@@ -167,4 +187,66 @@ export async function readLatestDesignSession(projectRoot: string): Promise<Desi
   `).get(projectRoot);
 
   return row ? JSON.parse(row.response_json) as DesignRuntimeResponse : null;
+}
+
+export async function listStoredSessionProjectRoots(): Promise<string[]> {
+  const db = await getDatabase();
+  const rows = db.query<{ project_root: string }, []>(`
+    select project_root from architect_sessions
+    union
+    select project_root from design_sessions
+  `).all();
+  return rows.map((row) => row.project_root);
+}
+
+export async function listStoredArchitectSessions(projectRoot: string): Promise<StoredArchitectSession[]> {
+  const db = await getDatabase();
+  return db.query<{
+    id: string;
+    project_root: string;
+    goal: string;
+    title: string;
+    summary: string;
+    decisions_json: string;
+    created_at: string;
+  }, [string]>(`
+    select id, project_root, goal, title, summary, decisions_json, created_at
+    from architect_sessions
+    where project_root = ?
+    order by created_at desc
+  `).all(projectRoot).map((row) => ({
+    id: row.id,
+    projectRoot: row.project_root,
+    goal: row.goal,
+    title: row.title,
+    summary: row.summary,
+    decisionsJson: row.decisions_json,
+    createdAt: row.created_at
+  }));
+}
+
+export async function listStoredDesignSessions(projectRoot: string): Promise<StoredDesignSession[]> {
+  const db = await getDatabase();
+  return db.query<{
+    id: string;
+    project_root: string;
+    mode: string;
+    title: string;
+    summary: string;
+    response_json: string;
+    created_at: string;
+  }, [string]>(`
+    select id, project_root, mode, title, summary, response_json, created_at
+    from design_sessions
+    where project_root = ?
+    order by created_at desc
+  `).all(projectRoot).map((row) => ({
+    id: row.id,
+    projectRoot: row.project_root,
+    mode: row.mode,
+    title: row.title,
+    summary: row.summary,
+    responseJson: row.response_json,
+    createdAt: row.created_at
+  }));
 }

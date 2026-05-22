@@ -40,11 +40,18 @@ interface ArchitectFlowState {
   architectPending: boolean;
   architectError: string;
   timelineItems: ArchitectTimelineItem[];
+  streamMessages: string[];
+  blueprintTimelineItems: ArchitectTimelineItem[];
+  blueprintStreamMessages: string[];
   expandedTimelineId: string | null;
   setUserBrief: (value: string) => void;
   prepareRequest: (params: { brief: string; requestKey: string; omakaseMode: boolean }) => void;
   markRequestStarted: (requestKey: string) => void;
   addProgress: (event: ArchitectProgressEvent) => void;
+  addStreamMessage: (message: string) => void;
+  resetBlueprintStream: () => void;
+  addBlueprintProgress: (event: ArchitectProgressEvent) => void;
+  addBlueprintStreamMessage: (message: string) => void;
   completeRequest: (decisionSet: ArchitectDecisionSet) => void;
   failRequest: (message: string) => void;
   chooseOption: (decisionId: string, optionId: string) => void;
@@ -74,6 +81,9 @@ export const useArchitectFlowStore = create<ArchitectFlowState>((set) => ({
   architectPending: false,
   architectError: "",
   timelineItems: [],
+  streamMessages: [],
+  blueprintTimelineItems: [],
+  blueprintStreamMessages: [],
   expandedTimelineId: null,
   setUserBrief: (value) => set({ userBrief: value }),
   prepareRequest: ({ brief, requestKey, omakaseMode }) => set({
@@ -93,6 +103,9 @@ export const useArchitectFlowStore = create<ArchitectFlowState>((set) => ({
     architectPending: false,
     architectError: "",
     timelineItems: [],
+    streamMessages: [],
+    blueprintTimelineItems: [],
+    blueprintStreamMessages: [],
     expandedTimelineId: null
   }),
   markRequestStarted: (requestKey) => set({
@@ -100,12 +113,42 @@ export const useArchitectFlowStore = create<ArchitectFlowState>((set) => ({
     architectPending: true,
     architectError: "",
     timelineItems: [],
+    streamMessages: [],
+    blueprintTimelineItems: [],
+    blueprintStreamMessages: [],
     expandedTimelineId: null
   }),
   addProgress: (event) => set((state) => ({
     timelineItems: upsertTimelineItem(state.timelineItems, event),
     expandedTimelineId: event.id
   })),
+  addStreamMessage: (message) => set((state) => {
+    const trimmed = message.trim();
+    if (!trimmed || state.streamMessages.at(-1) === trimmed) {
+      return state;
+    }
+    return {
+      streamMessages: [...state.streamMessages, trimmed]
+    };
+  }),
+  resetBlueprintStream: () => set({
+    blueprintTimelineItems: [],
+    blueprintStreamMessages: [],
+    expandedTimelineId: null
+  }),
+  addBlueprintProgress: (event) => set((state) => ({
+    blueprintTimelineItems: upsertTimelineItem(state.blueprintTimelineItems, event),
+    expandedTimelineId: event.id
+  })),
+  addBlueprintStreamMessage: (message) => set((state) => {
+    const trimmed = message.trim();
+    if (!trimmed || state.blueprintStreamMessages.at(-1) === trimmed) {
+      return state;
+    }
+    return {
+      blueprintStreamMessages: [...state.blueprintStreamMessages, trimmed]
+    };
+  }),
   completeRequest: (decisionSet) => set((state) => {
     const answers = state.omakaseMode
       ? Object.fromEntries(decisionSet.decisions.map((decision) => [decision.id, decision.options[0]?.id ?? ""]))
@@ -116,8 +159,6 @@ export const useArchitectFlowStore = create<ArchitectFlowState>((set) => ({
       stepIndex: state.omakaseMode ? decisionSet.decisions.length : state.stepIndex,
       answers,
       continuePromptOpen: state.omakaseMode,
-      timelineItems: [],
-      expandedTimelineId: null,
       architectPending: false
     };
   }),

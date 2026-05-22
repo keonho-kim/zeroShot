@@ -3,7 +3,8 @@ import { MessageSquarePlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import type { ArtifactEditorMode } from "@/entities/design/artifact-editor";
-import type { ArtifactViewport } from "@/pages/design/artifact-workbench/types";
+import { ArtifactCommentOverlay } from "@/pages/design/artifact-workbench/ArtifactCommentOverlay";
+import type { ArtifactCommentCapture, ArtifactViewport } from "@/pages/design/artifact-workbench/types";
 import { cn } from "@/utils/cn";
 
 export function ArtifactStage(props: {
@@ -12,9 +13,13 @@ export function ArtifactStage(props: {
   artifactZoom: number;
   artifactFrameRef: RefObject<HTMLIFrameElement | null>;
   artifactSrcDoc: string;
+  commentToolOpen: boolean;
   sourceDraft: string;
   setSourceDraft: Dispatch<SetStateAction<string>>;
   onOpenCommentTool: () => void;
+  onCloseCommentTool: () => void;
+  onCaptureComment: (capture: ArtifactCommentCapture) => void;
+  targetIds: string[];
 }) {
   if (props.artifactMode === "source") {
     return (
@@ -39,10 +44,19 @@ export function ArtifactStage(props: {
           srcDoc={props.artifactSrcDoc}
           sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
         />
-        <Button type="button" className="artifact-comment-button" onClick={props.onOpenCommentTool}>
-          <MessageSquarePlus aria-hidden="true" />
-          코멘트하기
-        </Button>
+        {!props.commentToolOpen ? (
+          <Button type="button" className="artifact-comment-button" onClick={props.onOpenCommentTool}>
+            <MessageSquarePlus aria-hidden="true" />
+            코멘트하기
+          </Button>
+        ) : null}
+        <ArtifactCommentOverlay
+          open={props.commentToolOpen}
+          frameRef={props.artifactFrameRef}
+          targetIds={props.targetIds}
+          onClose={props.onCloseCommentTool}
+          onCapture={props.onCaptureComment}
+        />
       </div>
     </div>
   );

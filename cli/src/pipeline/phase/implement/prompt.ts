@@ -13,11 +13,11 @@ export function createPrompt(ctx: PipelineContext): { goal: string; extra: strin
 - Put the completed work details in work_log_entries.
 - Return PASS only if this implementation phase safely completed its intended scope.${updateRefactoring}`,
     extra: ctx.mode === "update"
-      ? `Use PRODUCT.html, UPDATE.md, .agents/PROJECT_CONTEXT.md when present, and compact state as grounding.
+      ? `Use PRODUCT.html, DESIGN/index.html when present, UPDATE.md, .agents/PROJECT_CONTEXT.md when present, and compact state as grounding.
 
 ${updateRefactoringGuidanceBlock()}
 
 Record changed_files, validation, next_steps, and open_issues in the JSON response.`
-      : "Use PRODUCT.html, .agents/PROJECT_CONTEXT.md when present, and compact state as grounding. Record changed_files, validation, next_steps, and open_issues in the JSON response."
+      : "Use PRODUCT.html, DESIGN/index.html when present, .agents/PROJECT_CONTEXT.md when present, and compact state as grounding. Record changed_files, validation, next_steps, and open_issues in the JSON response."
   };
 }

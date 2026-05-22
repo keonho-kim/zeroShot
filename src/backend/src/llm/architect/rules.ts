@@ -4,7 +4,10 @@ The user is describing a product they want to build. Convert the conversation in
 
 export const architectDecisionRulesPrompt = `Rules:
 - Return only JSON matching the provided schema.
-- Do not edit files, run commands, or inspect the repository unless it is necessary to understand the workspace.
+- This is a product design process for a completely empty project.
+- There are no existing product files, source files, README files, or package metadata to explore. Use local read-only commands only to confirm the empty workspace when needed.
+- Actively use web search and web page reading to gather external product-planning context. In particular, compare existing apps or programs in the same category and derive useful product strengths, workflow similarities, and planning implications.
+- Do not edit files, write files, install dependencies, or make persistent changes while generating decisions.
 - Build the decision set from three reusable conversation rounds: development overview, product detail, and development detail.
 - Development overview should start with product shape, concept, target user, core value, and usage context. Put language, runtime, framework, and deployment questions near the end of this round, not as the first question.
 - Product detail should clarify core workflows, screens, entities, permissions, integrations, realtime/SSE needs, and expected edge cases.

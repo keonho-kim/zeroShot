@@ -1,9 +1,23 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import type { PipelineContext } from "@cli/pipeline/types.js";
 import { nowHuman } from "@cli/pipeline/utils.js";
 import { additionalDirectoryBlock, commonContractBlock, compactStateBlock, updateInputFileBlock } from "@cli/pipeline/phase/common/prompt-blocks.js";
 
+function projectContextBlock(ctx: PipelineContext): string {
+  const contextPath = join(ctx.projectRoot, ".agents", "PROJECT_CONTEXT.md");
+  try {
+    return `Bootstrap language and environment context from .agents/PROJECT_CONTEXT.md:
+${readFileSync(contextPath, "utf8").trim()}`;
+  } catch {
+    return "Bootstrap language and environment context from .agents/PROJECT_CONTEXT.md:\nnone";
+  }
+}
+
 export function buildPrompt(ctx: PipelineContext, phase: string, reasoning: string, goalText: string, extraContext: string): string {
-  return `Repository root: ${ctx.projectRoot}
+  return `/goal
+
+Repository root: ${ctx.projectRoot}
 Run mode: ${ctx.mode}
 Product file: ${ctx.productFile}
 Run directory for final user HTML only: ${ctx.runDir}
@@ -20,6 +34,8 @@ Read if needed:
 ${updateInputFileBlock(ctx)}
 
 ${additionalDirectoryBlock(ctx)}
+
+${projectContextBlock(ctx)}
 
 ${compactStateBlock(ctx)}
 

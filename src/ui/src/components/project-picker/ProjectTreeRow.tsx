@@ -2,6 +2,7 @@ import { Check, ChevronDown, ChevronRight, FolderPlus, FolderOpen, FolderTree } 
 import type { DirectoryEntry } from "@/types/api";
 import { FloatingActionMenu, type FloatingActionMenuItem } from "@/components/ui/FloatingActionMenu";
 import { Button } from "@/components/ui/button";
+import { useI18n } from "@/lib/i18n";
 import { cn } from "@/utils/cn";
 import { PathBadge } from "./PathBadge";
 import { ProjectTreeMainButton } from "./ProjectTreeMainButton";
@@ -35,10 +36,11 @@ export function ProjectTreeRow({
   createPending: boolean;
   selectionPending: boolean;
 }) {
+  const { t } = useI18n();
   const actionItems: FloatingActionMenuItem[] = [
     {
       id: "open",
-      label: entry.isDirectory ? "Open folder" : "Open file",
+      label: entry.isDirectory ? t("projectPicker.openFolder") : t("projectPicker.openFile"),
       icon: <FolderOpen className="size-4" />,
       onSelect: onOpen
     },
@@ -46,7 +48,7 @@ export function ProjectTreeRow({
       ? [
           {
             id: "new-folder",
-            label: "New folder",
+            label: t("projectPicker.newFolder"),
             icon: <FolderPlus className="size-4" />,
             disabled: !selected || createPending,
             onSelect: onCreateDirectory
@@ -69,7 +71,7 @@ export function ProjectTreeRow({
           <button
             type="button"
             className="rounded-md p-1 transition focus-visible:shadow-[var(--shadow-focus)]"
-            aria-label={expanded ? `${entry.name} 접기` : `${entry.name} 펼치기`}
+            aria-label={expanded ? `${entry.name} ${t("common.close")}` : `${entry.name} ${t("projectPicker.openFolder")}`}
             onClick={(event) => {
               event.stopPropagation();
               onToggle();
@@ -83,14 +85,14 @@ export function ProjectTreeRow({
       <ProjectTreeMainButton entry={entry} selected={selected} expanded={expanded} onOpen={onOpen} />
 
       <div className="flex flex-wrap items-center justify-end gap-2 pl-2">
-        {!childrenLoaded && expanded && !loadError ? <PathBadge>Loading</PathBadge> : null}
+        {!childrenLoaded && expanded && !loadError ? <PathBadge>{t("common.loading")}</PathBadge> : null}
         {loadError ? <PathBadge>{loadError}</PathBadge> : null}
-        {current ? <PathBadge active>선택된 프로젝트</PathBadge> : null}
+        {current ? <PathBadge active>{t("projectPicker.selectedProject")}</PathBadge> : null}
         {entry.hasWorkHistory ? <PathBadge active={!!entry.runsCount}>{entry.runsCount ? `UPDATE (${entry.runsCount})` : "History"}</PathBadge> : null}
         {entry.isDirectory && selected && !current ? (
           <Button className="h-8 px-3 py-1 text-xs" disabled={selectionPending} onClick={onSelectProject}>
             <FolderTree className="size-3.5" />
-            프로젝트 선택
+            {t("projectPicker.selectProject")}
           </Button>
         ) : null}
         <FloatingActionMenu label={`${entry.name} actions`} items={actionItems} />

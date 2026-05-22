@@ -164,7 +164,7 @@ h1{margin:0;font-size:43px;line-height:.95;letter-spacing:0}
     <header class="hero" data-od-id="artifact-hero" data-od-edit="container" data-od-label="Hero">
       <p class="eyebrow" data-od-id="artifact-eyebrow" data-od-edit="text" data-od-label="Eyebrow">OPEN DESIGN ARTIFACT</p>
       <h1 data-od-id="artifact-title" data-od-edit="text" data-od-label="Title">${safeTitle}</h1>
-      <p class="sub" data-od-id="artifact-summary" data-od-edit="text" data-od-label="Summary">제품 블루프린트가 아직 없어서 DESIGN 편집을 시작할 기본 artifact를 만들었습니다. 요소를 클릭하고 드래그하거나 바로 타이핑해 편집하세요.</p>
+      <p class="sub" data-od-id="artifact-summary" data-od-edit="text" data-od-label="Summary">No product blueprint is available yet, so this starter artifact is ready for design editing. Click elements, drag them, or type directly to edit.</p>
     </header>
     <section class="panel" data-od-id="artifact-panel" data-od-edit="container" data-od-label="Feature panel">
       <div class="grid" data-od-id="artifact-grid" data-od-edit="container" data-od-label="Feature grid">
@@ -355,14 +355,10 @@ function injectBeforeBodyEnd(source: string, injection: string): string {
 
 function buildBridgeStyle(): string {
   return `<style data-od-edit-bridge-style>
-html[data-od-edit-enabled='true'] body * { cursor: crosshair !important; }
-html[data-od-edit-enabled='true'] [data-od-id],
-html[data-od-edit-enabled='true'] [data-od-source-path],
-html[data-od-edit-enabled='true'] [data-od-runtime-id] { outline: 1px dashed rgb(217 72 15 / 42%) !important; outline-offset: 3px !important; }
-html [data-od-selected='true'] { outline: 3px solid #d9480f !important; outline-offset: 3px !important; }
-html[data-od-edit-enabled='true'] [data-od-hover='true'] { outline: 2px dashed #1d1d1f !important; outline-offset: 2px !important; }
-[data-od-drag-ghost='true'] { position: fixed !important; z-index: 2147483647 !important; pointer-events: none !important; opacity: 0.42 !important; border: 2px dashed #d9480f !important; background: rgb(255 216 77 / 42%) !important; box-sizing: border-box !important; }
-[data-od-add-hint='true'] { position: fixed !important; z-index: 2147483647 !important; display: grid !important; width: 22px !important; height: 22px !important; place-items: center !important; border: 2px solid #1d4ed8 !important; border-radius: 999px !important; background: #dbeafe !important; color: #1d4ed8 !important; font: 900 16px/1 system-ui, sans-serif !important; pointer-events: none !important; box-shadow: 2px 2px 0 rgb(29 78 216 / 28%) !important; }
+html [data-od-id],
+html [data-od-source-path],
+html [data-od-runtime-id] { outline: 1px dashed rgb(0 0 0 / 58%) !important; outline-offset: 3px !important; }
+html [data-od-selected='true'] { outline: 3px solid #dc2626 !important; outline-offset: 3px !important; }
 </style>`;
 }
 
@@ -534,12 +530,6 @@ function artifactBridgeScript(initialMode: ArtifactEditorMode): string {
   const hostNodeSelector = ${JSON.stringify(hostNodeSelector)};
   const styleProps = ${JSON.stringify(styleProperties)};
   let editMode = ${JSON.stringify(initialMode !== "preview")};
-  let selectedId = "";
-  let hoverId = "";
-  let dragStart = null;
-  let dragGhost = null;
-  let addHint = null;
-  let lastPointer = { x: 16, y: 16 };
 
   const post = (payload) => window.parent.postMessage({ __zeroshotArtifact: marker, ...payload }, "*");
   const isHostNode = (element) => Boolean(element && element.matches && element.matches(hostNodeSelector));
@@ -633,7 +623,7 @@ function artifactBridgeScript(initialMode: ArtifactEditorMode): string {
     let element = node instanceof Element ? node : null;
     let fallback = null;
     while (element && element !== document.documentElement) {
-      if (element !== document.body && element.matches(selector) && isMappable(element)) {
+      if (element !== document.body && !isHostNode(element) && element.matches(selector) && isMappable(element)) {
         if (element.hasAttribute("data-od-id") || element.hasAttribute("data-od-edit")) return element;
         if (!fallback) fallback = element;
       }
@@ -641,58 +631,19 @@ function artifactBridgeScript(initialMode: ArtifactEditorMode): string {
     }
     return fallback;
   };
-  const markSelected = (element) => {
-    document.querySelectorAll("[data-od-selected='true']").forEach((node) => node.removeAttribute("data-od-selected"));
-    if (element) element.setAttribute("data-od-selected", "true");
-  };
   const markSelectedIds = (ids) => {
     const selected = new Set(Array.isArray(ids) ? ids : []);
     document.querySelectorAll("[data-od-selected='true']").forEach((node) => node.removeAttribute("data-od-selected"));
     selected.forEach((id) => {
       const target = document.querySelector("[data-od-id='" + id + "'],[data-od-runtime-id='" + id + "'],[" + sourcePathAttr + "='" + id + "']");
-      if (target) target.setAttribute("data-od-selected", "true");
+      if (target && !isHostNode(target)) target.setAttribute("data-od-selected", "true");
     });
   };
   const select = (element, event) => {
     const target = targetFor(element, true);
-    selectedId = target.id;
-    if (!event || (!event.ctrlKey && !event.metaKey)) markSelected(element);
     if (!element.hasAttribute("tabindex")) element.setAttribute("tabindex", "-1");
     element.focus({ preventScroll: true });
     post({ type: "od-edit-select", target, additive: Boolean(event && (event.ctrlKey || event.metaKey)) });
-  };
-  const removeDragGhost = () => {
-    if (dragGhost && dragGhost.parentElement) dragGhost.parentElement.removeChild(dragGhost);
-    dragGhost = null;
-  };
-  const createDragGhost = (element) => {
-    removeDragGhost();
-    const rect = element.getBoundingClientRect();
-    dragGhost = document.createElement("div");
-    dragGhost.setAttribute("data-od-drag-ghost", "true");
-    dragGhost.style.left = rect.left + "px";
-    dragGhost.style.top = rect.top + "px";
-    dragGhost.style.width = rect.width + "px";
-    dragGhost.style.height = rect.height + "px";
-    document.body.appendChild(dragGhost);
-  };
-  const showAddHint = (event) => {
-    if (!event || (!event.ctrlKey && !event.metaKey)) {
-      if (addHint && addHint.parentElement) addHint.parentElement.removeChild(addHint);
-      addHint = null;
-      return;
-    }
-    if (typeof event.clientX === "number" && typeof event.clientY === "number") {
-      lastPointer = { x: event.clientX, y: event.clientY };
-    }
-    if (!addHint) {
-      addHint = document.createElement("div");
-      addHint.setAttribute("data-od-add-hint", "true");
-      addHint.textContent = "+";
-      document.body.appendChild(addHint);
-    }
-    addHint.style.left = lastPointer.x + 12 + "px";
-    addHint.style.top = lastPointer.y + 12 + "px";
   };
 
   window.addEventListener("message", (event) => {
@@ -704,11 +655,6 @@ function artifactBridgeScript(initialMode: ArtifactEditorMode): string {
       setTimeout(postTargets, 0);
     }
     if (payload.type === "od-refresh-targets") setTimeout(postTargets, 0);
-    if (payload.type === "od-highlight-target") {
-      document.querySelectorAll("[data-od-hover='true']").forEach((node) => node.removeAttribute("data-od-hover"));
-      const target = document.querySelector("[data-od-id='" + payload.id + "'],[data-od-runtime-id='" + payload.id + "'],[" + sourcePathAttr + "='" + payload.id + "']");
-      if (target) target.setAttribute("data-od-hover", "true");
-    }
     if (payload.type === "od-highlight-targets") markSelectedIds(payload.ids);
   });
 
@@ -727,61 +673,6 @@ function artifactBridgeScript(initialMode: ArtifactEditorMode): string {
     event.preventDefault();
     event.stopPropagation();
     select(element, event);
-  }, true);
-
-  document.addEventListener("mousemove", (event) => {
-    showAddHint(event);
-    if (!editMode) return;
-    if (dragStart && dragGhost) {
-      dragGhost.style.transform = "translate(" + (event.clientX - dragStart.x) + "px, " + (event.clientY - dragStart.y) + "px)";
-    }
-    const element = closestTarget(event.target);
-    const target = element ? targetFor(element, false) : null;
-    const nextHoverId = target ? target.id : "";
-    if (nextHoverId !== hoverId) {
-      hoverId = nextHoverId;
-      post({ type: "od-edit-hover", target });
-    }
-  }, true);
-
-  document.addEventListener("mousedown", (event) => {
-    if (!editMode && !event.ctrlKey && !event.metaKey) return;
-    const element = closestTarget(event.target);
-    if (!element) return;
-    if (!event.ctrlKey && !event.metaKey) select(element, event);
-    if (!editMode) return;
-    dragStart = { x: event.clientX, y: event.clientY, target: targetFor(element, true) };
-    createDragGhost(element);
-  }, true);
-
-  document.addEventListener("keydown", (event) => {
-    if (event.ctrlKey || event.metaKey) {
-      showAddHint(event);
-    }
-  }, true);
-
-  document.addEventListener("keyup", showAddHint, true);
-  window.addEventListener("blur", () => showAddHint(null));
-
-  document.addEventListener("mouseup", (event) => {
-    if (!editMode || !dragStart) return;
-    const deltaX = event.clientX - dragStart.x;
-    const deltaY = event.clientY - dragStart.y;
-    if (Math.abs(deltaX) > 2 || Math.abs(deltaY) > 2) {
-      post({ type: "od-edit-drag", target: dragStart.target, deltaX, deltaY });
-    }
-    dragStart = null;
-    removeDragGhost();
-  }, true);
-
-  document.addEventListener("keydown", (event) => {
-    if (!editMode || !selectedId) return;
-    if (event.metaKey || event.ctrlKey || event.altKey) return;
-    if (event.key.length !== 1 && event.key !== "Backspace" && event.key !== "Enter") return;
-    const element = document.querySelector("[data-od-id='" + selectedId + "'],[data-od-runtime-id='" + selectedId + "'],[" + sourcePathAttr + "='" + selectedId + "']");
-    if (!element) return;
-    event.preventDefault();
-    post({ type: "od-edit-key-input", target: targetFor(element, true), key: event.key });
   }, true);
 
   window.addEventListener("resize", postTargets);

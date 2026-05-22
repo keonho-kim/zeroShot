@@ -20,7 +20,12 @@ import type {
   ProjectState,
   ResourceManifest,
   RunDetail,
-  RunSummary
+  RunSummary,
+  UpdateDecisionResponse,
+  UpdateProgressEvent,
+  WorkLogEntryDetail,
+  WorkLogEntrySummary,
+  WorkLogProjectSummary
 } from "@/types/api";
 
 const client = axios.create({
@@ -117,6 +122,10 @@ export function parseStreamEvent(raw: string): { event: string; data: unknown } 
   return { event, data: JSON.parse(data) as unknown };
 }
 
+export function formatRawCodexEvent(value: unknown): string {
+  return JSON.stringify(value, null, 2) ?? String(value);
+}
+
 export async function requestArchitectDecisionsStream(
   payload: {
     projectRoot: string;
@@ -126,7 +135,9 @@ export async function requestArchitectDecisionsStream(
     activeDesignTemplateId?: string;
     activeDesignSystemId?: string;
   },
-  onProgress: (event: ArchitectProgressEvent) => void
+  onProgress: (event: ArchitectProgressEvent) => void,
+  onMessage?: (message: string) => void,
+  onRaw?: (message: string) => void
 ) {
   const response = await fetch("/api/architect/decisions/stream", {
     method: "POST",
@@ -160,6 +171,15 @@ export async function requestArchitectDecisionsStream(
       if (parsed.event === "progress") {
         onProgress(parsed.data as ArchitectProgressEvent);
       }
+      if (parsed.event === "message") {
+        const data = parsed.data as { message?: unknown };
+        if (typeof data.message === "string") {
+          onMessage?.(data.message);
+        }
+      }
+      if (parsed.event === "raw") {
+        onRaw?.(formatRawCodexEvent(parsed.data));
+      }
       if (parsed.event === "complete") {
         return (parsed.data as { decisions: ArchitectDecisionResponse }).decisions;
       }
@@ -174,6 +194,73 @@ export async function requestArchitectDecisionsStream(
   }
 
   throw new Error("Architect stream ended before decisions were returned.");
+}
+
+export async function requestUpdateDecisionsStream(
+  payload: {
+    projectRoot: string;
+    updateRequest: string;
+    locale: string;
+  },
+  onProgress: (event: UpdateProgressEvent) => void,
+  onMessage?: (message: string) => void,
+  onRaw?: (message: string) => void
+) {
+  const response = await fetch("/api/update/decisions/stream", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || "Update decision request failed.");
+  }
+  if (!response.body) {
+    throw new Error("Update decision stream is unavailable.");
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  while (true) {
+    const { done, value } = await reader.read();
+    buffer += decoder.decode(value, { stream: !done });
+    const parts = buffer.split("\n\n");
+    buffer = parts.pop() ?? "";
+
+    for (const part of parts) {
+      const parsed = parseStreamEvent(part);
+      if (!parsed) {
+        continue;
+      }
+      if (parsed.event === "progress") {
+        onProgress(parsed.data as UpdateProgressEvent);
+      }
+      if (parsed.event === "message") {
+        const data = parsed.data as { message?: unknown };
+        if (typeof data.message === "string") {
+          onMessage?.(data.message);
+        }
+      }
+      if (parsed.event === "raw") {
+        onRaw?.(formatRawCodexEvent(parsed.data));
+      }
+      if (parsed.event === "complete") {
+        return (parsed.data as { decisions: UpdateDecisionResponse }).decisions;
+      }
+      if (parsed.event === "error") {
+        throw new Error((parsed.data as { message: string }).message);
+      }
+    }
+
+    if (done) {
+      break;
+    }
+  }
+
+  throw new Error("Update decision stream ended before decisions were returned.");
 }
 
 export async function runArchitectBootstrap(payload: {
@@ -197,6 +284,78 @@ export async function createArchitectProductHtml(payload: {
   return (await client.post<ProductArtifactFile>("/architect/product-html", payload)).data;
 }
 
+export async function createArchitectProductHtmlStream(
+  payload: {
+    projectRoot: string;
+    userBrief: string;
+    decisionSet: ArchitectDecisionResponse;
+    answers: Record<string, string>;
+    locale: string;
+    activeSkillId?: string;
+    activeDesignTemplateId?: string;
+    activeDesignSystemId?: string;
+  },
+  onProgress: (event: ArchitectProgressEvent) => void,
+  onMessage?: (message: string) => void,
+  onRaw?: (message: string) => void
+) {
+  const response = await fetch("/api/architect/product-html/stream", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || "PRODUCT.html request failed.");
+  }
+  if (!response.body) {
+    throw new Error("PRODUCT.html stream is unavailable.");
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  while (true) {
+    const { done, value } = await reader.read();
+    buffer += decoder.decode(value, { stream: !done });
+    const parts = buffer.split("\n\n");
+    buffer = parts.pop() ?? "";
+
+    for (const part of parts) {
+      const parsed = parseStreamEvent(part);
+      if (!parsed) {
+        continue;
+      }
+      if (parsed.event === "progress") {
+        onProgress(parsed.data as ArchitectProgressEvent);
+      }
+      if (parsed.event === "message") {
+        const data = parsed.data as { message?: unknown };
+        if (typeof data.message === "string") {
+          onMessage?.(data.message);
+        }
+      }
+      if (parsed.event === "raw") {
+        onRaw?.(formatRawCodexEvent(parsed.data));
+      }
+      if (parsed.event === "complete") {
+        return (parsed.data as { file: ProductArtifactFile }).file;
+      }
+      if (parsed.event === "error") {
+        throw new Error((parsed.data as { message: string }).message);
+      }
+    }
+
+    if (done) {
+      break;
+    }
+  }
+
+  throw new Error("PRODUCT.html stream ended before a file was returned.");
+}
+
 export async function requestDesignRuntimeStream(
   payload: {
     projectRoot: string;
@@ -208,7 +367,8 @@ export async function requestDesignRuntimeStream(
     activeDesignSystemId?: string;
   },
   onProgress: (event: DesignProgressEvent) => void,
-  onMessage?: (message: string) => void
+  onMessage?: (message: string) => void,
+  onRaw?: (message: string) => void
 ) {
   const response = await fetch("/api/design/runtime/stream", {
     method: "POST",
@@ -248,6 +408,9 @@ export async function requestDesignRuntimeStream(
           onMessage?.(data.message);
         }
       }
+      if (parsed.event === "raw") {
+        onRaw?.(formatRawCodexEvent(parsed.data));
+      }
       if (parsed.event === "complete") {
         return (parsed.data as { design: DesignRuntimeResponse }).design;
       }
@@ -269,7 +432,9 @@ export async function requestDesignRecommendationsStream(
     projectRoot: string;
     locale: string;
   },
-  onProgress: (event: DesignProgressEvent) => void
+  onProgress: (event: DesignProgressEvent) => void,
+  onMessage?: (message: string) => void,
+  onRaw?: (message: string) => void
 ) {
   const response = await fetch("/api/design/recommendations/stream", {
     method: "POST",
@@ -303,6 +468,15 @@ export async function requestDesignRecommendationsStream(
       if (parsed.event === "progress") {
         onProgress(parsed.data as DesignProgressEvent);
       }
+      if (parsed.event === "message") {
+        const data = parsed.data as { message?: unknown };
+        if (typeof data.message === "string") {
+          onMessage?.(data.message);
+        }
+      }
+      if (parsed.event === "raw") {
+        onRaw?.(formatRawCodexEvent(parsed.data));
+      }
       if (parsed.event === "complete") {
         return (parsed.data as { recommendations: DesignRecommendationResponse }).recommendations;
       }
@@ -323,7 +497,7 @@ export async function startBuild(payload: { projectRoot: string; productContent?
   return (await client.post<JobSnapshot>("/build", payload)).data;
 }
 
-export async function startUpdate(payload: { projectRoot: string; updateContent: string }) {
+export async function startUpdate(payload: { projectRoot: string; updateContent: string; options?: PipelineOptions }) {
   return (await client.post<JobSnapshot>("/update", payload)).data;
 }
 
@@ -337,6 +511,18 @@ export async function fetchRuns(projectRoot: string) {
 
 export async function fetchRunDetail(projectRoot: string, runName: string) {
   return (await client.get<RunDetail>(`/history/${runName}`, { params: { projectRoot } })).data;
+}
+
+export async function fetchWorkLogProjects() {
+  return (await client.get<{ projects: WorkLogProjectSummary[] }>("/history/projects")).data.projects;
+}
+
+export async function fetchWorkLogEntries(projectRoot: string) {
+  return (await client.get<{ entries: WorkLogEntrySummary[] }>("/history/entries", { params: { projectRoot } })).data.entries;
+}
+
+export async function fetchWorkLogEntryDetail(projectRoot: string, entryId: string) {
+  return (await client.get<WorkLogEntryDetail>(`/history/entries/${encodeURIComponent(entryId)}`, { params: { projectRoot } })).data;
 }
 
 export async function highlightCode(payload: { code: string; language: string }) {

@@ -4,8 +4,9 @@ import { basename, relative } from "node:path";
 import { loadAppConfig, saveAppConfig } from "@backend/config/app-config.js";
 import { loadCodexSettings, readProjectCodexSettings, saveCodexSettings, saveProjectCodexSettings } from "@backend/config/codex-config.js";
 import { assertPathWithinRoots, assertProjectRootWithinRoots, isWithin, listDirectoryEntries } from "@backend/core/path-guards.js";
+import { createSseStream } from "@backend/core/sse.js";
 import { readAuthStatus, saveAuthFile } from "@backend/services/auth-service.js";
-import { buildArchitectDecisions, buildArchitectProductHtml, type ArchitectProgressEvent } from "@backend/services/architect-service.js";
+import { buildArchitectDecisions, buildArchitectProductHtml, type ArchitectProductFile, type ArchitectProgressEvent } from "@backend/services/architect-service.js";
 import { readLatestDesignSession, readProjectSettings, recordArchitectSession, recordDesignSession, saveProjectSettings } from "@backend/services/app-storage-service.js";
 import { inferBootstrapRequest, runBootstrap } from "@backend/services/bootstrap-service.js";
 import { buildDesignRuntime, recommendDesignResources } from "@backend/services/design-service.js";
@@ -14,14 +15,43 @@ import { appendAppEvent } from "@backend/services/event-log-service.js";
 import { createDirectory, deleteEntry, designEntryPath, readDesignHtmlSnapshot, readProductHtml, readProductHtmlSnapshot, upsertArtifactManifest, writeArtifactFile, writeDesignHtmlSnapshot, writeProductHtml, writeProductHtmlSnapshot, writeUpdateDocument } from "@backend/services/file-service.js";
 import { readRunDetail, listRuns } from "@backend/services/history-service.js";
 import { jobManager } from "@backend/services/job-manager.js";
+import { listWorkLogEntries, listWorkLogProjects, readWorkLogEntryDetail } from "@backend/services/log-service.js";
 import { readProjectHistoryMeta, readProjectState } from "@backend/services/project-service.js";
 import { buildResourcePromptContext, listResourceCatalog } from "@backend/services/resource-service.js";
+import { buildUpdateDecisions, type UpdateProgressEvent } from "@backend/services/update-service.js";
+import { normalizeLocale } from "@backend/i18n/locale.js";
 import type { BootstrapRequest, DesignProgressEvent, DesignRuntimeMode, PipelineOptions, RunMode } from "@backend/types.js";
 
 const router: Router = express.Router();
 
 function asyncHandler(handler: RequestHandler): RequestHandler {
   return (req: Request, res: Response, next: NextFunction) => Promise.resolve(handler(req, res, next)).catch(next);
+}
+
+async function saveArchitectProductFiles(projectRoot: string, files: ArchitectProductFile[]) {
+  for (const file of files) {
+    if (file.path !== "ARCHITECT/PRODUCT.html"
+      && !file.path.startsWith("ARCHITECT/pages/")
+      && !file.path.startsWith("ARCHITECT/components/")
+      && !file.path.startsWith("ARCHITECT/assets/")) {
+      throw new Error(`Architect product returned a file outside ARCHITECT/: ${file.path}`);
+    }
+    await writeArtifactFile(projectRoot, file.path, file.content);
+  }
+
+  const entry = await readProductHtmlSnapshot(projectRoot);
+  await upsertArtifactManifest(projectRoot, files.map((file) => ({
+    path: file.path,
+    type: file.type,
+    title: file.title,
+    entry: file.path === "ARCHITECT/PRODUCT.html"
+  })));
+  await appendAppEvent("product_artifact_saved", {
+    projectRoot,
+    path: entry.path,
+    etag: entry.etag
+  });
+  return entry;
 }
 
 async function getValidatedProjectRoot(projectRoot: string): Promise<string> {
@@ -309,7 +339,7 @@ router.post("/architect/decisions", asyncHandler(async (req: Request, res: Respo
     const decisions = await buildArchitectDecisions({
       projectRoot,
       goal: body.goal.trim(),
-      locale: body.locale === "ko" ? "ko" : "en",
+      locale: normalizeLocale(body.locale),
       reasoning: appConfig.defaults.planReasoning,
       model: typeof body.model === "string" && body.model.trim() ? body.model.trim() : undefined,
       additionalDirectories: [appConfig.resourceRoots.skills, appConfig.resourceRoots.designTemplates, appConfig.resourceRoots.designSystems],
@@ -361,26 +391,14 @@ router.post("/architect/decisions/stream", asyncHandler(async (req: Request, res
     return;
   }
 
-  res.writeHead(200, {
-    "Content-Type": "text/event-stream",
-    "Cache-Control": "no-cache",
-    Connection: "keep-alive"
-  });
-
-  let seq = 0;
-  const writeEvent = (type: string, data: object) => {
-    seq += 1;
-    res.write(`id: ${seq}\n`);
-    res.write(`event: ${type}\n`);
-    res.write(`data: ${JSON.stringify(data)}\n\n`);
-  };
+  const stream = createSseStream(res);
 
   try {
     const appConfig = await loadAppConfig();
     const decisions = await buildArchitectDecisions({
       projectRoot,
       goal: body.goal.trim(),
-      locale: body.locale === "ko" ? "ko" : "en",
+      locale: normalizeLocale(body.locale),
       reasoning: appConfig.defaults.planReasoning,
       model: typeof body.model === "string" && body.model.trim() ? body.model.trim() : undefined,
       additionalDirectories: [appConfig.resourceRoots.skills, appConfig.resourceRoots.designTemplates, appConfig.resourceRoots.designSystems],
@@ -390,7 +408,9 @@ router.post("/architect/decisions/stream", asyncHandler(async (req: Request, res
         activeDesignSystemId: body.activeDesignSystemId,
         includeCatalogSummary: true
       }),
-      onProgress: (event: ArchitectProgressEvent) => writeEvent("progress", event)
+      onProgress: (event: ArchitectProgressEvent) => stream.write("progress", event),
+      onMessage: (message) => stream.write("message", { message }),
+      onRaw: (event) => stream.write("raw", event)
     });
     await recordArchitectSession({
       projectRoot,
@@ -404,12 +424,12 @@ router.post("/architect/decisions/stream", asyncHandler(async (req: Request, res
       title: decisions.title,
       decisionsCount: decisions.decisions.length
     });
-    writeEvent("complete", { decisions });
+    await stream.write("complete", { decisions });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    writeEvent("error", { message: `Codex could not produce architect decisions: ${message}` });
+    await stream.write("error", { message: `Codex could not produce architect decisions: ${message}` });
   } finally {
-    res.end();
+    stream.close();
   }
 }));
 
@@ -457,12 +477,12 @@ router.post("/architect/product-html", asyncHandler(async (req: Request, res: Re
 
   try {
     const appConfig = await loadAppConfig();
-    const html = await buildArchitectProductHtml({
+    const files = await buildArchitectProductHtml({
       projectRoot,
       userBrief: body.userBrief.trim(),
       decisionSet: body.decisionSet as Parameters<typeof buildArchitectProductHtml>[0]["decisionSet"],
       answers: body.answers ?? {},
-      locale: body.locale === "ko" ? "ko" : "en",
+      locale: normalizeLocale(body.locale),
       reasoning: appConfig.defaults.planReasoning,
       model: typeof body.model === "string" && body.model.trim() ? body.model.trim() : undefined,
       additionalDirectories: [appConfig.resourceRoots.skills, appConfig.resourceRoots.designTemplates, appConfig.resourceRoots.designSystems],
@@ -473,22 +493,68 @@ router.post("/architect/product-html", asyncHandler(async (req: Request, res: Re
         includeCatalogSummary: true
       })
     });
-    const file = await writeProductHtmlSnapshot(projectRoot, html);
-    await upsertArtifactManifest(projectRoot, [{
-      path: file.path,
-      type: "text/html",
-      title: "PRODUCT BLUEPRINT",
-      entry: true
-    }]);
-    await appendAppEvent("product_artifact_saved", {
-      projectRoot,
-      path: file.path,
-      etag: file.etag
-    });
+    const file = await saveArchitectProductFiles(projectRoot, files);
     res.json(file);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     res.status(502).json({ message: `Codex could not create PRODUCT.html: ${message}` });
+  }
+}));
+
+router.post("/architect/product-html/stream", asyncHandler(async (req: Request, res: Response) => {
+  const auth = await readAuthStatus();
+  if (!auth.valid) {
+    res.status(412).json(auth);
+    return;
+  }
+
+  const body = req.body as {
+    projectRoot?: string;
+    userBrief?: string;
+    decisionSet?: unknown;
+    answers?: Record<string, string>;
+    locale?: string;
+    model?: string;
+    activeSkillId?: string;
+    activeDesignTemplateId?: string;
+    activeDesignSystemId?: string;
+  };
+  const projectRoot = await getValidatedProjectRoot(String(body.projectRoot ?? ""));
+  if (!body.decisionSet || typeof body.userBrief !== "string" || !body.userBrief.trim()) {
+    res.status(400).json({ message: "Architect decisions and user brief are required" });
+    return;
+  }
+
+  const stream = createSseStream(res);
+
+  try {
+    const appConfig = await loadAppConfig();
+    const files = await buildArchitectProductHtml({
+      projectRoot,
+      userBrief: body.userBrief.trim(),
+      decisionSet: body.decisionSet as Parameters<typeof buildArchitectProductHtml>[0]["decisionSet"],
+      answers: body.answers ?? {},
+      locale: normalizeLocale(body.locale),
+      reasoning: appConfig.defaults.planReasoning,
+      model: typeof body.model === "string" && body.model.trim() ? body.model.trim() : undefined,
+      additionalDirectories: [appConfig.resourceRoots.skills, appConfig.resourceRoots.designTemplates, appConfig.resourceRoots.designSystems],
+      resourceContext: await buildResourcePromptContext({
+        activeSkillId: body.activeSkillId,
+        activeDesignTemplateId: body.activeDesignTemplateId,
+        activeDesignSystemId: body.activeDesignSystemId,
+        includeCatalogSummary: true
+      }),
+      onProgress: (event: ArchitectProgressEvent) => stream.write("progress", event),
+      onMessage: (message) => stream.write("message", { message }),
+      onRaw: (event) => stream.write("raw", event)
+    });
+    const file = await saveArchitectProductFiles(projectRoot, files);
+    await stream.write("complete", { file });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    await stream.write("error", { message: `Codex could not create PRODUCT.html: ${message}` });
+  } finally {
+    stream.close();
   }
 }));
 
@@ -591,33 +657,23 @@ router.post("/design/recommendations/stream", asyncHandler(async (req: Request, 
     return;
   }
 
-  res.writeHead(200, {
-    "Content-Type": "text/event-stream",
-    "Cache-Control": "no-cache",
-    Connection: "keep-alive"
-  });
-
-  let seq = 0;
-  const writeEvent = (type: string, data: object) => {
-    seq += 1;
-    res.write(`id: ${seq}\n`);
-    res.write(`event: ${type}\n`);
-    res.write(`data: ${JSON.stringify(data)}\n\n`);
-  };
+  const stream = createSseStream(res);
 
   try {
     const recommendations = await recommendDesignResources({
       projectRoot,
-      locale: body.locale === "ko" ? "ko" : "en",
+      locale: normalizeLocale(body.locale),
       model: typeof body.model === "string" && body.model.trim() ? body.model.trim() : undefined,
-      onProgress: (event: DesignProgressEvent) => writeEvent("progress", event)
+      onProgress: (event: DesignProgressEvent) => stream.write("progress", event),
+      onMessage: (message) => stream.write("message", { message }),
+      onRaw: (event) => stream.write("raw", event)
     });
-    writeEvent("complete", { recommendations });
+    await stream.write("complete", { recommendations });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    writeEvent("error", { message: `Design recommendations failed: ${message}` });
+    await stream.write("error", { message: `Design recommendations failed: ${message}` });
   } finally {
-    res.end();
+    stream.close();
   }
 }));
 
@@ -646,32 +702,21 @@ router.post("/design/runtime/stream", asyncHandler(async (req: Request, res: Res
     return;
   }
 
-  res.writeHead(200, {
-    "Content-Type": "text/event-stream",
-    "Cache-Control": "no-cache",
-    Connection: "keep-alive"
-  });
-
-  let seq = 0;
-  const writeEvent = (type: string, data: object) => {
-    seq += 1;
-    res.write(`id: ${seq}\n`);
-    res.write(`event: ${type}\n`);
-    res.write(`data: ${JSON.stringify(data)}\n\n`);
-  };
+  const stream = createSseStream(res);
 
   try {
     const design = await buildDesignRuntime({
       projectRoot,
       mode,
       goal: typeof body.goal === "string" ? body.goal.trim() : "",
-      locale: body.locale === "ko" ? "ko" : "en",
+      locale: normalizeLocale(body.locale),
       activeSkillId: body.activeSkillId,
       activeDesignTemplateId: body.activeDesignTemplateId,
       activeDesignSystemId: body.activeDesignSystemId,
       model: typeof body.model === "string" && body.model.trim() ? body.model.trim() : undefined,
-      onProgress: (event: DesignProgressEvent) => writeEvent("progress", event),
-      onMessage: (message) => writeEvent("message", { message })
+      onProgress: (event: DesignProgressEvent) => stream.write("progress", event),
+      onMessage: (message) => stream.write("message", { message }),
+      onRaw: (event) => stream.write("raw", event)
     });
     for (const file of design.files) {
       if (!file.path.startsWith("DESIGN/")) {
@@ -701,12 +746,12 @@ router.post("/design/runtime/stream", asyncHandler(async (req: Request, res: Res
       designId: design.id,
       title: design.title
     });
-    writeEvent("complete", { design });
+    await stream.write("complete", { design });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    writeEvent("error", { message: `Design runtime failed: ${message}` });
+    await stream.write("error", { message: `Design runtime failed: ${message}` });
   } finally {
-    res.end();
+    stream.close();
   }
 }));
 
@@ -754,6 +799,60 @@ async function startPipeline(mode: RunMode, req: Request, res: Response) {
 }
 
 router.post("/build", asyncHandler(async (req: Request, res: Response) => startPipeline("build", req, res)));
+
+router.post("/update/decisions/stream", asyncHandler(async (req: Request, res: Response) => {
+  const auth = await readAuthStatus();
+  if (!auth.valid) {
+    res.status(412).json(auth);
+    return;
+  }
+
+  const body = req.body as {
+    projectRoot?: string;
+    updateRequest?: string;
+    locale?: string;
+    model?: string;
+  };
+  const projectRoot = await getValidatedProjectRoot(String(body.projectRoot ?? ""));
+  const projectState = await readProjectState(projectRoot);
+  if (!projectState.updateEnabled) {
+    res.status(409).json({ message: "UPDATE needs a completed build run and source code." });
+    return;
+  }
+  if (typeof body.updateRequest !== "string" || !body.updateRequest.trim()) {
+    res.status(400).json({ message: "Update request is required" });
+    return;
+  }
+
+  const stream = createSseStream(res);
+
+  try {
+    const appConfig = await loadAppConfig();
+    const decisions = await buildUpdateDecisions({
+      projectRoot,
+      updateRequest: body.updateRequest.trim(),
+      locale: normalizeLocale(body.locale),
+      reasoning: appConfig.defaults.planReasoning,
+      model: typeof body.model === "string" && body.model.trim() ? body.model.trim() : undefined,
+      additionalDirectories: [appConfig.resourceRoots.skills, appConfig.resourceRoots.designTemplates, appConfig.resourceRoots.designSystems],
+      onProgress: (event: UpdateProgressEvent) => stream.write("progress", event),
+      onMessage: (message) => stream.write("message", { message }),
+      onRaw: (event) => stream.write("raw", event)
+    });
+    await appendAppEvent("update_decisions_created", {
+      projectRoot,
+      title: decisions.title,
+      decisionsCount: decisions.decisions.length
+    });
+    await stream.write("complete", { decisions });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    await stream.write("error", { message: `Codex could not produce update decisions: ${message}` });
+  } finally {
+    stream.close();
+  }
+}));
+
 router.post("/update", asyncHandler(async (req: Request, res: Response) => startPipeline("update", req, res)));
 
 router.get("/jobs/current", asyncHandler(async (_req: Request, res: Response) => {
@@ -770,30 +869,40 @@ router.get("/jobs/:jobId/stream", asyncHandler(async (req: Request, res: Respons
     return;
   }
 
-  res.writeHead(200, {
-    "Content-Type": "text/event-stream",
-    "Cache-Control": "no-cache",
-    Connection: "keep-alive"
-  });
+  const stream = createSseStream(res);
 
   const writeEvent = (event: { type: string; data: Record<string, unknown>; seq: number }) => {
-    res.write(`id: ${event.seq}\n`);
-    res.write(`event: ${event.type}\n`);
-    res.write(`data: ${JSON.stringify(event.data)}\n\n`);
+    void stream.write(event.type, event.data, event.seq);
   };
 
-  history.forEach(writeEvent);
+  for (const event of history) {
+    await stream.write(event.type, event.data, event.seq);
+  }
   const unsubscribe = jobManager.subscribe(jobId, writeEvent);
 
   req.on("close", () => {
     unsubscribe();
-    res.end();
+    stream.close();
   });
 }));
 
 router.get("/history", asyncHandler(async (req: Request, res: Response) => {
   const projectRoot = await getValidatedProjectRoot(String(req.query.projectRoot ?? ""));
   res.json({ runs: await listRuns(projectRoot) });
+}));
+
+router.get("/history/projects", asyncHandler(async (_req: Request, res: Response) => {
+  res.json({ projects: await listWorkLogProjects() });
+}));
+
+router.get("/history/entries", asyncHandler(async (req: Request, res: Response) => {
+  const projectRoot = await getValidatedProjectRoot(String(req.query.projectRoot ?? ""));
+  res.json({ entries: await listWorkLogEntries(projectRoot) });
+}));
+
+router.get("/history/entries/:entryId", asyncHandler(async (req: Request, res: Response) => {
+  const projectRoot = await getValidatedProjectRoot(String(req.query.projectRoot ?? ""));
+  res.json(await readWorkLogEntryDetail(projectRoot, String(req.params.entryId)));
 }));
 
 router.get("/history/:runName", asyncHandler(async (req: Request, res: Response) => {

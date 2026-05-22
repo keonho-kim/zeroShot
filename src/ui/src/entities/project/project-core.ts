@@ -36,7 +36,7 @@ export function updateDisabledReason(state: UpdateGateProjectState): string {
     return "";
   }
   if (state.runsCount < 1) {
-    return "BUILD를 먼저 실행하세요.";
+    return "Run BUILD first.";
   }
-  return "업데이트할 소스코드가 없습니다.";
+  return "No source code is available to update.";
 }

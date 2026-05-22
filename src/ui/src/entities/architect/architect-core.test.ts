@@ -10,6 +10,7 @@ import {
 } from "@/entities/architect/architect-core";
 
 const decisionSet: ArchitectDecisionSet = {
+  chatMessage: "Product decisions are ready.",
   title: "Bakery planner",
   summary: "Codex converted the brief into product decisions.",
   decisions: [
@@ -57,8 +58,12 @@ const decisionSet: ArchitectDecisionSet = {
 };
 
 describe("architect core", () => {
-  test("detects Korean environment language", () => {
+  test("detects supported environment languages", () => {
     expect(detectLocale("ko-KR")).toBe("ko");
+    expect(detectLocale("zh-CN")).toBe("zh");
+    expect(detectLocale("ja-JP")).toBe("ja");
+    expect(detectLocale("es-ES")).toBe("es");
+    expect(detectLocale("de-DE")).toBe("de");
     expect(detectLocale("en-US")).toBe("en");
   });
 

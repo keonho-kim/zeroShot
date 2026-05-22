@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ProjectTree } from "./project-picker/ProjectTree";
 import { useProjectTreeController } from "./project-picker/useProjectTreeController";
+import { useI18n } from "@/lib/i18n";
 
 interface Props {
   open: boolean;
@@ -11,7 +12,9 @@ interface Props {
 }
 
 export function ProjectPickerModal({ open, onClose }: Props) {
+  const { t } = useI18n();
   const tree = useProjectTreeController({ open, onClose });
+  const browsingLabel = tree.currentPath ? t("projectPicker.browsing", { path: tree.currentPath }) : t("projectPicker.chooseStart");
 
   return (
     <AnimatePresence>
@@ -33,12 +36,12 @@ export function ProjectPickerModal({ open, onClose }: Props) {
             <Card className="flex h-full w-full flex-col overflow-hidden bg-[var(--panel)] p-0 shadow-[var(--shadow-popover)]">
               <div className="flex items-center justify-between px-6 py-4">
                 <div>
-                  <p className="text-2xl font-semibold tracking-[-0.02em]">프로젝트 선택</p>
-                  <p className="text-sm text-[var(--muted-foreground)]">폴더를 한 번 누르면 하위 디렉터리가 열립니다. 프로젝트 지정은 우측 선택 버튼을 사용하세요.</p>
+                  <p className="text-2xl font-semibold tracking-[-0.02em]">{t("projectPicker.title")}</p>
+                  <p className="text-sm text-[var(--muted-foreground)]">{t("projectPicker.description")}</p>
                 </div>
                 <Button variant="ghost" onClick={onClose}>
                   <X className="size-4" />
-                  닫기
+                  {t("common.close")}
                 </Button>
               </div>
 
@@ -46,19 +49,19 @@ export function ProjectPickerModal({ open, onClose }: Props) {
                 <div className="flex flex-wrap items-center gap-2">
                   <Button variant="outline" disabled={!tree.canGoBack} onClick={tree.goBack}>
                     <ChevronLeft className="size-4" />
-                    뒤로가기
+                    {t("projectPicker.back")}
                   </Button>
                   <Button variant="outline" disabled={!tree.canGoUp} onClick={tree.goUp}>
                     <House className="size-4" />
-                    상위 폴더
+                    {t("projectPicker.up")}
                   </Button>
                 </div>
               </div>
 
               <div className="flex min-h-0 min-w-0 flex-1 flex-col">
                 <div className="bg-[var(--surface)] px-4 py-3 text-sm text-[var(--muted-foreground)]">
-                  <span className="block truncate" title={tree.currentPath ? `${tree.currentPath} 탐색 중` : "탐색 시작점을 선택하세요"}>
-                    {tree.currentPath ? `${tree.currentPath} 탐색 중` : "탐색 시작점을 선택하세요"}
+                  <span className="block truncate" title={browsingLabel}>
+                    {browsingLabel}
                   </span>
                 </div>
                 <ProjectTree

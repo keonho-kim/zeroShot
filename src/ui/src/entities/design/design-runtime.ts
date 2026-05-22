@@ -13,21 +13,21 @@ export const designModeOptions: DesignModeOption[] = [
     id: "codex",
     title: "Codex Canvas",
     eyebrow: "GENERATE",
-    detail: "제품 블루프린트와 디자인 템플릿을 바탕으로 구현 가능한 UI 지시를 만듭니다.",
+    detail: "Create implementable UI instructions from the product blueprint and design template.",
     output: "Design brief, artifact contract, verification plan"
   },
   {
     id: "figma",
-    title: "와이어 프레임",
+    title: "Wireframe",
     eyebrow: "EDIT",
-    detail: "레이아웃, 컴포넌트 상태, 레이어 명명, 프로토타입 메모 중심으로 정리합니다.",
+    detail: "Organize layout, component states, layer names, and prototype notes.",
     output: "Wireframe map, component checklist, handoff notes"
   },
   {
     id: "powerpoint",
-    title: "프레젠테이션",
+    title: "Presentation",
     eyebrow: "EDIT",
-    detail: "슬라이드 흐름, 편집 계층, 차트/표 자리표시자, 발표 리듬을 설계합니다.",
+    detail: "Plan slide flow, editorial hierarchy, chart and table placeholders, and presentation rhythm.",
     output: "Presentation sequence, editorial hierarchy, export checks"
   }
 ];

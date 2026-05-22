@@ -1,6 +1,7 @@
 import { FolderPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useI18n } from "@/lib/i18n";
 
 export function CreateDirectoryRow({
   depth,
@@ -17,6 +18,7 @@ export function CreateDirectoryRow({
   onSubmit: () => void;
   onCancel: () => void;
 }) {
+  const { t } = useI18n();
   return (
     <div
       className="grid grid-cols-[32px_40px_minmax(0,1fr)] gap-3 px-3 py-2 md:grid-cols-[32px_40px_minmax(0,1fr)_auto] md:items-center"
@@ -29,7 +31,7 @@ export function CreateDirectoryRow({
       <Input
         autoFocus
         value={name}
-        placeholder="새 폴더 이름"
+        placeholder={t("projectPicker.newFolderName")}
         onChange={(event) => onNameChange(event.target.value)}
         onKeyDown={(event) => {
           if (event.key === "Escape") {
@@ -42,10 +44,10 @@ export function CreateDirectoryRow({
       />
       <div className="col-span-3 flex flex-wrap gap-2 md:col-span-1">
         <Button disabled={!name.trim() || pending} onClick={onSubmit}>
-          생성
+          {t("common.create")}
         </Button>
         <Button variant="outline" onClick={onCancel}>
-          취소
+          {t("common.cancel")}
         </Button>
       </div>
     </div>
