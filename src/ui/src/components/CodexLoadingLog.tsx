@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { buildCodexLoadingLogItems, type CodexLoadingProgressItem } from "@/entities/codex/codex-loading-log";
+import { MarkdownRenderer } from "@/components/MarkdownRenderer";
 
 export function CodexLoadingLog(props: {
   progressItems: CodexLoadingProgressItem[];
@@ -34,7 +35,7 @@ export function CodexLoadingLog(props: {
             {item.kind === "agent" || item.kind === "reasoning" ? (
               <>
                 <span className="codex-loading-agent-icon" aria-hidden="true">{item.icon}</span>
-                <pre>{item.detail}</pre>
+                <MarkdownRenderer markdown={item.detail} className="codex-loading-markdown" />
               </>
             ) : item.kind === "tool" ? (
               <p>

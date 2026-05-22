@@ -9,6 +9,7 @@
 @import "./pages/design.css";
 @import "./components/artifact-editor.css";
 @import "./components/codex-loading.css";
+@import "./components/markdown-renderer.css";
 @import "./components/design-output.css";
 @import "./pages/architect.css";
 @import "./components/modal.css";

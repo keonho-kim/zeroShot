@@ -1,0 +1,111 @@
+.markdown-renderer {
+  width: 100%;
+  color: inherit;
+  font-size: inherit;
+  line-height: 1.55;
+}
+
+.markdown-renderer-content {
+  outline: none;
+}
+
+.markdown-renderer-content > *:first-child {
+  margin-top: 0;
+}
+
+.markdown-renderer-content > *:last-child {
+  margin-bottom: 0;
+}
+
+.markdown-renderer-paragraph {
+  margin: 0 0 0.55rem;
+  white-space: pre-wrap;
+}
+
+.markdown-renderer-heading {
+  margin: 0.8rem 0 0.35rem;
+  color: inherit;
+  font-weight: 800;
+  letter-spacing: 0;
+  line-height: 1.25;
+}
+
+.markdown-renderer-heading-1 {
+  font-size: 1.2rem;
+}
+
+.markdown-renderer-heading-2 {
+  font-size: 1.08rem;
+}
+
+.markdown-renderer-heading-3,
+.markdown-renderer-heading-4,
+.markdown-renderer-heading-5,
+.markdown-renderer-heading-6 {
+  font-size: 0.98rem;
+}
+
+.markdown-renderer-list {
+  margin: 0.35rem 0 0.65rem;
+  padding-left: 1.2rem;
+}
+
+.markdown-renderer-list-item {
+  margin: 0.2rem 0;
+}
+
+.markdown-renderer-nested-list-item {
+  list-style: none;
+}
+
+.markdown-renderer-quote {
+  margin: 0.55rem 0;
+  border-left: 3px solid var(--border);
+  padding-left: 0.75rem;
+  color: var(--muted-foreground);
+}
+
+.markdown-renderer-link {
+  color: var(--primary);
+  text-decoration: underline;
+  text-underline-offset: 0.16em;
+}
+
+.markdown-renderer-bold {
+  font-weight: 800;
+}
+
+.markdown-renderer-italic {
+  font-style: italic;
+}
+
+.markdown-renderer-strikethrough {
+  text-decoration: line-through;
+}
+
+.markdown-renderer-inline-code {
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--muted);
+  padding: 0.05rem 0.28rem;
+  color: var(--foreground);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 0.9em;
+  font-style: normal;
+}
+
+.markdown-renderer-code-block {
+  display: block;
+  overflow-x: auto;
+  margin: 0.55rem 0;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--muted);
+  padding: 0.65rem 0.75rem;
+  color: var(--foreground);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 0.82rem;
+  font-style: normal;
+  line-height: 1.5;
+  white-space: pre;
+}

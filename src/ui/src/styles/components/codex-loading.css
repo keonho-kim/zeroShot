@@ -222,11 +222,16 @@
   line-height: 1;
 }
 
-.codex-loading-log-item.agent pre {
+.codex-loading-log-item.agent .codex-loading-markdown {
   color: var(--foreground);
 }
 
-.codex-loading-log-item.reasoning pre {
+.codex-loading-log-item.reasoning .codex-loading-markdown {
   color: var(--muted-foreground);
   font-style: italic;
+}
+
+.codex-loading-log-item.reasoning .markdown-renderer-inline-code,
+.codex-loading-log-item.reasoning .markdown-renderer-code-block {
+  color: var(--muted-foreground);
 }
