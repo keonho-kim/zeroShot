@@ -31,7 +31,7 @@ export function CodexLoadingLog(props: {
       {items.length ? (
         items.map((item) => (
           <div key={item.id} className={`codex-loading-log-item ${item.kind}`}>
-            {item.kind === "agent" ? (
+            {item.kind === "agent" || item.kind === "reasoning" ? (
               <>
                 <span className="codex-loading-agent-icon" aria-hidden="true">{item.icon}</span>
                 <pre>{item.detail}</pre>

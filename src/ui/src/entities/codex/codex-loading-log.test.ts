@@ -48,6 +48,28 @@ describe("codex loading log model", () => {
     }]);
   });
 
+  test("formats reasoning as a subdued user-facing item", () => {
+    const items = buildCodexLoadingLogItems([], [
+      JSON.stringify({
+        type: "item.updated",
+        item: {
+          id: "reasoning_1",
+          type: "reasoning",
+          text: "Reviewing the product brief and the next implementation choice."
+        }
+      })
+    ]);
+
+    expect(items).toEqual([{
+      id: "reasoning-reasoning_1",
+      kind: "reasoning",
+      title: "Reasoning",
+      detail: "Reviewing the product brief and the next implementation choice.",
+      status: "running",
+      icon: "💭"
+    }]);
+  });
+
   test("updates the same item instead of appending duplicate status rows", () => {
     const items = buildCodexLoadingLogItems([], [
       JSON.stringify({

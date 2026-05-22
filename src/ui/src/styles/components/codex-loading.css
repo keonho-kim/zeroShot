@@ -187,6 +187,15 @@
   padding: 0.9rem 1rem;
 }
 
+.codex-loading-log-item.reasoning {
+  width: min(100%, 42rem);
+  border: 2px solid color-mix(in srgb, var(--border) 56%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--panel) 72%, var(--muted) 28%);
+  opacity: 0.78;
+  padding: 0.8rem 0.95rem;
+}
+
 .codex-loading-agent-icon {
   color: var(--foreground);
   font-size: 1rem;
@@ -195,4 +204,9 @@
 
 .codex-loading-log-item.agent pre {
   color: var(--foreground);
+}
+
+.codex-loading-log-item.reasoning pre {
+  color: var(--muted-foreground);
+  font-style: italic;
 }

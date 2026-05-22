@@ -7,7 +7,7 @@ export interface CodexLoadingProgressItem {
 
 export type CodexLoadingLogItem = {
   id: string;
-  kind: "progress" | "tool" | "agent" | "raw";
+  kind: "progress" | "tool" | "agent" | "reasoning" | "raw";
   title: string;
   detail: string;
   status?: "running" | "completed" | "failed";
@@ -214,6 +214,20 @@ function rawMessageItem(message: string, index: number): CodexLoadingLogItem | n
         detail: text,
         status: itemStatus(parsed, item),
         icon: "💬"
+      };
+    }
+  }
+
+  if (item && itemType === "reasoning") {
+    const text = readString(item.text).trim();
+    if (text) {
+      return {
+        id: `reasoning-${itemKey(item, String(index))}`,
+        kind: "reasoning",
+        title: "Reasoning",
+        detail: text,
+        status: itemStatus(parsed, item),
+        icon: "💭"
       };
     }
   }
