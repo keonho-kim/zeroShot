@@ -80,4 +80,12 @@
   .product-html-preview iframe {
     min-height: 368px;
   }
+
+  .codex-loading-panel {
+    height: auto;
+  }
+
+  .codex-loading-log {
+    height: clamp(18rem, 48vh, 28rem);
+  }
 }

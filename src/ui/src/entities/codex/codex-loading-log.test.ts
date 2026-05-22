@@ -88,6 +88,23 @@ describe("codex loading log model", () => {
     ]);
   });
 
+  test("keeps every incoming user-facing event without a fixed cap", () => {
+    const messages = Array.from({ length: 120 }, (_, index) => JSON.stringify({
+      type: "item.completed",
+      item: {
+        id: `item_${index}`,
+        type: "agent_message",
+        text: `Work note ${index + 1}`
+      }
+    }));
+
+    const items = buildCodexLoadingLogItems([], messages);
+
+    expect(items).toHaveLength(120);
+    expect(items[0]?.detail).toBe("Work note 1");
+    expect(items.at(-1)?.detail).toBe("Work note 120");
+  });
+
   test("formats tool calls with an icon, tool name, and detail", () => {
     const items = buildCodexLoadingLogItems([], [
       JSON.stringify({

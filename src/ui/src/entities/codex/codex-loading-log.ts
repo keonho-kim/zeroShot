@@ -386,8 +386,7 @@ export function buildCodexLoadingLogItems(
   rawMessages: string[]
 ): CodexLoadingLogItem[] {
   const latestMessages = rawMessages
-    .filter((message) => message.trim())
-    .slice(-80);
+    .filter((message) => message.trim());
   const parsedMessages = latestMessages.map((message, index) => ({
     message,
     event: parseRawCodexEvent(message),
@@ -401,8 +400,7 @@ export function buildCodexLoadingLogItems(
       .map((message, index) => rawMessageItem(message, index))
       .filter((item): item is CodexLoadingLogItem => Boolean(item))
       .reduce(upsert, items)
-      .filter((item) => item.detail.trim())
-      .slice(-80);
+      .filter((item) => item.detail.trim());
   }
 
   const progressById = new Map(progressItems.map((item) => [item.id, item]));
@@ -417,7 +415,7 @@ export function buildCodexLoadingLogItems(
     return rawItem ? upsert(withProgress, rawItem) : withProgress;
   }, []);
 
-  return nextItems.filter((item) => item.detail.trim()).slice(-80);
+  return nextItems.filter((item) => item.detail.trim());
 }
 
 export function hasCodexThreadStarted(rawMessages: string[]): boolean {

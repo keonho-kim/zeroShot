@@ -128,7 +128,7 @@ export const useArchitectFlowStore = create<ArchitectFlowState>((set) => ({
       return state;
     }
     return {
-      streamMessages: [...state.streamMessages.slice(-79), trimmed]
+      streamMessages: [...state.streamMessages, trimmed]
     };
   }),
   resetBlueprintStream: () => set({
@@ -146,7 +146,7 @@ export const useArchitectFlowStore = create<ArchitectFlowState>((set) => ({
       return state;
     }
     return {
-      blueprintStreamMessages: [...state.blueprintStreamMessages.slice(-79), trimmed]
+      blueprintStreamMessages: [...state.blueprintStreamMessages, trimmed]
     };
   }),
   completeRequest: (decisionSet) => set((state) => {

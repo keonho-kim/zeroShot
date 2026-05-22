@@ -178,7 +178,7 @@ export function DesignPage() {
       }, (event) => {
         setRecommendationTimelineItems((items) => upsertTimelineItem(items, event));
       }, undefined, (message) => {
-        setRecommendationMessages((items) => items.at(-1) === message ? items : [...items.slice(-79), message]);
+        setRecommendationMessages((items) => items.at(-1) === message ? items : [...items, message]);
       });
     },
     onSuccess: (nextRecommendations) => {
@@ -226,7 +226,7 @@ export function DesignPage() {
           ? { ...item, content: message, isStreaming: true }
           : item));
       }, (message) => {
-        setRuntimeMessages((items) => items.at(-1) === message ? items : [...items.slice(-79), message]);
+        setRuntimeMessages((items) => items.at(-1) === message ? items : [...items, message]);
       });
     },
     onSuccess: (design) => {

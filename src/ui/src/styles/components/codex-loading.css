@@ -73,11 +73,19 @@
 }
 
 .codex-loading-panel {
-  display: grid;
+  display: flex;
   width: min(100%, 860px);
+  height: min(72vh, 760px);
   margin-inline: auto;
-  justify-items: center;
+  flex-direction: column;
+  align-items: center;
   gap: clamp(1.75rem, 3.5vw, 3rem);
+}
+
+.codex-loading-panel > .agent-loading-stage {
+  flex: 5 1 0;
+  min-height: 9rem;
+  align-content: center;
 }
 
 .codex-loading-panel-note {
@@ -103,7 +111,11 @@
 .codex-loading-log {
   display: grid;
   width: min(100%, 820px);
-  max-height: clamp(14rem, 28vh, 22rem);
+  flex: 7 1 0;
+  height: 100%;
+  min-height: 0;
+  max-height: none;
+  align-self: stretch;
   gap: 0.75rem;
   overflow: auto;
   border: 2px solid var(--border);
