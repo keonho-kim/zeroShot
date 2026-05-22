@@ -16,6 +16,7 @@ export type CodexLoadingLogItem = {
 
 type RawCodexEvent = {
   type?: unknown;
+  thread_id?: unknown;
   item?: Record<string, unknown>;
   message?: unknown;
   error?: { message?: unknown };
@@ -52,6 +53,11 @@ function itemKey(item: Record<string, unknown>, fallback: string): string {
   return readString(item.id) || readString(item.call_id) || readString(item.name) || fallback;
 }
 
+function scopedItemKey(item: Record<string, unknown>, fallback: string, scope: string): string {
+  const key = itemKey(item, fallback);
+  return scope ? `${scope}-${key}` : key;
+}
+
 function parseRawCodexEvent(value: string): RawCodexEvent | null {
   try {
     const parsed = JSON.parse(value) as unknown;
@@ -64,6 +70,75 @@ function parseRawCodexEvent(value: string): RawCodexEvent | null {
 function rawEventTitle(event: RawCodexEvent | null, index: number): string {
   const itemType = event?.item ? readString(event.item.type) : "";
   return [readString(event?.type), itemType].filter(Boolean).join(" · ") || `raw ${index + 1}`;
+}
+
+function decodeJsonStringContent(value: string): string {
+  return value
+    .replace(/\\\\/g, "\\")
+    .replace(/\\"/g, "\"")
+    .replace(/\\n/g, "\n")
+    .replace(/\\r/g, "\r")
+    .replace(/\\t/g, "\t");
+}
+
+function extractJsonField(raw: string, fieldName: string): string {
+  const fieldIndex = raw.indexOf(`"${fieldName}"`);
+  if (fieldIndex < 0) {
+    return "";
+  }
+  const colonIndex = raw.indexOf(":", fieldIndex + fieldName.length + 2);
+  if (colonIndex < 0) {
+    return "";
+  }
+  const quoteIndex = raw.indexOf("\"", colonIndex + 1);
+  if (quoteIndex < 0) {
+    return "";
+  }
+
+  let escaped = false;
+  let content = "";
+  for (let index = quoteIndex + 1; index < raw.length; index += 1) {
+    const char = raw[index];
+    if (escaped) {
+      content += `\\${char}`;
+      escaped = false;
+      continue;
+    }
+    if (char === "\\") {
+      escaped = true;
+      continue;
+    }
+    if (char === "\"") {
+      try {
+        return JSON.parse(`"${content}"`) as string;
+      } catch {
+        return decodeJsonStringContent(content);
+      }
+    }
+    content += char;
+  }
+
+  return decodeJsonStringContent(content);
+}
+
+function userFacingAgentText(text: string): string {
+  const trimmed = text.trim();
+  if (!trimmed) {
+    return "";
+  }
+
+  const chatMessage = extractJsonField(trimmed, "chatMessage").trim();
+  if (chatMessage) {
+    return sanitizeAgentText(chatMessage);
+  }
+
+  return trimmed.startsWith("{") || trimmed.startsWith("[") ? "" : sanitizeAgentText(trimmed);
+}
+
+function sanitizeAgentText(text: string): string {
+  return text
+    .replace(/\[([^\]]+)]\([^)]+\)/g, "$1")
+    .replace(/\/Users\/[^\s)]+\/([^/\s)]+)/g, "$1");
 }
 
 function itemStatus(event: RawCodexEvent | null, item: Record<string, unknown>): CodexLoadingLogItem["status"] {
@@ -96,8 +171,20 @@ function firstCommandToken(command: string): string {
   return command.trim().split(/\s+/)[0]?.replace(/^.*\//, "") ?? "";
 }
 
+function displayCommand(command: string): string {
+  const trimmed = command.trim();
+  const shellCommand = trimmed.match(/^(?:.*\/)?(?:sh|bash|zsh)\s+-lc\s+([\s\S]+)$/);
+  const inner = shellCommand?.[1]?.trim();
+  if (!inner) {
+    return trimmed;
+  }
+  const quoted = inner.match(/^(['"])([\s\S]*)\1$/);
+  return quoted?.[2] || inner;
+}
+
 function commandLabel(command: string): { icon: string; title: string } {
-  const token = firstCommandToken(command);
+  const normalized = displayCommand(command);
+  const token = firstCommandToken(normalized);
 
   if (["rg", "grep", "find", "fd", "ag"].includes(token)) {
     return { icon: "🔎", title: "Search files" };
@@ -171,7 +258,7 @@ function toolLabelAndDetail(item: Record<string, unknown>): { icon: string; titl
     const label = commandLabel(command);
     return {
       ...label,
-      detail: compact(command || readString(item.status) || "Running")
+      detail: compact(displayCommand(command) || readString(item.status) || "Running")
     };
   }
 
@@ -194,7 +281,7 @@ function toolLabelAndDetail(item: Record<string, unknown>): { icon: string; titl
   return null;
 }
 
-function rawMessageItem(message: string, index: number): CodexLoadingLogItem | null {
+function rawMessageItem(message: string, index: number, scope = ""): CodexLoadingLogItem | null {
   const parsed = parseRawCodexEvent(message);
   const eventType = readString(parsed?.type);
   if (hiddenLifecycleEvents.has(eventType)) {
@@ -205,10 +292,10 @@ function rawMessageItem(message: string, index: number): CodexLoadingLogItem | n
   const itemType = item ? readString(item.type) : "";
 
   if (item && itemType === "agent_message") {
-    const text = readString(item.text).trim();
+    const text = userFacingAgentText(readString(item.text));
     if (text) {
       return {
-        id: `agent-${itemKey(item, String(index))}`,
+        id: `agent-${scopedItemKey(item, String(index), readString(parsed?.thread_id) || scope)}`,
         kind: "agent",
         title: "Agent message",
         detail: text,
@@ -222,7 +309,7 @@ function rawMessageItem(message: string, index: number): CodexLoadingLogItem | n
     const text = readString(item.text).trim();
     if (text) {
       return {
-        id: `reasoning-${itemKey(item, String(index))}`,
+        id: `reasoning-${scopedItemKey(item, String(index), readString(parsed?.thread_id) || scope)}`,
         kind: "reasoning",
         title: "Reasoning",
         detail: text,
@@ -236,7 +323,7 @@ function rawMessageItem(message: string, index: number): CodexLoadingLogItem | n
     const tool = toolLabelAndDetail(item);
     if (tool) {
       return {
-        id: `tool-${itemKey(item, `${itemType}-${index}`)}`,
+        id: `tool-${scopedItemKey(item, `${itemType}-${index}`, readString(parsed?.thread_id) || scope)}`,
         kind: "tool",
         title: tool.title,
         detail: tool.detail,
@@ -300,7 +387,7 @@ export function buildCodexLoadingLogItems(
 ): CodexLoadingLogItem[] {
   const latestMessages = rawMessages
     .filter((message) => message.trim())
-    .slice(-40);
+    .slice(-80);
   const parsedMessages = latestMessages.map((message, index) => ({
     message,
     event: parseRawCodexEvent(message),
@@ -311,22 +398,26 @@ export function buildCodexLoadingLogItems(
     const items = progressItems.map(progressItem);
 
     return latestMessages
-      .map(rawMessageItem)
+      .map((message, index) => rawMessageItem(message, index))
       .filter((item): item is CodexLoadingLogItem => Boolean(item))
       .reduce(upsert, items)
       .filter((item) => item.detail.trim())
-      .slice(-50);
+      .slice(-80);
   }
 
   const progressById = new Map(progressItems.map((item) => [item.id, item]));
+  let currentThreadScope = "";
   const nextItems = parsedMessages.reduce<CodexLoadingLogItem[]>((items, { message, event, index }) => {
     const progress = progressForRawEvent(readString(event?.type), progressById);
     const withProgress = progress ? upsert(items, progressItem(progress)) : items;
-    const rawItem = rawMessageItem(message, index);
+    if (readString(event?.type) === "thread.started") {
+      currentThreadScope = readString(event?.thread_id) || `thread-${index}`;
+    }
+    const rawItem = rawMessageItem(message, index, currentThreadScope);
     return rawItem ? upsert(withProgress, rawItem) : withProgress;
   }, []);
 
-  return nextItems.filter((item) => item.detail.trim()).slice(-50);
+  return nextItems.filter((item) => item.detail.trim()).slice(-80);
 }
 
 export function hasCodexThreadStarted(rawMessages: string[]): boolean {

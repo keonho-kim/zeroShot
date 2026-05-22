@@ -24,6 +24,70 @@ describe("codex loading log model", () => {
     }]);
   });
 
+  test("extracts chatMessage from structured agent JSON", () => {
+    const items = buildCodexLoadingLogItems([], [
+      JSON.stringify({
+        type: "thread.started",
+        thread_id: "thread_1"
+      }),
+      JSON.stringify({
+        type: "item.completed",
+        item: {
+          id: "item_1",
+          type: "agent_message",
+          text: JSON.stringify({
+            chatMessage: "I checked the workspace and prepared the product choices.",
+            decisions: []
+          })
+        }
+      })
+    ]);
+
+    expect(items).toEqual([{
+      id: "agent-thread_1-item_1",
+      kind: "agent",
+      title: "Agent message",
+      detail: "I checked the workspace and prepared the product choices.",
+      status: "completed",
+      icon: "💬"
+    }]);
+  });
+
+  test("removes markdown file links and local absolute paths from agent text", () => {
+    const items = buildCodexLoadingLogItems([], [
+      JSON.stringify({
+        type: "item.completed",
+        item: {
+          id: "item_1",
+          type: "agent_message",
+          text: "Checked [README.md](/Users/khkim/test-space/zeroshot-ground-zero/README.md) before planning."
+        }
+      })
+    ]);
+
+    expect(items[0]?.detail).toBe("Checked README.md before planning.");
+  });
+
+  test("keeps agent messages from separate Codex threads as separate rows", () => {
+    const items = buildCodexLoadingLogItems([], [
+      JSON.stringify({ type: "thread.started", thread_id: "thread_a" }),
+      JSON.stringify({
+        type: "item.completed",
+        item: { id: "item_0", type: "agent_message", text: "Reviewing the product brief." }
+      }),
+      JSON.stringify({ type: "thread.started", thread_id: "thread_b" }),
+      JSON.stringify({
+        type: "item.completed",
+        item: { id: "item_0", type: "agent_message", text: "Checking the workspace context." }
+      })
+    ]);
+
+    expect(items.map((item) => [item.id, item.detail])).toEqual([
+      ["agent-thread_a-item_0", "Reviewing the product brief."],
+      ["agent-thread_b-item_0", "Checking the workspace context."]
+    ]);
+  });
+
   test("formats tool calls with an icon, tool name, and detail", () => {
     const items = buildCodexLoadingLogItems([], [
       JSON.stringify({
@@ -127,7 +191,7 @@ describe("codex loading log model", () => {
     expect(items.map((item) => item.id)).toEqual([
       "progress-session",
       "progress-analysis",
-      "agent-item_1",
+      "agent-thread-0-item_1",
       "progress-validation"
     ]);
     expect(items.at(-1)?.detail).toBe("Prepared the product direction options.");
@@ -150,13 +214,33 @@ describe("codex loading log model", () => {
           type: "command_execution",
           command: "ls src/ui"
         }
+      }),
+      JSON.stringify({
+        type: "item.updated",
+        item: {
+          id: "item_5",
+          type: "command_execution",
+          command: "/bin/zsh -lc 'rg --files'"
+        }
+      }),
+      JSON.stringify({
+        type: "item.updated",
+        item: {
+          id: "item_6",
+          type: "command_execution",
+          command: "/bin/zsh -lc ls"
+        }
       })
     ]);
 
     expect(items.map((item) => [item.icon, item.title])).toEqual([
       ["🔎", "Search files"],
+      ["📁", "Browse files"],
+      ["🔎", "Search files"],
       ["📁", "Browse files"]
     ]);
+    expect(items[2]?.detail).toBe("rg --files");
+    expect(items[3]?.detail).toBe("ls");
   });
 
   test("detects when a Codex thread has started", () => {

@@ -4,7 +4,9 @@ The user is describing a product they want to build. Convert the conversation in
 
 export const architectDecisionRulesPrompt = `Rules:
 - Return only JSON matching the provided schema.
-- Do not edit files, run commands, or inspect the repository unless it is necessary to understand the workspace.
+- Use available tools broadly when they improve the decision quality: inspect the project root, README, PRODUCT/ARCHITECT/DESIGN files, source structure, package metadata, and active resource context before finalizing choices.
+- Prefer lightweight read-only commands and searches such as pwd, ls, find, rg, cat, sed, head, and tree. Use web/search or document-reading tools when current external guidance or referenced resources matter.
+- Do not edit files, write files, install dependencies, or make persistent changes while generating decisions.
 - Build the decision set from three reusable conversation rounds: development overview, product detail, and development detail.
 - Development overview should start with product shape, concept, target user, core value, and usage context. Put language, runtime, framework, and deployment questions near the end of this round, not as the first question.
 - Product detail should clarify core workflows, screens, entities, permissions, integrations, realtime/SSE needs, and expected edge cases.

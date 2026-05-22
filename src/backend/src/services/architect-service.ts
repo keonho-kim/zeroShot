@@ -315,22 +315,49 @@ export async function buildArchitectDecisions(params: {
     ...(params.model ? { model: params.model } : {})
   } satisfies ThreadOptions;
 
-  await streamVisibleCodexPrelude({
-    thread: codex.startThread({ ...threadOptions, modelReasoningEffort: "low" satisfies ModelReasoningEffort }),
-    prompt: visiblePreludePrompt({
-      locale: params.locale,
-      workflow: "ARCHITECT",
+  const visibleWorkNotes = [
+    {
+      workflow: "ARCHITECT brief review",
       task: [
-        "Create product direction questions from this brief.",
+        "Review the user's product brief and identify the target user, core value, and first user action.",
         "",
         compactVisibleContext(params.goal)
       ].join("\n")
-    }),
-    describeProgress: (event) => describeProgress(event, params.locale),
-    onProgress: params.onProgress,
-    onMessage: params.onMessage,
-    onRaw: params.onRaw
-  });
+    },
+    {
+      workflow: "ARCHITECT workspace scan",
+      task: [
+        "Use available read-only tools to inspect the current project root and any relevant README, PRODUCT, ARCHITECT, DESIGN, package, or source files.",
+        "If the workspace is empty, say that briefly and continue from the brief.",
+        "",
+        compactVisibleContext(params.goal)
+      ].join("\n")
+    },
+    {
+      workflow: "ARCHITECT decision shaping",
+      task: [
+        "Turn the brief and workspace context into the main decision axes the user should choose before implementation.",
+        "Focus on product workflow, screens, data, stack, persistence, integrations, and validation.",
+        "",
+        compactVisibleContext(params.goal)
+      ].join("\n")
+    }
+  ];
+
+  for (const workNote of visibleWorkNotes) {
+    await streamVisibleCodexPrelude({
+      thread: codex.startThread({ ...threadOptions, modelReasoningEffort: "low" satisfies ModelReasoningEffort }),
+      prompt: visiblePreludePrompt({
+        locale: params.locale,
+        workflow: workNote.workflow,
+        task: workNote.task
+      }),
+      describeProgress: (event) => event.type === "turn.completed" ? null : describeProgress(event, params.locale),
+      onProgress: params.onProgress,
+      onMessage: params.onMessage,
+      onRaw: params.onRaw
+    });
+  }
 
   const thread = codex.startThread(threadOptions);
   const { events } = await thread.runStreamed(buildArchitectPrompt(params.goal, params.locale, params.resourceContext ?? ""), {
