@@ -17,6 +17,8 @@ export type CodexLoadingLogItem = {
 type RawCodexEvent = {
   type?: unknown;
   item?: Record<string, unknown>;
+  message?: unknown;
+  error?: { message?: unknown };
 };
 
 const toolItemTypes = new Set([
@@ -25,6 +27,12 @@ const toolItemTypes = new Set([
   "command_execution",
   "file_change",
   "image_view"
+]);
+
+const hiddenLifecycleEvents = new Set([
+  "thread.started",
+  "turn.started",
+  "turn.completed"
 ]);
 
 function readString(value: unknown): string {
@@ -186,8 +194,13 @@ function toolLabelAndDetail(item: Record<string, unknown>): { icon: string; titl
   return null;
 }
 
-function rawMessageItem(message: string, index: number): CodexLoadingLogItem {
+function rawMessageItem(message: string, index: number): CodexLoadingLogItem | null {
   const parsed = parseRawCodexEvent(message);
+  const eventType = readString(parsed?.type);
+  if (hiddenLifecycleEvents.has(eventType)) {
+    return null;
+  }
+
   const item = parsed?.item;
   const itemType = item ? readString(item.type) : "";
 
@@ -222,8 +235,9 @@ function rawMessageItem(message: string, index: number): CodexLoadingLogItem {
   return {
     id: `raw-${index}`,
     kind: "raw",
-    title: rawEventTitle(parsed, index),
-    detail: message.trim()
+    title: eventType === "turn.failed" || eventType === "error" ? "Codex error" : rawEventTitle(parsed, index),
+    detail: readString(parsed?.error?.message) || readString(parsed?.message) || message.trim(),
+    status: eventType === "turn.failed" || eventType === "error" ? "failed" : undefined
   };
 }
 
@@ -251,6 +265,7 @@ export function buildCodexLoadingLogItems(
     .filter((message) => message.trim())
     .slice(-40)
     .map(rawMessageItem)
+    .filter((item): item is CodexLoadingLogItem => Boolean(item))
     .reduce(upsert, items);
 
   return nextItems.filter((item) => item.detail.trim()).slice(-50);

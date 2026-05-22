@@ -102,4 +102,12 @@ describe("codex loading log model", () => {
 
     expect(hasCodexThreadStarted(items)).toBe(true);
   });
+
+  test("keeps global lifecycle events out of the user log", () => {
+    expect(buildCodexLoadingLogItems([], [
+      JSON.stringify({ type: "thread.started", thread_id: "thread_1" }),
+      JSON.stringify({ type: "turn.started" }),
+      JSON.stringify({ type: "turn.completed", usage: { input_tokens: 1, cached_input_tokens: 0, output_tokens: 1, reasoning_output_tokens: 0 } })
+    ])).toEqual([]);
+  });
 });
