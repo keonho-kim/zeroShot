@@ -28,8 +28,6 @@ export function OmakaseLogViewer({
       <OmakaseTimeline statuses={statuses} />
       <CodexLoadingPanel
         label="OMAKASE"
-        noteTitle="ARCHITECT -> DESIGN -> BUILD"
-        noteDetail="Codex is making the intermediate choices and running the full workflow."
         progressItems={progressItems}
         messages={messages}
         emptyMessage={runStatus === "idle" ? t("home.omakaseNotStarted") : t("log.waiting")}
