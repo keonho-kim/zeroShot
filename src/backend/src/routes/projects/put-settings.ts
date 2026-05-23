@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
-import { saveProjectSettings } from "@backend/services/app-storage-service";
-import { appendAppEvent } from "@backend/services/event-log-service";
+import { saveProjectSettings } from "@backend/services/app-storage/service";
+import { appendAppEvent } from "@backend/services/event-log/service";
 import { getValidatedProjectRoot } from "@backend/routes/shared/project-root";
 
 export async function putProjectSettings(req: Request, res: Response) {

@@ -2,7 +2,7 @@ import { realpath, readdir, readFile, stat, writeFile, mkdir } from "node:fs/pro
 import { dirname, join, relative, resolve } from "node:path";
 import { expandHomePath } from "@backend/core/path-input";
 import type { DirectoryEntry } from "@backend/types/project";
-import { readProjectHistoryMeta } from "@backend/services/project-service";
+import { readProjectHistoryMeta } from "@backend/services/project/service";
 
 function normalize(path: string): string {
   return path.replace(/\\/g, "/");

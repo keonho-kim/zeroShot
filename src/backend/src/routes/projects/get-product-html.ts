@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { readProductHtml } from "@backend/services/file-service";
+import { readProductHtml } from "@backend/services/file/service";
 import { getValidatedProjectRoot } from "@backend/routes/shared/project-root";
 
 export async function getProductHtml(req: Request, res: Response) {

@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 import { createSseStream } from "@backend/core/sse";
-import { jobManager } from "@backend/services/job-manager";
+import { jobManager } from "@backend/services/job/service";
 
 export async function getJobStream(req: Request, res: Response) {
   const jobId = String(req.params.jobId);

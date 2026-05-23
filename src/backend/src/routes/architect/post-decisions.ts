@@ -1,11 +1,11 @@
 import type { Request, Response } from "express";
 import { normalizeLocale } from "@backend/i18n/locale";
 import { buildArchitectDecisions } from "@backend/services/architect/service";
-import { readAuthStatus } from "@backend/services/auth-service";
-import { recordArchitectSession } from "@backend/services/app-storage-service";
+import { readAuthStatus } from "@backend/services/auth/service";
+import { recordArchitectSession } from "@backend/services/app-storage/service";
 import { loadAppConfig } from "@backend/config/app-config";
-import { appendAppEvent } from "@backend/services/event-log-service";
-import { buildResourcePromptContext } from "@backend/services/resource-service";
+import { appendAppEvent } from "@backend/services/event-log/service";
+import { buildResourcePromptContext } from "@backend/services/resource/service";
 import { getValidatedProjectRoot } from "@backend/routes/shared/project-root";
 
 export async function postArchitectDecisions(req: Request, res: Response) {

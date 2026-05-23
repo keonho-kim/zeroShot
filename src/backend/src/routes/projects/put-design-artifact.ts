@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
-import { appendAppEvent } from "@backend/services/event-log-service";
-import { upsertArtifactManifest, writeDesignHtmlSnapshot } from "@backend/services/file-service";
+import { appendAppEvent } from "@backend/services/event-log/service";
+import { upsertArtifactManifest, writeDesignHtmlSnapshot } from "@backend/services/file/service";
 import { getValidatedProjectRoot } from "@backend/routes/shared/project-root";
 
 export async function putDesignArtifact(req: Request, res: Response) {

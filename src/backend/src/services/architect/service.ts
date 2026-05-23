@@ -2,7 +2,7 @@ import { Codex, type ApprovalMode, type ModelReasoningEffort, type SandboxMode, 
 import { buildArchitectPrompt } from "@backend/llm/architect/prompt";
 import { buildArchitectProductHtmlPrompt } from "@backend/llm/architect/product-html-prompt";
 import { ensureDevelopmentLanguageDecision } from "@backend/llm/architect/development-stack-decision";
-import { compactVisibleContext, streamVisibleCodexPrelude, visiblePreludePrompt } from "@backend/services/codex-visible-stream-service";
+import { compactVisibleContext, streamVisibleCodexPrelude, visiblePreludePrompt } from "@backend/services/codex-visible-stream/service";
 import { architectEmptyProjectReviewGuidance, architectEmptyProjectToolGuidance } from "@backend/services/architect/const/guidance";
 import {
   architectDecisionResponseSchema,

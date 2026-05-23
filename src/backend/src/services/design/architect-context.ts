@@ -1,6 +1,6 @@
 import { readdir, readFile, stat } from "node:fs/promises";
 import { join, relative } from "node:path";
-import { architectProductPath } from "@backend/services/file-service";
+import { architectProductPath } from "@backend/services/file/service";
 
 export async function readArchitectContext(projectRoot: string): Promise<string> {
   const architectRoot = join(projectRoot, "ARCHITECT");

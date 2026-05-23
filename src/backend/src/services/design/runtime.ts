@@ -1,9 +1,9 @@
 import { Codex, type ApprovalMode, type ModelReasoningEffort, type SandboxMode, type ThreadEvent, type ThreadOptions } from "@openai/codex-sdk";
 import { loadAppConfig } from "@backend/config/app-config";
 import { buildDesignPrompt } from "@backend/llm/makeover/prompt";
-import { compactVisibleContext, streamVisibleCodexPrelude, visiblePreludePrompt } from "@backend/services/codex-visible-stream-service";
-import { readProductHtml } from "@backend/services/file-service";
-import { buildResourcePromptContext } from "@backend/services/resource-service";
+import { compactVisibleContext, streamVisibleCodexPrelude, visiblePreludePrompt } from "@backend/services/codex-visible-stream/service";
+import { readProductHtml } from "@backend/services/file/service";
+import { buildResourcePromptContext } from "@backend/services/resource/service";
 import type { DesignProgressEvent, DesignRuntimeMode, DesignRuntimeResponse } from "@backend/types/design";
 import { makeoverArchitectOnlyReviewGuidance, makeoverArchitectOnlyToolGuidance } from "@backend/services/design/const/guidance";
 import { designRuntimeResponseSchema, designRuntimeSchema } from "@backend/services/design/const/schemas";

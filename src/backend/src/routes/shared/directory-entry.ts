@@ -1,6 +1,6 @@
 import { stat } from "node:fs/promises";
 import { basename } from "node:path";
-import { readProjectHistoryMeta } from "@backend/services/project-service";
+import { readProjectHistoryMeta } from "@backend/services/project/service";
 import { getRelativeProjectPath } from "@backend/routes/shared/project-root";
 
 export async function buildDirectoryEntry(projectRoot: string, absolutePath: string, allowedRoots: string[]) {

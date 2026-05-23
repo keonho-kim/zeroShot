@@ -2,10 +2,10 @@ import type { Request, Response } from "express";
 import { loadAppConfig } from "@backend/config/app-config";
 import { normalizeLocale } from "@backend/i18n/locale";
 import { buildArchitectProductHtml } from "@backend/services/architect/service";
-import { saveArchitectProductFiles } from "@backend/services/artifact-workflow-service";
-import { readAuthStatus } from "@backend/services/auth-service";
-import { buildResourcePromptContext } from "@backend/services/resource-service";
-import { createWorkflowLogRecord } from "@backend/services/workflow-log-service";
+import { saveArchitectProductFiles } from "@backend/services/artifact-workflow/service";
+import { readAuthStatus } from "@backend/services/auth/service";
+import { buildResourcePromptContext } from "@backend/services/resource/service";
+import { createWorkflowLogRecord } from "@backend/services/workflow-log/service";
 import { getValidatedProjectRoot } from "@backend/routes/shared/project-root";
 
 export async function postArchitectProductHtml(req: Request, res: Response) {

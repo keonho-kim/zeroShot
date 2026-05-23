@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 import { createSseStream } from "@backend/core/sse";
-import { readAuthStatus } from "@backend/services/auth-service";
-import { runOmakasePipeline } from "@backend/services/omakase-service";
+import { readAuthStatus } from "@backend/services/auth/service";
+import { runOmakasePipeline } from "@backend/services/omakase/service";
 import type { PipelineOptions } from "@backend/types/pipeline";
 import { getValidatedProjectRoot } from "@backend/routes/shared/project-root";
 

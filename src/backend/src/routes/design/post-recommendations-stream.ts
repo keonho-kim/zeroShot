@@ -1,10 +1,10 @@
 import type { Request, Response } from "express";
 import { createSseStream } from "@backend/core/sse";
 import { normalizeLocale } from "@backend/i18n/locale";
-import { readAuthStatus } from "@backend/services/auth-service";
+import { readAuthStatus } from "@backend/services/auth/service";
 import { recommendDesignResources } from "@backend/services/design/service";
-import { readProjectState } from "@backend/services/project-service";
-import { appendWorkflowLogEvent, createWorkflowLogRecord } from "@backend/services/workflow-log-service";
+import { readProjectState } from "@backend/services/project/service";
+import { appendWorkflowLogEvent, createWorkflowLogRecord } from "@backend/services/workflow-log/service";
 import type { DesignProgressEvent } from "@backend/types/design";
 import { getValidatedProjectRoot } from "@backend/routes/shared/project-root";
 import { workflowProgressMessage, workflowRawMessage } from "@backend/routes/shared/workflow";

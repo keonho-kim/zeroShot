@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { readProjectState } from "@backend/services/project-service";
+import { readProjectState } from "@backend/services/project/service";
 import { getValidatedProjectRoot } from "@backend/routes/shared/project-root";
 
 export async function getProjectState(req: Request, res: Response) {

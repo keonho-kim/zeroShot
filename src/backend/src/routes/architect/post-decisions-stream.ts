@@ -3,11 +3,11 @@ import { loadAppConfig } from "@backend/config/app-config";
 import { createSseStream } from "@backend/core/sse";
 import { normalizeLocale } from "@backend/i18n/locale";
 import { buildArchitectDecisions, type ArchitectProgressEvent } from "@backend/services/architect/service";
-import { recordArchitectSession } from "@backend/services/app-storage-service";
-import { readAuthStatus } from "@backend/services/auth-service";
-import { appendAppEvent } from "@backend/services/event-log-service";
-import { buildResourcePromptContext } from "@backend/services/resource-service";
-import { appendWorkflowLogEvent, createWorkflowLogRecord } from "@backend/services/workflow-log-service";
+import { recordArchitectSession } from "@backend/services/app-storage/service";
+import { readAuthStatus } from "@backend/services/auth/service";
+import { appendAppEvent } from "@backend/services/event-log/service";
+import { buildResourcePromptContext } from "@backend/services/resource/service";
+import { appendWorkflowLogEvent, createWorkflowLogRecord } from "@backend/services/workflow-log/service";
 import { getValidatedProjectRoot } from "@backend/routes/shared/project-root";
 import { workflowProgressMessage, workflowRawMessage } from "@backend/routes/shared/workflow";
 

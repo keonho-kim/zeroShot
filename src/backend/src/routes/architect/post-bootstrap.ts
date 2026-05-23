@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { inferBootstrapRequest, runBootstrap } from "@backend/services/bootstrap-service";
+import { inferBootstrapRequest, runBootstrap } from "@backend/services/bootstrap/service";
 import type { BootstrapRequest } from "@backend/types/pipeline";
 import { getValidatedProjectRoot } from "@backend/routes/shared/project-root";
 

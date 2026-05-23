@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 import { loadAppConfig } from "@backend/config/app-config";
 import { assertPathWithinRoots } from "@backend/core/path-guards";
-import { createDirectory } from "@backend/services/file-service";
+import { createDirectory } from "@backend/services/file/service";
 import { buildDirectoryEntry } from "@backend/routes/shared/directory-entry";
 import { getBrowsableRoots } from "@backend/routes/shared/project-root";
 

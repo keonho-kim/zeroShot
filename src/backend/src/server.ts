@@ -6,7 +6,7 @@ import { apiRouter } from "@backend/routes/api";
 import { getWorkspaceRoot } from "@backend/core/workspace";
 import { loadAppConfig } from "@backend/config/app-config";
 import { captureServerError, initServerObservability } from "@backend/observability/sentry";
-import { ensureResourceStoreSeeded } from "@backend/services/resource-seed-service";
+import { ensureResourceStoreSeeded } from "@backend/services/resource/service";
 
 const app = express();
 initServerObservability();
