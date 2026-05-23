@@ -4,8 +4,8 @@ import { FloatingActionMenu, type FloatingActionMenuItem } from "@/components/ui
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/utils/cn";
-import { PathBadge } from "./PathBadge";
-import { ProjectTreeMainButton } from "./ProjectTreeMainButton";
+import { PathBadge } from "@/components/project-picker/PathBadge";
+import { ProjectTreeMainButton } from "@/components/project-picker/ProjectTreeMainButton";
 
 export function ProjectTreeRow({
   entry,

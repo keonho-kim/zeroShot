@@ -1,7 +1,7 @@
 import { spawn } from "node:child_process";
 import { basename } from "node:path";
-import { buildBootstrapCommandSpec } from "@backend/core/cli-command.js";
-import type { BootstrapRequest, BootstrapResult, PipelineCommandSpec } from "@backend/types/pipeline.js";
+import { buildBootstrapCommandSpec } from "@backend/core/cli-command";
+import type { BootstrapRequest, BootstrapResult, PipelineCommandSpec } from "@backend/types/pipeline";
 
 export function inferBootstrapRequest(params: {
   projectRoot: string;

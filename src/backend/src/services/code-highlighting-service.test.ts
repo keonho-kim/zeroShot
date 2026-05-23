@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { highlightCode, normalizeHighlightLanguage } from "./code-highlighting-service";
+import { highlightCode, normalizeHighlightLanguage } from "@backend/services/code-highlighting-service";
 
 describe("code highlighting service", () => {
   test("normalizes unsupported languages to plaintext", () => {

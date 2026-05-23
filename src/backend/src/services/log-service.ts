@@ -1,12 +1,12 @@
 import { readdir, stat } from "node:fs/promises";
 import { basename, join } from "node:path";
-import { loadAppConfig } from "@backend/config/app-config.js";
-import { isWithin, resolveExistingPath } from "@backend/core/path-guards.js";
-import { listRuns } from "@backend/services/history-service.js";
-import { listStoredArchitectSessions, listStoredDesignSessions, listStoredSessionProjectRoots } from "@backend/services/app-storage-service.js";
-import { readProjectHistoryMeta } from "@backend/services/project-service.js";
-import { countWorkflowLogRecords, listWorkflowLogProjectRoots } from "@backend/services/workflow-log-service.js";
-import type { WorkLogProjectSummary } from "@backend/types/history.js";
+import { loadAppConfig } from "@backend/config/app-config";
+import { isWithin, resolveExistingPath } from "@backend/core/path-guards";
+import { listRuns } from "@backend/services/history-service";
+import { listStoredArchitectSessions, listStoredDesignSessions, listStoredSessionProjectRoots } from "@backend/services/app-storage-service";
+import { readProjectHistoryMeta } from "@backend/services/project-service";
+import { countWorkflowLogRecords, listWorkflowLogProjectRoots } from "@backend/services/workflow-log-service";
+import type { WorkLogProjectSummary } from "@backend/types/history";
 
 async function existingDirectories(paths: string[]): Promise<string[]> {
   const resolved = await Promise.all(

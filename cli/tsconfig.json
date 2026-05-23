@@ -9,6 +9,10 @@
     },
     "rootDir": "src"
   },
+  "tsc-alias": {
+    "resolveFullPaths": true,
+    "resolveFullExtension": ".js"
+  },
   "include": ["src"],
   "exclude": ["src/**/*.test.ts"]
 }

@@ -1,6 +1,6 @@
-import { runCodexPhase } from "@cli/pipeline/executor.js";
-import type { PhaseResult, PipelineContext } from "@cli/pipeline/types.js";
-import { createPrompt } from "@cli/pipeline/phase/requirements-normalize/prompt.js";
+import { runCodexPhase } from "@cli/pipeline/executor";
+import type { PhaseResult, PipelineContext } from "@cli/pipeline/types";
+import { createPrompt } from "@cli/pipeline/phase/requirements-normalize/prompt";
 
 export async function requirementsNormalizePhase(ctx: PipelineContext): Promise<PhaseResult> {
   console.log("[normalize] requirements-normalize phase를 시작합니다.");

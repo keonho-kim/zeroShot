@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
-import { saveProjectCodexSettings } from "@backend/config/codex-config.js";
-import { getValidatedProjectRoot } from "../shared/project-root.js";
+import { saveProjectCodexSettings } from "@backend/config/codex-config";
+import { getValidatedProjectRoot } from "@backend/routes/shared/project-root";
 
 export async function postProjectCodexSettings(req: Request, res: Response) {
   const body = req.body as { projectRoot?: string };

@@ -1,15 +1,15 @@
 import type { Request, Response } from "express";
-import { createSseStream } from "@backend/core/sse.js";
-import { normalizeLocale } from "@backend/i18n/locale.js";
-import { saveDesignRuntimeArtifacts } from "@backend/services/artifact-workflow-service.js";
-import { readAuthStatus } from "@backend/services/auth-service.js";
-import { buildDesignRuntime } from "@backend/services/design-service.js";
-import { readProjectState } from "@backend/services/project-service.js";
-import { appendWorkflowLogEvent, createWorkflowLogRecord } from "@backend/services/workflow-log-service.js";
-import type { DesignProgressEvent } from "@backend/types/design.js";
-import { getValidatedProjectRoot } from "../shared/project-root.js";
-import { workflowProgressMessage, workflowRawMessage } from "../shared/workflow.js";
-import { toDesignRuntimeMode } from "./shared.js";
+import { createSseStream } from "@backend/core/sse";
+import { normalizeLocale } from "@backend/i18n/locale";
+import { saveDesignRuntimeArtifacts } from "@backend/services/artifact-workflow-service";
+import { readAuthStatus } from "@backend/services/auth-service";
+import { buildDesignRuntime } from "@backend/services/design-service";
+import { readProjectState } from "@backend/services/project-service";
+import { appendWorkflowLogEvent, createWorkflowLogRecord } from "@backend/services/workflow-log-service";
+import type { DesignProgressEvent } from "@backend/types/design";
+import { getValidatedProjectRoot } from "@backend/routes/shared/project-root";
+import { workflowProgressMessage, workflowRawMessage } from "@backend/routes/shared/workflow";
+import { toDesignRuntimeMode } from "@backend/routes/design/shared";
 
 export async function postDesignRuntimeStream(req: Request, res: Response) {
   const auth = await readAuthStatus();

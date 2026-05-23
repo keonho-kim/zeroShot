@@ -1,5 +1,5 @@
-import { readProjectSettings } from "@backend/services/app-storage-service.js";
-import { buildResourcePromptContext } from "@backend/services/resource-service.js";
+import { readProjectSettings } from "@backend/services/app-storage-service";
+import { buildResourcePromptContext } from "@backend/services/resource-service";
 
 export async function appendActiveResourceContext(projectRoot: string, content: string): Promise<string> {
   const settings = await readProjectSettings(projectRoot);

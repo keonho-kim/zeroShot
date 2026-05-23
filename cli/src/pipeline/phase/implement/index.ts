@@ -1,6 +1,6 @@
-import { runCodexPhase } from "@cli/pipeline/executor.js";
-import type { PhaseResult, PipelineContext } from "@cli/pipeline/types.js";
-import { createPrompt } from "@cli/pipeline/phase/implement/prompt.js";
+import { runCodexPhase } from "@cli/pipeline/executor";
+import type { PhaseResult, PipelineContext } from "@cli/pipeline/types";
+import { createPrompt } from "@cli/pipeline/phase/implement/prompt";
 
 export async function iterOnce(ctx: PipelineContext, iter: number): Promise<PhaseResult> {
   console.log("[iter] 구현 iteration을 시작합니다.");

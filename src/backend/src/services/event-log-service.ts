@@ -1,6 +1,6 @@
 import { appendFile, mkdir } from "node:fs/promises";
 import { dirname } from "node:path";
-import { getAppEventsPath } from "@backend/core/workspace.js";
+import { getAppEventsPath } from "@backend/core/workspace";
 
 export async function appendAppEvent(type: string, payload: Record<string, unknown>): Promise<void> {
   const path = getAppEventsPath();

@@ -1,8 +1,8 @@
 import express, { type Router } from "express";
-import { asyncHandler } from "../shared/async-handler.js";
-import { getLatestDesign } from "./get-latest.js";
-import { postDesignRecommendationsStream } from "./post-recommendations-stream.js";
-import { postDesignRuntimeStream } from "./post-runtime-stream.js";
+import { asyncHandler } from "@backend/routes/shared/async-handler";
+import { getLatestDesign } from "@backend/routes/design/get-latest";
+import { postDesignRecommendationsStream } from "@backend/routes/design/post-recommendations-stream";
+import { postDesignRuntimeStream } from "@backend/routes/design/post-runtime-stream";
 
 export const designRouter: Router = express.Router();
 

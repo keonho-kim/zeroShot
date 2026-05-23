@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { createProjectDirectory, fetchAppSettings, fetchProjectTree } from "@/lib/api";
 import { useAppStore } from "@/stores/app-store";
 import type { DirectoryEntry } from "@/types/api";
-import { getErrorMessage, mergeTreeChildren } from "./project-picker-utils";
+import { getErrorMessage, mergeTreeChildren } from "@/components/project-picker/project-picker-utils";
 
 function hasLoadedChildren(path: string): boolean {
   return Object.hasOwn(useAppStore.getState().treeChildrenByPath, path);

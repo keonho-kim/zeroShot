@@ -1,5 +1,5 @@
-import type { PipelineContext } from "@cli/pipeline/types.js";
-import { updateRefactoringGuidanceBlock } from "@cli/pipeline/phase/common/prompt-blocks.js";
+import type { PipelineContext } from "@cli/pipeline/types";
+import { updateRefactoringGuidanceBlock } from "@cli/pipeline/phase/common/prompt-blocks";
 
 export function createPrompt(ctx: PipelineContext): { goal: string; extra: string } {
   const updateRefactoring = ctx.mode === "update"

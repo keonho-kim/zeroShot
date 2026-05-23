@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { mkdir, readFile, rm, stat } from "node:fs/promises";
 import { isAbsolute, join } from "node:path";
-import { ensureFileContent, resolveExistingPath } from "@backend/core/path-guards.js";
+import { ensureFileContent, resolveExistingPath } from "@backend/core/path-guards";
 
 export const architectProductPath = "ARCHITECT/PRODUCT.html";
 export const designEntryPath = "DESIGN/index.html";

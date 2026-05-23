@@ -1,9 +1,9 @@
 import type { Request, Response } from "express";
-import { loadAppConfig } from "@backend/config/app-config.js";
-import { assertPathWithinRoots } from "@backend/core/path-guards.js";
-import { createDirectory } from "@backend/services/file-service.js";
-import { buildDirectoryEntry } from "../shared/directory-entry.js";
-import { getBrowsableRoots } from "../shared/project-root.js";
+import { loadAppConfig } from "@backend/config/app-config";
+import { assertPathWithinRoots } from "@backend/core/path-guards";
+import { createDirectory } from "@backend/services/file-service";
+import { buildDirectoryEntry } from "@backend/routes/shared/directory-entry";
+import { getBrowsableRoots } from "@backend/routes/shared/project-root";
 
 export async function postProjectDirectory(req: Request, res: Response) {
   const body = req.body as { parentPath?: string; name?: string };

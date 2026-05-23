@@ -2,7 +2,7 @@ import { afterEach, describe, expect, test } from "bun:test";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { assertProjectRootWithinRoots } from "./path-guards";
+import { assertProjectRootWithinRoots } from "@backend/core/path-guards";
 
 let tempDir = "";
 

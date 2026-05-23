@@ -1,4 +1,4 @@
-import type { PipelineContext } from "@cli/pipeline/types.js";
+import type { PipelineContext } from "@cli/pipeline/types";
 
 export function updateInputFileBlock(ctx: PipelineContext): string {
   if (ctx.mode !== "update") {

@@ -1,6 +1,6 @@
-import type { ArchitectProgressEvent } from "./architect";
-import type { DesignProgressEvent } from "./design";
-import type { JobEvent, JobSnapshot } from "./pipeline";
+import type { ArchitectProgressEvent } from "@/types/api/architect";
+import type { DesignProgressEvent } from "@/types/api/design";
+import type { JobEvent, JobSnapshot } from "@/types/api/pipeline";
 
 export type OmakaseStage = "architect" | "design" | "build";
 

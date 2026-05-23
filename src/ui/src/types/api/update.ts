@@ -1,4 +1,4 @@
-import type { ArchitectDecision, ArchitectDecisionOption, ArchitectDecisionResponse, ArchitectProgressEvent } from "./architect";
+import type { ArchitectDecision, ArchitectDecisionOption, ArchitectDecisionResponse, ArchitectProgressEvent } from "@/types/api/architect";
 
 export type UpdateDecisionOption = ArchitectDecisionOption;
 export type UpdateDecision = ArchitectDecision;

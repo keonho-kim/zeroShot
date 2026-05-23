@@ -1,9 +1,9 @@
 import { readdir, readFile, stat } from "node:fs/promises";
 import { join, relative } from "node:path";
-import { loadAppConfig } from "@backend/config/app-config.js";
-import { resourceCatalogSummary, resourcePromptBlock } from "@backend/llm/resources/prompt.js";
-import { ensureResourceStoreSeeded } from "@backend/services/resource-seed-service.js";
-import type { ResourceFileSummary, ResourceManifest } from "@backend/types/resource.js";
+import { loadAppConfig } from "@backend/config/app-config";
+import { resourceCatalogSummary, resourcePromptBlock } from "@backend/llm/resources/prompt";
+import { ensureResourceStoreSeeded } from "@backend/services/resource-seed-service";
+import type { ResourceFileSummary, ResourceManifest } from "@backend/types/resource";
 
 type Frontmatter = Record<string, unknown>;
 

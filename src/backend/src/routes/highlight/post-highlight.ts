@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { highlightCode, normalizeHighlightLanguage } from "@backend/services/code-highlighting-service.js";
+import { highlightCode, normalizeHighlightLanguage } from "@backend/services/code-highlighting-service";
 
 export async function postHighlight(req: Request, res: Response) {
   const body = req.body as { code?: string; language?: string };

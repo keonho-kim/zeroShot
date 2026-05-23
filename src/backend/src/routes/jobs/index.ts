@@ -1,7 +1,7 @@
 import express, { type Router } from "express";
-import { asyncHandler } from "../shared/async-handler.js";
-import { getCurrentJob } from "./get-current.js";
-import { getJobStream } from "./get-stream.js";
+import { asyncHandler } from "@backend/routes/shared/async-handler";
+import { getCurrentJob } from "@backend/routes/jobs/get-current";
+import { getJobStream } from "@backend/routes/jobs/get-stream";
 
 export const jobsRouter: Router = express.Router();
 

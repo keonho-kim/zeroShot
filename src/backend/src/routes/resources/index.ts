@@ -1,6 +1,6 @@
 import express, { type Router } from "express";
-import { asyncHandler } from "../shared/async-handler.js";
-import { getResources } from "./get-resources.js";
+import { asyncHandler } from "@backend/routes/shared/async-handler";
+import { getResources } from "@backend/routes/resources/get-resources";
 
 export const resourcesRouter: Router = express.Router();
 

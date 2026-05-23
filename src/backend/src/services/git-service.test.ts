@@ -4,7 +4,7 @@ import fs from "node:fs";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { readGitStatusMatrix } from "./git-service";
+import { readGitStatusMatrix } from "@backend/services/git-service";
 
 let tempDir = "";
 

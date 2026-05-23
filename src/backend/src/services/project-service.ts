@@ -1,9 +1,9 @@
 import { join } from "node:path";
 import { readdir } from "node:fs/promises";
-import { exists } from "@backend/core/path-guards.js";
-import { architectProductPath, designEntryPath } from "@backend/services/file-service.js";
-import { analyzeProjectSource } from "@backend/services/source-analysis-service.js";
-import type { ProjectState } from "@backend/types/project.js";
+import { exists } from "@backend/core/path-guards";
+import { architectProductPath, designEntryPath } from "@backend/services/file-service";
+import { analyzeProjectSource } from "@backend/services/source-analysis-service";
+import type { ProjectState } from "@backend/types/project";
 
 const nonProjectEntries = new Set([".DS_Store", ".work.history", "runs", "ARCHITECT", "DESIGN", "PRODUCT.md", "PRODUCT.html", "DESIGN.md", "DESIGN.runtime.json", "artifacts.json", "UPDATE.md"]);
 

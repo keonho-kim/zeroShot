@@ -1,7 +1,7 @@
 import { cp, mkdir, rm, stat } from "node:fs/promises";
 import { dirname, relative, resolve, join } from "node:path";
-import { getAppDataRoot, getWorkspaceRoot } from "@backend/core/workspace.js";
-import type { AppConfig } from "@backend/types/app.js";
+import { getAppDataRoot, getWorkspaceRoot } from "@backend/core/workspace";
+import type { AppConfig } from "@backend/types/app";
 
 const seededKeys = new Set<string>();
 

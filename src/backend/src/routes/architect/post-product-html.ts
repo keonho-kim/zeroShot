@@ -1,12 +1,12 @@
 import type { Request, Response } from "express";
-import { loadAppConfig } from "@backend/config/app-config.js";
-import { normalizeLocale } from "@backend/i18n/locale.js";
-import { buildArchitectProductHtml } from "@backend/services/architect-service.js";
-import { saveArchitectProductFiles } from "@backend/services/artifact-workflow-service.js";
-import { readAuthStatus } from "@backend/services/auth-service.js";
-import { buildResourcePromptContext } from "@backend/services/resource-service.js";
-import { createWorkflowLogRecord } from "@backend/services/workflow-log-service.js";
-import { getValidatedProjectRoot } from "../shared/project-root.js";
+import { loadAppConfig } from "@backend/config/app-config";
+import { normalizeLocale } from "@backend/i18n/locale";
+import { buildArchitectProductHtml } from "@backend/services/architect-service";
+import { saveArchitectProductFiles } from "@backend/services/artifact-workflow-service";
+import { readAuthStatus } from "@backend/services/auth-service";
+import { buildResourcePromptContext } from "@backend/services/resource-service";
+import { createWorkflowLogRecord } from "@backend/services/workflow-log-service";
+import { getValidatedProjectRoot } from "@backend/routes/shared/project-root";
 
 export async function postArchitectProductHtml(req: Request, res: Response) {
   const auth = await readAuthStatus();

@@ -1,6 +1,6 @@
-import { languageName } from "@backend/i18n/locale.js";
-import { resourceCatalogSummary } from "@backend/llm/resources/prompt.js";
-import type { ResourceManifest } from "@backend/types/resource.js";
+import { languageName } from "@backend/i18n/locale";
+import { resourceCatalogSummary } from "@backend/llm/resources/prompt";
+import type { ResourceManifest } from "@backend/types/resource";
 
 function resourceList(title: string, resources: ResourceManifest[]): string {
   return [

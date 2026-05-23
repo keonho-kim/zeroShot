@@ -1,7 +1,7 @@
 import express, { type Router } from "express";
-import { asyncHandler } from "../shared/async-handler.js";
-import { getAuthStatus } from "./get-status.js";
-import { putAuth } from "./put-auth.js";
+import { asyncHandler } from "@backend/routes/shared/async-handler";
+import { getAuthStatus } from "@backend/routes/auth/get-status";
+import { putAuth } from "@backend/routes/auth/put-auth";
 
 export const authRouter: Router = express.Router();
 

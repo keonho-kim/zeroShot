@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { saveAuthFile } from "@backend/services/auth-service.js";
+import { saveAuthFile } from "@backend/services/auth-service";
 
 export async function putAuth(req: Request, res: Response) {
   const body = req.body as { content?: string };

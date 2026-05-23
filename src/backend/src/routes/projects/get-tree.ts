@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
-import { loadAppConfig } from "@backend/config/app-config.js";
-import { assertPathWithinRoots, listDirectoryEntries } from "@backend/core/path-guards.js";
-import { getBrowsableRoots } from "../shared/project-root.js";
+import { loadAppConfig } from "@backend/config/app-config";
+import { assertPathWithinRoots, listDirectoryEntries } from "@backend/core/path-guards";
+import { getBrowsableRoots } from "@backend/routes/shared/project-root";
 
 export async function getProjectTree(req: Request, res: Response) {
   const config = await loadAppConfig();

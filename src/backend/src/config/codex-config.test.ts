@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { mkdir, mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { getProjectCodexConfigPath, saveProjectCodexSettings } from "./codex-config";
+import { getProjectCodexConfigPath, saveProjectCodexSettings } from "@backend/config/codex-config";
 
 let originalHome = "";
 

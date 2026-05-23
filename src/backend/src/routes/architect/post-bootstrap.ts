@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
-import { inferBootstrapRequest, runBootstrap } from "@backend/services/bootstrap-service.js";
-import type { BootstrapRequest } from "@backend/types/pipeline.js";
-import { getValidatedProjectRoot } from "../shared/project-root.js";
+import { inferBootstrapRequest, runBootstrap } from "@backend/services/bootstrap-service";
+import type { BootstrapRequest } from "@backend/types/pipeline";
+import { getValidatedProjectRoot } from "@backend/routes/shared/project-root";
 
 export async function postArchitectBootstrap(req: Request, res: Response) {
   const body = req.body as {

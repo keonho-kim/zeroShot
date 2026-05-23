@@ -1,8 +1,8 @@
 import type { Request, Response } from "express";
-import { loadAppConfig, saveAppConfig } from "@backend/config/app-config.js";
-import { assertPathWithinRoots, isWithin } from "@backend/core/path-guards.js";
-import { deleteEntry } from "@backend/services/file-service.js";
-import { getBrowsableRoots } from "../shared/project-root.js";
+import { loadAppConfig, saveAppConfig } from "@backend/config/app-config";
+import { assertPathWithinRoots, isWithin } from "@backend/core/path-guards";
+import { deleteEntry } from "@backend/services/file-service";
+import { getBrowsableRoots } from "@backend/routes/shared/project-root";
 
 export async function deleteProjectDirectory(req: Request, res: Response) {
   const body = req.body as { path?: string };

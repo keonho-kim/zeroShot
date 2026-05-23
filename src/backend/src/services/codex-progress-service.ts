@@ -1,5 +1,5 @@
 import type { ThreadEvent } from "@openai/codex-sdk";
-import { textByLocale } from "@backend/i18n/locale.js";
+import { textByLocale } from "@backend/i18n/locale";
 
 export interface CodexProgressEvent {
   id: string;

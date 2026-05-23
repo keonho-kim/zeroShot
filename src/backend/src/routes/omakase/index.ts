@@ -1,6 +1,6 @@
 import express, { type Router } from "express";
-import { asyncHandler } from "../shared/async-handler.js";
-import { postOmakaseStream } from "./post-stream.js";
+import { asyncHandler } from "@backend/routes/shared/async-handler";
+import { postOmakaseStream } from "@backend/routes/omakase/post-stream";
 
 export const omakaseRouter: Router = express.Router();
 

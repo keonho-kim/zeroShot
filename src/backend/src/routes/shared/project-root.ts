@@ -1,6 +1,6 @@
 import { relative } from "node:path";
-import { loadAppConfig } from "@backend/config/app-config.js";
-import { assertProjectRootWithinRoots } from "@backend/core/path-guards.js";
+import { loadAppConfig } from "@backend/config/app-config";
+import { assertProjectRootWithinRoots } from "@backend/core/path-guards";
 
 export type LoadedAppConfig = Awaited<ReturnType<typeof loadAppConfig>>;
 

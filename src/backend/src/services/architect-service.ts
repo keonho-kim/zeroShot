@@ -1,11 +1,11 @@
 import { Codex, type ApprovalMode, type ModelReasoningEffort, type SandboxMode, type ThreadEvent, type ThreadOptions } from "@openai/codex-sdk";
 import { z } from "zod";
-import { buildArchitectPrompt } from "@backend/llm/architect/prompt.js";
-import { buildArchitectProductHtmlPrompt } from "@backend/llm/architect/product-html-prompt.js";
-import { ensureDevelopmentLanguageDecision } from "@backend/llm/architect/development-stack-decision.js";
-import { textByLocale } from "@backend/i18n/locale.js";
-import { describeCodexProgress } from "@backend/services/codex-progress-service.js";
-import { compactVisibleContext, streamVisibleCodexPrelude, visiblePreludePrompt } from "@backend/services/codex-visible-stream-service.js";
+import { buildArchitectPrompt } from "@backend/llm/architect/prompt";
+import { buildArchitectProductHtmlPrompt } from "@backend/llm/architect/product-html-prompt";
+import { ensureDevelopmentLanguageDecision } from "@backend/llm/architect/development-stack-decision";
+import { textByLocale } from "@backend/i18n/locale";
+import { describeCodexProgress } from "@backend/services/codex-progress-service";
+import { compactVisibleContext, streamVisibleCodexPrelude, visiblePreludePrompt } from "@backend/services/codex-visible-stream-service";
 
 const architectEmptyProjectToolGuidance = [
   "This ARCHITECT workflow is for a completely empty project.",
@@ -168,7 +168,7 @@ function asReasoningEffort(value: string): ModelReasoningEffort {
   throw new Error(`Unsupported reasoning effort: ${value}`);
 }
 
-export { ensureDevelopmentLanguageDecision } from "@backend/llm/architect/development-stack-decision.js";
+export { ensureDevelopmentLanguageDecision } from "@backend/llm/architect/development-stack-decision";
 
 function progressText(locale: string, ko: string, en: string): string {
   return textByLocale(locale, { ko, en, zh: en, ja: en, es: en, de: en });

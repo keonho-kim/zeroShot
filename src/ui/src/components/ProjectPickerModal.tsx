@@ -2,8 +2,8 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ChevronLeft, House, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { ProjectTree } from "./project-picker/ProjectTree";
-import { useProjectTreeController } from "./project-picker/useProjectTreeController";
+import { ProjectTree } from "@/components/project-picker/ProjectTree";
+import { useProjectTreeController } from "@/components/project-picker/useProjectTreeController";
 import { useI18n } from "@/lib/i18n";
 
 interface Props {

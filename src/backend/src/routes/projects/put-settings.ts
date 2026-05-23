@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
-import { saveProjectSettings } from "@backend/services/app-storage-service.js";
-import { appendAppEvent } from "@backend/services/event-log-service.js";
-import { getValidatedProjectRoot } from "../shared/project-root.js";
+import { saveProjectSettings } from "@backend/services/app-storage-service";
+import { appendAppEvent } from "@backend/services/event-log-service";
+import { getValidatedProjectRoot } from "@backend/routes/shared/project-root";
 
 export async function putProjectSettings(req: Request, res: Response) {
   const body = req.body as { projectRoot?: string; activeSkillId?: string; activeDesignTemplateId?: string; activeDesignSystemId?: string };

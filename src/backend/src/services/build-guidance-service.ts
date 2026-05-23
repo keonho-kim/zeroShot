@@ -1,6 +1,6 @@
-import { buildImplementationGuidance } from "@backend/llm/build/prompt.js";
+import { buildImplementationGuidance } from "@backend/llm/build/prompt";
 
-export { buildImplementationGuidance } from "@backend/llm/build/prompt.js";
+export { buildImplementationGuidance } from "@backend/llm/build/prompt";
 
 export function ensureBuildImplementationGuidance(content: string): string {
   if (content.includes("## Build Implementation Guidance")) {

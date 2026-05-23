@@ -1,4 +1,4 @@
-import { languageName } from "@backend/i18n/locale.js";
+import { languageName } from "@backend/i18n/locale";
 
 export function buildUpdatePrompt(updateRequest: string, locale: string): string {
   const language = languageName(locale);

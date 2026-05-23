@@ -2,11 +2,11 @@ import cors from "cors";
 import express, { type NextFunction, type Request, type Response } from "express";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
-import { apiRouter } from "@backend/routes/api.js";
-import { getWorkspaceRoot } from "@backend/core/workspace.js";
-import { loadAppConfig } from "@backend/config/app-config.js";
-import { captureServerError, initServerObservability } from "@backend/observability/sentry.js";
-import { ensureResourceStoreSeeded } from "@backend/services/resource-seed-service.js";
+import { apiRouter } from "@backend/routes/api";
+import { getWorkspaceRoot } from "@backend/core/workspace";
+import { loadAppConfig } from "@backend/config/app-config";
+import { captureServerError, initServerObservability } from "@backend/observability/sentry";
+import { ensureResourceStoreSeeded } from "@backend/services/resource-seed-service";
 
 const app = express();
 initServerObservability();

@@ -1,12 +1,12 @@
 import type { Request, Response } from "express";
-import { readAuthStatus } from "@backend/services/auth-service.js";
-import { writeProductHtml, writeUpdateDocument } from "@backend/services/file-service.js";
-import { startPipelineRun } from "@backend/services/pipeline-run-service.js";
-import { readProjectState } from "@backend/services/project-service.js";
-import { createWorkflowLogRecord } from "@backend/services/workflow-log-service.js";
-import type { PipelineOptions, RunMode } from "@backend/types/pipeline.js";
-import { productContentToHtml, appendActiveResourceContext } from "../shared/product-content.js";
-import { getValidatedProjectRoot } from "../shared/project-root.js";
+import { readAuthStatus } from "@backend/services/auth-service";
+import { writeProductHtml, writeUpdateDocument } from "@backend/services/file-service";
+import { startPipelineRun } from "@backend/services/pipeline-run-service";
+import { readProjectState } from "@backend/services/project-service";
+import { createWorkflowLogRecord } from "@backend/services/workflow-log-service";
+import type { PipelineOptions, RunMode } from "@backend/types/pipeline";
+import { productContentToHtml, appendActiveResourceContext } from "@backend/routes/shared/product-content";
+import { getValidatedProjectRoot } from "@backend/routes/shared/project-root";
 
 export async function startPipeline(mode: RunMode, req: Request, res: Response) {
   const auth = await readAuthStatus();

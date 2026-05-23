@@ -1,16 +1,16 @@
 import express, { type Router } from "express";
-import { architectRouter } from "./architect/index.js";
-import { authRouter } from "./auth/index.js";
-import { designRouter } from "./design/index.js";
-import { highlightRouter } from "./highlight/index.js";
-import { historyRouter } from "./history/index.js";
-import { jobsRouter } from "./jobs/index.js";
-import { omakaseRouter } from "./omakase/index.js";
-import { pipelineRouter } from "./pipeline/index.js";
-import { projectsRouter } from "./projects/index.js";
-import { resourcesRouter } from "./resources/index.js";
-import { settingsRouter } from "./settings/index.js";
-import { updateRouter } from "./update/index.js";
+import { architectRouter } from "@backend/routes/architect";
+import { authRouter } from "@backend/routes/auth";
+import { designRouter } from "@backend/routes/design";
+import { highlightRouter } from "@backend/routes/highlight";
+import { historyRouter } from "@backend/routes/history";
+import { jobsRouter } from "@backend/routes/jobs";
+import { omakaseRouter } from "@backend/routes/omakase";
+import { pipelineRouter } from "@backend/routes/pipeline";
+import { projectsRouter } from "@backend/routes/projects";
+import { resourcesRouter } from "@backend/routes/resources";
+import { settingsRouter } from "@backend/routes/settings";
+import { updateRouter } from "@backend/routes/update";
 
 const router: Router = express.Router();
 

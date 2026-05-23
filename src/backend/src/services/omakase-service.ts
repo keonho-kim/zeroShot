@@ -1,24 +1,24 @@
-import { loadAppConfig } from "@backend/config/app-config.js";
-import { normalizeLocale } from "@backend/i18n/locale.js";
-import { buildArchitectDecisions, buildArchitectProductHtml, type ArchitectDecisionResponse, type ArchitectProgressEvent } from "@backend/services/architect-service.js";
-import { recordArchitectSession } from "@backend/services/app-storage-service.js";
-import { saveArchitectProductFiles, saveDesignRuntimeArtifacts } from "@backend/services/artifact-workflow-service.js";
-import { inferBootstrapRequest, runBootstrap } from "@backend/services/bootstrap-service.js";
-import { buildDesignRuntime, recommendDesignResources } from "@backend/services/design-service.js";
-import { jobManager } from "@backend/services/job-manager.js";
-import { startPipelineRun } from "@backend/services/pipeline-run-service.js";
-import { readProjectState } from "@backend/services/project-service.js";
-import { buildResourcePromptContext } from "@backend/services/resource-service.js";
-import { appendWorkflowLogEvent, createWorkflowLogRecord } from "@backend/services/workflow-log-service.js";
+import { loadAppConfig } from "@backend/config/app-config";
+import { normalizeLocale } from "@backend/i18n/locale";
+import { buildArchitectDecisions, buildArchitectProductHtml, type ArchitectDecisionResponse, type ArchitectProgressEvent } from "@backend/services/architect-service";
+import { recordArchitectSession } from "@backend/services/app-storage-service";
+import { saveArchitectProductFiles, saveDesignRuntimeArtifacts } from "@backend/services/artifact-workflow-service";
+import { inferBootstrapRequest, runBootstrap } from "@backend/services/bootstrap-service";
+import { buildDesignRuntime, recommendDesignResources } from "@backend/services/design-service";
+import { jobManager } from "@backend/services/job-manager";
+import { startPipelineRun } from "@backend/services/pipeline-run-service";
+import { readProjectState } from "@backend/services/project-service";
+import { buildResourcePromptContext } from "@backend/services/resource-service";
+import { appendWorkflowLogEvent, createWorkflowLogRecord } from "@backend/services/workflow-log-service";
 import type {
   DesignProgressEvent,
   DesignRecommendationResponse
-} from "@backend/types/design.js";
+} from "@backend/types/design";
 import type {
   JobEvent,
   JobSnapshot,
   PipelineOptions
-} from "@backend/types/pipeline.js";
+} from "@backend/types/pipeline";
 
 export type OmakaseStage = "architect" | "design" | "build";
 

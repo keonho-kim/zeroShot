@@ -1,7 +1,7 @@
 import express, { type Router } from "express";
-import { asyncHandler } from "../shared/async-handler.js";
-import { postUpdateDecisionsStream } from "./post-decisions-stream.js";
-import { postUpdate } from "./post-update.js";
+import { asyncHandler } from "@backend/routes/shared/async-handler";
+import { postUpdateDecisionsStream } from "@backend/routes/update/post-decisions-stream";
+import { postUpdate } from "@backend/routes/update/post-update";
 
 export const updateRouter: Router = express.Router();
 

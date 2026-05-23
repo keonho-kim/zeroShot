@@ -1,11 +1,11 @@
 import { EventEmitter } from "node:events";
 import { spawn } from "node:child_process";
 import { createInterface } from "node:readline";
-import { loadAppConfig } from "@backend/config/app-config.js";
-import { buildPipelineCommandSpec } from "@backend/core/cli-command.js";
-import { ensureResourceStoreSeeded } from "@backend/services/resource-seed-service.js";
-import { appendWorkflowLogEvent } from "@backend/services/workflow-log-service.js";
-import type { JobEvent, JobSnapshot, PipelineOptions, RunMode } from "@backend/types/pipeline.js";
+import { loadAppConfig } from "@backend/config/app-config";
+import { buildPipelineCommandSpec } from "@backend/core/cli-command";
+import { ensureResourceStoreSeeded } from "@backend/services/resource-seed-service";
+import { appendWorkflowLogEvent } from "@backend/services/workflow-log-service";
+import type { JobEvent, JobSnapshot, PipelineOptions, RunMode } from "@backend/types/pipeline";
 
 const PHASE_NAMES = new Set(["prepare", "normalize", "iter", "replan", "validate", "sync-product", "closeout", "build", "codex"]);
 

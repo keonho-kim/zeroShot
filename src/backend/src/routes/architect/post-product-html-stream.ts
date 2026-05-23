@@ -1,14 +1,14 @@
 import type { Request, Response } from "express";
-import { loadAppConfig } from "@backend/config/app-config.js";
-import { createSseStream } from "@backend/core/sse.js";
-import { normalizeLocale } from "@backend/i18n/locale.js";
-import { buildArchitectProductHtml, type ArchitectProgressEvent } from "@backend/services/architect-service.js";
-import { saveArchitectProductFiles } from "@backend/services/artifact-workflow-service.js";
-import { readAuthStatus } from "@backend/services/auth-service.js";
-import { buildResourcePromptContext } from "@backend/services/resource-service.js";
-import { appendWorkflowLogEvent, createWorkflowLogRecord } from "@backend/services/workflow-log-service.js";
-import { getValidatedProjectRoot } from "../shared/project-root.js";
-import { workflowProgressMessage, workflowRawMessage } from "../shared/workflow.js";
+import { loadAppConfig } from "@backend/config/app-config";
+import { createSseStream } from "@backend/core/sse";
+import { normalizeLocale } from "@backend/i18n/locale";
+import { buildArchitectProductHtml, type ArchitectProgressEvent } from "@backend/services/architect-service";
+import { saveArchitectProductFiles } from "@backend/services/artifact-workflow-service";
+import { readAuthStatus } from "@backend/services/auth-service";
+import { buildResourcePromptContext } from "@backend/services/resource-service";
+import { appendWorkflowLogEvent, createWorkflowLogRecord } from "@backend/services/workflow-log-service";
+import { getValidatedProjectRoot } from "@backend/routes/shared/project-root";
+import { workflowProgressMessage, workflowRawMessage } from "@backend/routes/shared/workflow";
 
 export async function postArchitectProductHtmlStream(req: Request, res: Response) {
   const auth = await readAuthStatus();

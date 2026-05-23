@@ -1,6 +1,6 @@
 import { readdir, stat } from "node:fs/promises";
 import { extname, join } from "node:path";
-import type { LanguageStat } from "@backend/types/project.js";
+import type { LanguageStat } from "@backend/types/project";
 
 const ignoredDirectories = new Set([
   ".git",

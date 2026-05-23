@@ -2,8 +2,8 @@ import { Database } from "bun:sqlite";
 import { mkdir, readdir } from "node:fs/promises";
 import { Buffer } from "node:buffer";
 import { dirname, join } from "node:path";
-import { getAppDatabasePath } from "@backend/core/workspace.js";
-import { architectProductPath, designEntryPath, readArtifactFile, readArtifactManifest } from "@backend/services/file-service.js";
+import { getAppDatabasePath } from "@backend/core/workspace";
+import { architectProductPath, designEntryPath, readArtifactFile, readArtifactManifest } from "@backend/services/file-service";
 import type {
   WorkflowLogBoard,
   WorkflowLogEvent,
@@ -13,7 +13,7 @@ import type {
   WorkflowLogSection,
   WorkflowLogStage,
   WorkflowLogStageGroup
-} from "@backend/types/history.js";
+} from "@backend/types/history";
 
 const stageSections: Record<WorkflowLogStage, WorkflowLogSection[]> = {
   product: ["blueprint", "decisions", "logs"],

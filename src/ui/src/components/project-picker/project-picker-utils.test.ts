@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { mergeTreeChildren, prioritizeSelectedDirectory } from "./project-picker-utils";
+import { mergeTreeChildren, prioritizeSelectedDirectory } from "@/components/project-picker/project-picker-utils";
 
 describe("project picker tree utilities", () => {
   test("marks an empty directory as loaded", () => {

@@ -1,10 +1,10 @@
 import { Codex, type ApprovalMode, type ModelReasoningEffort, type SandboxMode, type ThreadEvent, type ThreadOptions } from "@openai/codex-sdk";
 import { z } from "zod";
-import { extractArchitectChatMessage } from "@backend/services/architect-service.js";
-import { buildUpdatePrompt } from "@backend/llm/update/prompt.js";
-import { textByLocale } from "@backend/i18n/locale.js";
-import { describeCodexProgress } from "@backend/services/codex-progress-service.js";
-import { streamVisibleCodexPrelude, visiblePreludePrompt } from "@backend/services/codex-visible-stream-service.js";
+import { extractArchitectChatMessage } from "@backend/services/architect-service";
+import { buildUpdatePrompt } from "@backend/llm/update/prompt";
+import { textByLocale } from "@backend/i18n/locale";
+import { describeCodexProgress } from "@backend/services/codex-progress-service";
+import { streamVisibleCodexPrelude, visiblePreludePrompt } from "@backend/services/codex-visible-stream-service";
 
 const updateDecisionSchema = {
   type: "object",

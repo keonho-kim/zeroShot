@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
-import { readProjectState } from "@backend/services/project-service.js";
-import { getValidatedProjectRoot } from "../shared/project-root.js";
+import { readProjectState } from "@backend/services/project-service";
+import { getValidatedProjectRoot } from "@backend/routes/shared/project-root";
 
 export async function getProjectState(req: Request, res: Response) {
   const projectRoot = await getValidatedProjectRoot(String(req.query.projectRoot ?? ""));

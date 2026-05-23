@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { saveAppConfig } from "@backend/config/app-config.js";
+import { saveAppConfig } from "@backend/config/app-config";
 
 export async function putAppSettings(req: Request, res: Response) {
   await saveAppConfig(req.body);

@@ -1,4 +1,4 @@
-import type { DesignRuntimeMode } from "@backend/types/design.js";
+import type { DesignRuntimeMode } from "@backend/types/design";
 
 export function toDesignRuntimeMode(value: unknown): DesignRuntimeMode {
   if (value === "figma" || value === "powerpoint") {

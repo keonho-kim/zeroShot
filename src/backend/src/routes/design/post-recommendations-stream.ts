@@ -1,13 +1,13 @@
 import type { Request, Response } from "express";
-import { createSseStream } from "@backend/core/sse.js";
-import { normalizeLocale } from "@backend/i18n/locale.js";
-import { readAuthStatus } from "@backend/services/auth-service.js";
-import { recommendDesignResources } from "@backend/services/design-service.js";
-import { readProjectState } from "@backend/services/project-service.js";
-import { appendWorkflowLogEvent, createWorkflowLogRecord } from "@backend/services/workflow-log-service.js";
-import type { DesignProgressEvent } from "@backend/types/design.js";
-import { getValidatedProjectRoot } from "../shared/project-root.js";
-import { workflowProgressMessage, workflowRawMessage } from "../shared/workflow.js";
+import { createSseStream } from "@backend/core/sse";
+import { normalizeLocale } from "@backend/i18n/locale";
+import { readAuthStatus } from "@backend/services/auth-service";
+import { recommendDesignResources } from "@backend/services/design-service";
+import { readProjectState } from "@backend/services/project-service";
+import { appendWorkflowLogEvent, createWorkflowLogRecord } from "@backend/services/workflow-log-service";
+import type { DesignProgressEvent } from "@backend/types/design";
+import { getValidatedProjectRoot } from "@backend/routes/shared/project-root";
+import { workflowProgressMessage, workflowRawMessage } from "@backend/routes/shared/workflow";
 
 export async function postDesignRecommendationsStream(req: Request, res: Response) {
   const auth = await readAuthStatus();

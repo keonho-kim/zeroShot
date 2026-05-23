@@ -1,5 +1,5 @@
-import type { ArchitectDecisionResponse } from "@backend/services/architect-service.js";
-import { textByLocale } from "@backend/i18n/locale.js";
+import type { ArchitectDecisionResponse } from "@backend/services/architect-service";
+import { textByLocale } from "@backend/i18n/locale";
 
 function hasDevelopmentLanguageInfo(goal: string): boolean {
   return /\b(type\s*script|javascript|node\.?js|bun|deno|react|vue|svelte|next\.?js|python|fastapi|django|flask|go|golang|rust|java|kotlin|swift|\.net|php|ruby|rails|zig|elixir|phoenix|scala|spring|express|nestjs)\b/i.test(goal)

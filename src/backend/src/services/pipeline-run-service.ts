@@ -1,7 +1,7 @@
-import { appendAppEvent } from "@backend/services/event-log-service.js";
-import { jobManager } from "@backend/services/job-manager.js";
-import { createWorkflowLogRecord } from "@backend/services/workflow-log-service.js";
-import type { PipelineOptions, RunMode } from "@backend/types/pipeline.js";
+import { appendAppEvent } from "@backend/services/event-log-service";
+import { jobManager } from "@backend/services/job-manager";
+import { createWorkflowLogRecord } from "@backend/services/workflow-log-service";
+import type { PipelineOptions, RunMode } from "@backend/types/pipeline";
 
 export async function startPipelineRun(mode: RunMode, projectRoot: string, options?: PipelineOptions) {
   if (mode === "build") {

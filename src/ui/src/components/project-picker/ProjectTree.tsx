@@ -5,9 +5,9 @@ import type { DirectoryEntry } from "@/types/api";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/utils/cn";
-import { CreateDirectoryRow } from "./CreateDirectoryRow";
-import { ProjectTreeRow } from "./ProjectTreeRow";
-import { getErrorMessage, prioritizeSelectedDirectory } from "./project-picker-utils";
+import { CreateDirectoryRow } from "@/components/project-picker/CreateDirectoryRow";
+import { ProjectTreeRow } from "@/components/project-picker/ProjectTreeRow";
+import { getErrorMessage, prioritizeSelectedDirectory } from "@/components/project-picker/project-picker-utils";
 
 function smoothEaseInOut(progress: number): number {
   return progress < 0.5

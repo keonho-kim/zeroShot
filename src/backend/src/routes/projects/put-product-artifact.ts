@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
-import { appendAppEvent } from "@backend/services/event-log-service.js";
-import { upsertArtifactManifest, writeProductHtmlSnapshot } from "@backend/services/file-service.js";
-import { getValidatedProjectRoot } from "../shared/project-root.js";
+import { appendAppEvent } from "@backend/services/event-log-service";
+import { upsertArtifactManifest, writeProductHtmlSnapshot } from "@backend/services/file-service";
+import { getValidatedProjectRoot } from "@backend/routes/shared/project-root";
 
 export async function putProductArtifact(req: Request, res: Response) {
   const body = req.body as { projectRoot: string; content?: string; markdownMirror?: string; etag?: string };

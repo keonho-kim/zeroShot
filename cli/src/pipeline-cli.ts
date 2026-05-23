@@ -4,8 +4,8 @@ import { Command } from "commander";
 import { mkdir, readFile, stat, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
-import { runPipeline } from "@cli/pipeline/runner.js";
-import type { AppDefaults, PipelineOptions, RunMode } from "@cli/pipeline/types.js";
+import { runPipeline } from "@cli/pipeline/runner";
+import type { AppDefaults, PipelineOptions, RunMode } from "@cli/pipeline/types";
 
 interface CliOptions extends PipelineOptions {
   projectRoot: string;

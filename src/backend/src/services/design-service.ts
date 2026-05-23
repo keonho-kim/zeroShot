@@ -2,21 +2,21 @@ import { readdir, readFile, stat } from "node:fs/promises";
 import { join, relative } from "node:path";
 import { Codex, type ApprovalMode, type ModelReasoningEffort, type SandboxMode, type ThreadEvent, type ThreadOptions } from "@openai/codex-sdk";
 import { z } from "zod";
-import { loadAppConfig } from "@backend/config/app-config.js";
-import { buildDesignPrompt, modeDisplayName } from "@backend/llm/makeover/prompt.js";
-import { buildRecommendationPrompt } from "@backend/llm/makeover/recommendation-prompt.js";
-import { textByLocale } from "@backend/i18n/locale.js";
-import { describeCodexProgress } from "@backend/services/codex-progress-service.js";
-import { compactVisibleContext, streamVisibleCodexPrelude, visiblePreludePrompt } from "@backend/services/codex-visible-stream-service.js";
-import { architectProductPath, readProductHtml } from "@backend/services/file-service.js";
-import { buildResourcePromptContext, listResourceCatalog } from "@backend/services/resource-service.js";
+import { loadAppConfig } from "@backend/config/app-config";
+import { buildDesignPrompt, modeDisplayName } from "@backend/llm/makeover/prompt";
+import { buildRecommendationPrompt } from "@backend/llm/makeover/recommendation-prompt";
+import { textByLocale } from "@backend/i18n/locale";
+import { describeCodexProgress } from "@backend/services/codex-progress-service";
+import { compactVisibleContext, streamVisibleCodexPrelude, visiblePreludePrompt } from "@backend/services/codex-visible-stream-service";
+import { architectProductPath, readProductHtml } from "@backend/services/file-service";
+import { buildResourcePromptContext, listResourceCatalog } from "@backend/services/resource-service";
 import type {
   DesignRecommendationResponse,
   DesignProgressEvent,
   DesignRuntimeMode,
   DesignRuntimeResponse
-} from "@backend/types/design.js";
-import type { ResourceManifest } from "@backend/types/resource.js";
+} from "@backend/types/design";
+import type { ResourceManifest } from "@backend/types/resource";
 
 const makeoverArchitectOnlyToolGuidance = [
   "Use read-only tools only when they help inspect ARCHITECT/PRODUCT.html, supporting files under ARCHITECT/, or selected read-only resource roots.",

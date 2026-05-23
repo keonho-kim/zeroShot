@@ -1,6 +1,6 @@
 import express, { type Router } from "express";
-import { asyncHandler } from "../shared/async-handler.js";
-import { postBuild } from "./post-build.js";
+import { asyncHandler } from "@backend/routes/shared/async-handler";
+import { postBuild } from "@backend/routes/pipeline/post-build";
 
 export const pipelineRouter: Router = express.Router();
 

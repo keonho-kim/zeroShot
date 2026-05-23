@@ -2,7 +2,7 @@ import { afterEach, describe, expect, test } from "bun:test";
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { listRuns, readRunDetail } from "./history-service";
+import { listRuns, readRunDetail } from "@backend/services/history-service";
 
 let tempDir = "";
 

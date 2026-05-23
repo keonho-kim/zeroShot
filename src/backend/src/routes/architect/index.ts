@@ -1,10 +1,10 @@
 import express, { type Router } from "express";
-import { asyncHandler } from "../shared/async-handler.js";
-import { postArchitectBootstrap } from "./post-bootstrap.js";
-import { postArchitectDecisions } from "./post-decisions.js";
-import { postArchitectDecisionsStream } from "./post-decisions-stream.js";
-import { postArchitectProductHtml } from "./post-product-html.js";
-import { postArchitectProductHtmlStream } from "./post-product-html-stream.js";
+import { asyncHandler } from "@backend/routes/shared/async-handler";
+import { postArchitectBootstrap } from "@backend/routes/architect/post-bootstrap";
+import { postArchitectDecisions } from "@backend/routes/architect/post-decisions";
+import { postArchitectDecisionsStream } from "@backend/routes/architect/post-decisions-stream";
+import { postArchitectProductHtml } from "@backend/routes/architect/post-product-html";
+import { postArchitectProductHtmlStream } from "@backend/routes/architect/post-product-html-stream";
 
 export const architectRouter: Router = express.Router();
 

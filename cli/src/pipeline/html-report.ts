@@ -1,6 +1,6 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import type { PipelineContext, PipelineState } from "@cli/pipeline/types.js";
+import type { PipelineContext, PipelineState } from "@cli/pipeline/types";
 
 function escapeHtml(value: string): string {
   return value
