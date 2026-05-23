@@ -112,13 +112,20 @@ When the user asks for development work, use a feature branch named `feat/<featu
 Required development flow:
 
 1. Create the feature branch from the latest `main`.
-2. Implement the requested change with the minimum necessary production-grade scope.
-3. Run the required local verification.
-4. Commit the intended files only.
-5. Push the feature branch.
-6. Open a pull request.
-7. Merge the pull request into `main`.
-8. Confirm the remote feature branch was deleted.
+
+- If current branch is not main, ask first whether keep this branch or create new branch.
+
+1. Implement the requested change with the minimum necessary production-grade scope.
+2. Run the required local verification.
+3. Commit the intended files only.
+4. Push the feature branch.
+5. If user explicitly request,
+  - check workflow.
+  - check version tag.
+  - Open a pull request.
+  - Merge the pull request into `main`
+  - Confirm workflow completed worked.
+  - Confirm the remote feature branch was deleted.
 
 After merging any development pull request into `main`, always check whether the merged change must be reflected in the installable package and GitHub latest release before sending the final report.
 
