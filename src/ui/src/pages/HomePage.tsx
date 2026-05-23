@@ -52,7 +52,7 @@ export function HomePage() {
               <Play aria-hidden="true" />
               {t("home.start")}
             </Button>
-            <Button type="button" variant="outline" onClick={() => navigate("/logs")} className="landing-action-button">
+            <Button type="button" variant="outline" onClick={() => navigate("/history")} className="landing-action-button">
               <ScrollText aria-hidden="true" />
               {t("home.workHistory")}
             </Button>

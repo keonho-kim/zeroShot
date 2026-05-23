@@ -1,29 +1,29 @@
-.logs-page {
+.history-page {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
 }
 
-.logs-page.builder-shell {
+.history-page.builder-shell {
   width: min(calc(100vw - 2rem), 1440px);
 }
 
-.logs-update-button {
+.history-update-button {
   border-color: var(--border);
   background: color-mix(in srgb, var(--arcade-pink) 70%, var(--panel) 30%);
   color: var(--foreground);
 }
 
-.logs-update-button:hover:not(:disabled) {
+.history-update-button:hover:not(:disabled) {
   background: var(--arcade-pink);
 }
 
-.logs-update-button:disabled {
+.history-update-button:disabled {
   cursor: not-allowed;
   opacity: 0.45;
 }
 
-.logs-title-meta {
+.history-title-meta {
   display: inline-flex;
   max-width: min(52rem, 70vw);
   min-width: 0;
@@ -40,7 +40,7 @@
   text-align: center;
 }
 
-.logs-empty {
+.history-empty {
   border: var(--border-strong) dashed var(--border);
   background: var(--muted);
   color: var(--muted-foreground);
@@ -50,7 +50,7 @@
   padding: 1rem;
 }
 
-.logs-document-frame {
+.history-document-frame {
   min-height: 560px;
   width: 100%;
   border: var(--border-strong) solid var(--border);
@@ -58,7 +58,7 @@
   background: white;
 }
 
-.logs-detail-empty {
+.history-detail-empty {
   display: grid;
   min-height: 360px;
   place-items: center;
@@ -312,64 +312,55 @@
 @media (min-width: 1024px) {
   .workflow-clamp-board {
     gap: 0.75rem;
-    grid-template-areas: "stage section records detail";
-    grid-template-columns: minmax(168px, 0.26fr) minmax(136px, 0.2fr) minmax(210px, 0.32fr) minmax(0, 1.7fr);
+    grid-template-areas:
+      "stage stage"
+      "section section"
+      "records detail";
+    grid-template-columns: minmax(240px, 0.34fr) minmax(0, 1fr);
     padding: 0.9rem;
   }
 
   .workflow-clamp-board-direct {
-    grid-template-areas: "stage section detail";
-    grid-template-columns: minmax(168px, 0.26fr) minmax(136px, 0.2fr) minmax(0, 2.02fr);
+    grid-template-areas:
+      "stage"
+      "section"
+      "detail";
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .workflow-stage-tabs,
   .workflow-section-tabs {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-auto-columns: minmax(132px, 1fr);
+    grid-auto-flow: column;
     gap: 2px;
-    overflow: visible;
+    overflow-x: auto;
   }
 
   .workflow-stage-tab,
   .workflow-section-tab {
-    justify-content: space-between;
-    border-right-width: 0;
-    box-shadow: 4px 4px 0 var(--border);
-    text-align: left;
+    justify-content: center;
+    box-shadow: var(--shadow-button);
+    text-align: center;
   }
 
   .workflow-stage-tab {
-    min-height: 3.25rem;
-    padding: 0.85rem 0.95rem;
-    font-size: 1.06rem;
-  }
-
-  .workflow-stage-tab::after,
-  .workflow-section-tab::after {
-    content: "";
-    display: block;
-    position: absolute;
-    top: 0.35rem;
-    right: -0.5rem;
-    height: calc(100% - 0.7rem);
-    width: 0.5rem;
-    border: var(--border-strong) solid var(--border);
-    border-left: 0;
-    background: inherit;
+    min-height: 2.8rem;
+    padding: 0.7rem 0.85rem;
+    font-size: 1rem;
   }
 
   .workflow-section-tab {
-    position: relative;
-    min-height: 2.75rem;
-    padding: 0.75rem 0.85rem;
-    font-size: 0.73rem;
+    min-height: 2.45rem;
+    padding: 0.65rem 0.75rem;
+    font-size: 0.76rem;
   }
 
   .workflow-record-list {
     gap: 0.45rem;
   }
 
-  .logs-document-frame {
+  .history-document-frame {
     min-height: 620px;
   }
 }

@@ -30,7 +30,7 @@ export const workLogTranslations = defineTranslations({
     "log.section.blueprint": "BLUEPRINT",
     "log.section.preview": "PREVIEW",
     "log.section.decisions": "DECISIONS",
-    "log.section.logs": "LOGS",
+    "log.section.logs": "WORK ITEMS",
     "log.section.buildLog": "BUILD LOG",
     "log.section.request": "REQUEST",
     "log.section.updateLog": "UPDATE LOG",

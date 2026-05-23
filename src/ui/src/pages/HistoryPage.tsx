@@ -140,7 +140,7 @@ function EventsView({ record }: { record: WorkflowLogRecordDetail }) {
           <time>{formatDate(event.createdAt)}</time>
         </article>
       ))}
-      {!record.events.length ? <p className="logs-empty">{t("log.noEventLogs")}</p> : null}
+      {!record.events.length ? <p className="history-empty">{t("log.noEventLogs")}</p> : null}
     </div>
   );
 }
@@ -148,10 +148,10 @@ function EventsView({ record }: { record: WorkflowLogRecordDetail }) {
 function RecordDetail({ record }: { record: WorkflowLogRecordDetail | undefined }) {
   const { t } = useI18n();
   if (!record) {
-    return <div className="logs-empty logs-detail-empty">{t("log.selectRecord")}</div>;
+    return <div className="history-empty history-detail-empty">{t("log.selectRecord")}</div>;
   }
   if (record.kind === "artifact" && record.content?.trim()) {
-    return <DocumentPreview className="logs-document-frame" filename={record.summary} content={record.content} />;
+    return <DocumentPreview className="history-document-frame" filename={record.summary} content={record.content} />;
   }
   if (record.kind === "decisions" || record.section === "decisions") {
     return <DecisionView record={record} />;
@@ -162,7 +162,7 @@ function RecordDetail({ record }: { record: WorkflowLogRecordDetail | undefined 
   return <EventsView record={record} />;
 }
 
-export function LogsPage() {
+export function HistoryPage() {
   const { t } = useI18n();
   const navigate = useNavigate();
   const currentProjectRoot = useAppStore((state) => state.projectRoot);
@@ -243,7 +243,7 @@ export function LogsPage() {
   const headerTitle = selectedProjectRoot ? projectTitle(selectedProjectRoot) : t("log.pageTitle");
   const selectedProject = projects.find((project) => project.projectRoot === selectedProjectRoot);
   const headerMeta = selectedProjectRoot ? (
-    <p className="logs-title-meta" title={selectedProjectRoot}>
+    <p className="history-title-meta" title={selectedProjectRoot}>
       <span>{t("log.projectPathLabel")} {formatProjectPath(selectedProjectRoot)}</span>
       {selectedProject?.lastActivityAt ? (
         <>
@@ -258,13 +258,13 @@ export function LogsPage() {
   const hideRecordList = selectedSection === "blueprint" || selectedSection === "preview";
 
   return (
-    <div className="builder-shell logs-page">
+    <div className="builder-shell history-page">
       <PageHeader
         title={headerTitle}
         titleMeta={headerMeta}
         rightSlot={selectedProjectRoot ? (
           <Button
-            className="nav-tile logs-update-button"
+            className="nav-tile history-update-button"
             disabled={updateDisabled}
             onClick={() => {
               setProjectRoot(selectedProjectRoot);
@@ -337,7 +337,7 @@ export function LogsPage() {
                   <small>{formatDate(record.createdAt)}</small>
                 </button>
               ))}
-              {!sectionRecords.length ? <p className="logs-empty">{t("log.noSectionRecords")}</p> : null}
+              {!sectionRecords.length ? <p className="history-empty">{t("log.noSectionRecords")}</p> : null}
             </aside>
           ) : null}
 
@@ -350,7 +350,7 @@ export function LogsPage() {
           </section>
         </section>
       ) : (
-        <p className="logs-empty">{t("log.chooseProject")}</p>
+        <p className="history-empty">{t("log.chooseProject")}</p>
       )}
     </div>
   );

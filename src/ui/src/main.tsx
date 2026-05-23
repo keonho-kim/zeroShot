@@ -16,7 +16,7 @@ const StartModePage = lazy(() => import("@/pages/StartModePage").then((module) =
 const OmakasePage = lazy(() => import("@/pages/OmakasePage").then((module) => ({ default: module.OmakasePage })));
 const WorkspacePage = lazy(() => import("@/pages/WorkspacePage").then((module) => ({ default: module.WorkspacePage })));
 const LoginPage = lazy(() => import("@/pages/LoginPage").then((module) => ({ default: module.LoginPage })));
-const LogsPage = lazy(() => import("@/pages/LogsPage").then((module) => ({ default: module.LogsPage })));
+const HistoryPage = lazy(() => import("@/pages/HistoryPage").then((module) => ({ default: module.HistoryPage })));
 const ArchitectPage = lazy(() => import("@/pages/ArchitectPage").then((module) => ({ default: module.ArchitectPage })));
 const ArchitectProgressPage = lazy(() => import("@/pages/ArchitectProgressPage").then((module) => ({ default: module.ArchitectProgressPage })));
 const DesignPage = lazy(() => import("@/pages/DesignPage").then((module) => ({ default: module.DesignPage })));
@@ -58,8 +58,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
               <Route path="/architect" element={<ArchitectPage />} />
               <Route path="/architect/progress" element={<ArchitectProgressPage />} />
               <Route path="/makeover" element={<DesignPage />} />
-              <Route path="/logs" element={<LogsPage />} />
-              <Route path="/history" element={<Navigate to="/logs" replace />} />
+              <Route path="/history" element={<HistoryPage />} />
               <Route path="/settings" element={<SettingsPage />} />
             </Route>
           </Routes>
