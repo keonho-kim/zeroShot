@@ -359,6 +359,10 @@
   gap: 0.75rem;
 }
 
+.omakase-input-card .omakase-actions {
+  justify-content: flex-end;
+}
+
 .omakase-timeline {
   display: flex;
   justify-content: center;
