@@ -8,6 +8,8 @@ export interface OmakaseProgressItem {
   title: string;
   detail: string;
   status: "running" | "completed" | "failed";
+  kind?: "progress" | "tool" | "agent" | "reasoning";
+  icon?: string;
 }
 
 export const omakaseStageOrder: OmakaseStage[] = ["architect", "design", "build"];

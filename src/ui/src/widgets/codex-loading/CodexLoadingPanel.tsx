@@ -8,6 +8,8 @@ interface CodexLoadingProgressItem {
   title: string;
   detail: string;
   status: "running" | "completed" | "failed";
+  kind?: "progress" | "tool" | "agent" | "reasoning";
+  icon?: string;
 }
 
 export function CodexLoadingPanel(props: {

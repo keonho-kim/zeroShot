@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { buildLogText, initialOmakaseStageStatuses, omakaseStageLabel, type OmakaseProgressItem, type OmakaseRunStatus, type OmakaseStageStatus } from "@/entities/omakase/omakase-progress";
-import type { CodexLoadingLogSource } from "@/entities/codex/codex-loading-log";
+import { codexProgressPresentation, type CodexLoadingLogSource } from "@/entities/codex/codex-loading-log";
 import { useBodyClass } from "@/hooks/useBodyClass";
 import { requestOmakaseStream } from "@/lib/api/omakase";
 import { useI18n } from "@/lib/i18n";
@@ -91,11 +91,13 @@ export function useOmakasePageController() {
     if (!payload.event) {
       return;
     }
+    const presentation = codexProgressPresentation(payload.event);
     upsertProgress({
       id: `${payload.stage}:${payload.event.id}`,
       title: `${omakaseStageLabel(payload.stage)} · ${payload.event.title}`,
       detail: payload.event.detail,
-      status: payload.event.status
+      status: payload.event.status,
+      ...presentation
     });
   };
 

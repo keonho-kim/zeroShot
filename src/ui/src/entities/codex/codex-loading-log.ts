@@ -1,11 +1,13 @@
 import type { TranslationKey } from "@/lib/i18n-core";
-import { parseRawCodexEvent, progressForRawEvent, progressItem, readString, sourceItem } from "@/entities/codex/codex-loading-log-items";
+import { codexProgressPresentation, parseRawCodexEvent, progressForRawEvent, progressItem, readString, sourceItem } from "@/entities/codex/codex-loading-log-items";
 
 export interface CodexLoadingProgressItem {
   id: string;
   title: string;
   detail: string;
   status: "running" | "completed" | "failed";
+  kind?: "progress" | "tool" | "agent" | "reasoning";
+  icon?: string;
 }
 
 export type CodexLoadingLogItem = {
@@ -23,6 +25,8 @@ export type CodexLoadingLogSource =
   | { source: "omakase"; id?: string; stage: string; message: string };
 
 export type CodexLogTranslate = (key: TranslationKey, params?: Record<string, string | number>) => string;
+
+export { codexProgressPresentation };
 
 export function codexLogSources(rawMessages: string[]): CodexLoadingLogSource[] {
   return rawMessages.map((message) => ({ source: "codex", message }));

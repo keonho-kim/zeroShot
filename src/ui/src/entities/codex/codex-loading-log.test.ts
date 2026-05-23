@@ -350,6 +350,40 @@ describe("codex loading log model", () => {
     expect(items.every((item) => item.detail === "")).toBe(true);
   });
 
+  test("maps progress search, tool, file, agent, and reasoning items to matching renderer kinds", () => {
+    const items = buildItems([
+      { id: "architect:search-rss", title: "ARCHITECT · Searching", detail: "RSS reader", status: "running" },
+      { id: "architect:tool-github", title: "ARCHITECT · Tool call", detail: "github.search", status: "completed" },
+      { id: "architect:file-change", title: "ARCHITECT · File changes", detail: "updated: README.md", status: "completed" },
+      { id: "architect:agent-message", title: "ARCHITECT · Writing response", detail: "Preparing answer.", status: "running" },
+      { id: "architect:reasoning-current", title: "ARCHITECT · Reviewing", detail: "Checking tradeoffs.", status: "running" }
+    ], [], t);
+
+    expect(items.map((item) => [item.kind, item.icon, item.title])).toEqual([
+      ["tool", "🌐", "ARCHITECT · Searching"],
+      ["tool", "🛠️", "ARCHITECT · Tool call"],
+      ["tool", "📝", "ARCHITECT · File changes"],
+      ["agent", "💬", "ARCHITECT · Writing response"],
+      ["reasoning", "💭", "ARCHITECT · Reviewing"]
+    ]);
+  });
+
+  test("maps progress command items to existing CLI icons", () => {
+    const items = buildItems([
+      { id: "architect:command-rg", title: "ARCHITECT · Command execution", detail: "completed: /bin/zsh -lc 'rg --files'", status: "completed" },
+      { id: "build:command-ls", title: "BUILD · Command execution", detail: "in_progress: ls src/ui", status: "running" },
+      { id: "build:command-git", title: "BUILD · Command execution", detail: "completed: git status --short", status: "completed" },
+      { id: "build:command-bun", title: "BUILD · Command execution", detail: "completed: bun test", status: "completed" }
+    ], [], t);
+
+    expect(items.map((item) => [item.kind, item.icon])).toEqual([
+      ["tool", "🔎"],
+      ["tool", "📁"],
+      ["tool", "🌿"],
+      ["tool", "📦"]
+    ]);
+  });
+
   test("maps manual job Codex log lines through the common tool renderer", () => {
     const items = buildLogItems([], [
       { source: "job", lineType: "stdout", text: "item updated: web_search RSS reader apps" },

@@ -1,5 +1,6 @@
 import type { TranslationKey } from "@/lib/i18n-core";
 import type { CodexLoadingLogItem, CodexLoadingLogSource, CodexLoadingProgressItem, CodexLogTranslate } from "@/entities/codex/codex-loading-log";
+import { commandIcon, commandLabel, displayCommand } from "@/entities/codex/codex-loading-tool-labels";
 
 type RawCodexEvent = {
   type?: unknown;
@@ -191,49 +192,6 @@ function itemStatus(event: RawCodexEvent | null, item: Record<string, unknown>):
   return "running";
 }
 
-function firstCommandToken(command: string): string {
-  return command.trim().split(/\s+/)[0]?.replace(/^.*\//, "") ?? "";
-}
-
-function displayCommand(command: string): string {
-  const trimmed = command.trim();
-  const shellCommand = trimmed.match(/^(?:.*\/)?(?:sh|bash|zsh)\s+-lc\s+([\s\S]+)$/);
-  const inner = shellCommand?.[1]?.trim();
-  if (!inner) {
-    return trimmed;
-  }
-  const quoted = inner.match(/^(['"])([\s\S]*)\1$/);
-  return quoted?.[2] || inner;
-}
-
-function commandLabel(command: string, t: CodexLogTranslate): { icon: string; title: string } {
-  const normalized = displayCommand(command);
-  const token = firstCommandToken(normalized);
-
-  if (["rg", "grep", "find", "fd", "ag"].includes(token)) {
-    return { icon: "🔎", title: t("log.tool.searchFiles") };
-  }
-  if (["ls", "tree", "pwd", "du"].includes(token)) {
-    return { icon: "📁", title: t("log.tool.browseFiles") };
-  }
-  if (["cat", "sed", "awk", "head", "tail", "less", "nl"].includes(token)) {
-    return { icon: "📄", title: t("log.tool.readFile") };
-  }
-  if (["curl", "wget"].includes(token)) {
-    return { icon: "🌐", title: t("log.tool.networkRequest") };
-  }
-  if (token === "git") {
-    return { icon: "🌿", title: t("log.tool.git") };
-  }
-  if (["bun", "npm", "pnpm", "yarn", "node"].includes(token)) {
-    return { icon: "📦", title: t("log.tool.javascript") };
-  }
-  if (["go", "cargo", "pytest", "vitest", "jest", "tsc"].includes(token)) {
-    return { icon: "✅", title: t("log.tool.check") };
-  }
-  return { icon: "⌨️", title: t("log.tool.command") };
-}
-
 function webSearchLabel(item: Record<string, unknown>, t: CodexLogTranslate): { icon: string; title: string; detail: string } {
   const action = readRecord(item.action);
   const actionType = readString(action?.type);
@@ -366,13 +324,53 @@ function rawMessageItem(message: string, index: number, t: CodexLogTranslate, sc
   };
 }
 
+function unscopedProgressId(id: string): string {
+  return id.split(":").at(-1) ?? id;
+}
+
+function commandFromProgressDetail(detail: string): string {
+  return detail.replace(/^[a-z_]+:\s+/i, "").trim();
+}
+
+export function codexProgressPresentation(item: Pick<CodexLoadingProgressItem, "id" | "detail" | "icon" | "kind">): {
+  icon?: string;
+  kind: NonNullable<CodexLoadingProgressItem["kind"]>;
+} {
+  if (item.kind) {
+    return { kind: item.kind, icon: item.icon };
+  }
+
+  const id = unscopedProgressId(item.id);
+  if (id.startsWith("search-")) {
+    return { kind: "tool", icon: "🌐" };
+  }
+  if (id.startsWith("tool-")) {
+    return { kind: "tool", icon: "🛠️" };
+  }
+  if (id.startsWith("command-")) {
+    return { kind: "tool", icon: commandIcon(commandFromProgressDetail(item.detail)) };
+  }
+  if (id.startsWith("file-")) {
+    return { kind: "tool", icon: "📝" };
+  }
+  if (id.startsWith("reasoning-")) {
+    return { kind: "reasoning", icon: "💭" };
+  }
+  if (id.startsWith("agent-")) {
+    return { kind: "agent", icon: "💬" };
+  }
+  return { kind: "progress", icon: item.icon };
+}
+
 export function progressItem(item: CodexLoadingProgressItem, t: CodexLogTranslate): CodexLoadingLogItem {
+  const presentation = codexProgressPresentation(item);
   return {
     id: `progress-${item.id}`,
-    kind: "progress",
+    kind: presentation.kind,
     title: item.title,
     detail: formatUserText(item.detail.trim(), t),
-    status: item.status
+    status: item.status,
+    icon: presentation.icon
   };
 }
 
