@@ -5,7 +5,6 @@ import { useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/PageHeader";
 import { DocumentPreview } from "@/components/DocumentPreview";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { fetchProjectState, fetchWorkflowLogBoard, fetchWorkflowLogRecord, fetchWorkLogProjects } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { useAppStore } from "@/stores/app-store";
@@ -14,8 +13,7 @@ import type {
   WorkflowLogRecordDetail,
   WorkflowLogRecordSummary,
   WorkflowLogSection,
-  WorkflowLogStage,
-  WorkLogProjectSummary
+  WorkflowLogStage
 } from "@/types/api";
 
 const stageOrder: WorkflowLogStage[] = ["product", "design", "build", "update"];
@@ -57,28 +55,6 @@ function formatDate(value?: string): string {
 
 function projectTitle(projectRoot: string): string {
   return projectRoot.split("/").filter(Boolean).at(-1) || projectRoot;
-}
-
-function ProjectButton({
-  project,
-  selected,
-  onClick
-}: {
-  project: WorkLogProjectSummary;
-  selected: boolean;
-  onClick: () => void;
-}) {
-  const { t } = useI18n();
-  return (
-    <button type="button" className={cn("logs-list-button", selected && "logs-list-button-active")} onClick={onClick}>
-      <span className="logs-list-button-top">
-        <strong>{project.name}</strong>
-        <small>{t("log.conversationCount", { count: project.conversationsCount })}</small>
-      </span>
-      <span className="logs-list-button-path">{formatProjectPath(project.projectRoot)}</span>
-      {project.lastActivityAt ? <span className="logs-list-button-date">{formatDate(project.lastActivityAt)}</span> : null}
-    </button>
-  );
 }
 
 function selectedAnswerLabel(payload: unknown, decisionId: string): string {
@@ -221,11 +197,14 @@ export function LogsPage() {
   });
 
   useEffect(() => {
+    if (projectsQuery.isLoading) {
+      return;
+    }
     if (selectedProjectRoot && projects.some((project) => project.projectRoot === selectedProjectRoot)) {
       return;
     }
     setSelectedProjectRoot(projects[0]?.projectRoot ?? "");
-  }, [projects, selectedProjectRoot]);
+  }, [projects, projectsQuery.isLoading, selectedProjectRoot]);
 
   useEffect(() => {
     if (!board) {
@@ -261,6 +240,18 @@ export function LogsPage() {
 
   const updateDisabled = !projectStateQuery.data?.updateEnabled;
   const headerTitle = selectedProjectRoot ? projectTitle(selectedProjectRoot) : t("log.pageTitle");
+  const selectedProject = projects.find((project) => project.projectRoot === selectedProjectRoot);
+  const headerMeta = selectedProjectRoot ? (
+    <p className="logs-title-meta" title={selectedProjectRoot}>
+      <span>{t("log.projectPathLabel")} {formatProjectPath(selectedProjectRoot)}</span>
+      {selectedProject?.lastActivityAt ? (
+        <>
+          <span aria-hidden="true">·</span>
+          <span>{t("log.lastActivityLabel")} {formatDate(selectedProject.lastActivityAt)}</span>
+        </>
+      ) : null}
+    </p>
+  ) : undefined;
   const selectedRecord = recordQuery.data;
   const sectionRecords = useMemo<WorkflowLogRecordSummary[]>(() => selectedRecords, [selectedRecords]);
 
@@ -268,7 +259,7 @@ export function LogsPage() {
     <div className="builder-shell logs-page">
       <PageHeader
         title={headerTitle}
-        projectRoot={selectedProjectRoot || currentProjectRoot}
+        titleMeta={headerMeta}
         rightSlot={selectedProjectRoot ? (
           <Button
             className="nav-tile logs-update-button"
@@ -283,28 +274,6 @@ export function LogsPage() {
           </Button>
         ) : undefined}
       />
-
-      <Card className="logs-panel logs-project-strip">
-        <div className="logs-panel-header">
-          <span>{t("log.projectList")}</span>
-          <strong>{projects.length}</strong>
-        </div>
-        <div className="logs-project-list">
-          {projects.map((project) => (
-            <ProjectButton
-              key={project.projectRoot}
-              project={project}
-              selected={selectedProjectRoot === project.projectRoot}
-              onClick={() => {
-                setSelectedProjectRoot(project.projectRoot);
-                setProjectRoot(project.projectRoot);
-                setSelectedRecordId("");
-              }}
-            />
-          ))}
-          {!projectsQuery.isLoading && !projects.length ? <p className="logs-empty">{t("log.noProjects")}</p> : null}
-        </div>
-      </Card>
 
       {selectedProjectRoot ? (
         <section className="workflow-clamp-board" aria-label={t("log.workflowBoard")}>

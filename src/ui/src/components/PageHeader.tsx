@@ -7,6 +7,7 @@ import { useI18n } from "@/lib/i18n";
 interface Props {
   title: string;
   projectRoot?: string;
+  titleMeta?: ReactNode;
   rightAction?: "settings";
   rightSlot?: ReactNode;
 }
@@ -16,7 +17,7 @@ function formatProjectLabel(projectRoot: string): string {
   return parts.at(-1) || projectRoot;
 }
 
-export function PageHeader({ title, projectRoot, rightAction, rightSlot }: Props) {
+export function PageHeader({ title, projectRoot, titleMeta, rightAction, rightSlot }: Props) {
   const navigate = useNavigate();
   const { t } = useI18n();
 
@@ -35,6 +36,7 @@ export function PageHeader({ title, projectRoot, rightAction, rightSlot }: Props
         </Button>
         <div className="page-title-block">
           <h1 className="page-title">{title}</h1>
+          {titleMeta}
           {projectRoot ? (
             <p className="project-chip mt-2" title={projectRoot}>
               {formatProjectLabel(projectRoot)}
