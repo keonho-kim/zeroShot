@@ -4,10 +4,12 @@ import { cn } from "@/shared/lib/cn";
 import type { WorkflowLogSection, WorkflowLogStage, WorkflowLogStageGroup } from "@/types/api";
 
 export function StageTabs({
+  expandedStage,
   stages,
   selectedStage,
   onSelect
 }: {
+  expandedStage: WorkflowLogStage | null;
   stages: WorkflowLogStageGroup[] | undefined;
   selectedStage: WorkflowLogStage;
   onSelect: (stage: WorkflowLogStage) => void;
@@ -22,8 +24,9 @@ export function StageTabs({
             <button
               type="button"
               key={stage}
+              aria-expanded={expandedStage === stage}
               className={cn("workflow-stage-tab", selectedStage === stage && "selected")}
-              disabled={!group?.enabled}
+              disabled={!group}
               onClick={() => onSelect(stage)}
             >
               <span>{t(workflowStageLabelKeys[stage])}</span>

@@ -48,17 +48,20 @@ export function HistoryPage() {
 
       {controller.selectedProjectRoot ? (
         <>
-          <div className="workflow-history-nav">
+          <div className={cn("workflow-history-nav", controller.sectionTabsExpanded && "expanded")}>
             <StageTabs
+              expandedStage={controller.expandedStage}
               stages={controller.board?.stages}
               selectedStage={controller.selectedStage}
               onSelect={controller.chooseStage}
             />
-            <SectionTabs
-              selectedStageGroup={controller.selectedStageGroup}
-              selectedSection={controller.selectedSection}
-              onSelect={controller.chooseSection}
-            />
+            {controller.sectionTabsExpanded ? (
+              <SectionTabs
+                selectedStageGroup={controller.selectedStageGroup}
+                selectedSection={controller.selectedSection}
+                onSelect={controller.chooseSection}
+              />
+            ) : null}
           </div>
           <section className={cn("workflow-clamp-board", controller.hideRecordList && "workflow-clamp-board-direct")}>
             {!controller.hideRecordList ? (

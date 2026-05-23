@@ -12,6 +12,7 @@ export function useHistoryPageController() {
   const setProjectRoot = useAppStore((state) => state.setProjectRoot);
   const [selectedProjectRoot, setSelectedProjectRoot] = useState(currentProjectRoot);
   const [selectedStage, setSelectedStage] = useState<WorkflowLogStage>("product");
+  const [expandedStage, setExpandedStage] = useState<WorkflowLogStage | null>(null);
   const [selectedSection, setSelectedSection] = useState<WorkflowLogSection>("blueprint");
   const [selectedRecordId, setSelectedRecordId] = useState("");
 
@@ -49,6 +50,10 @@ export function useHistoryPageController() {
     }
     setSelectedProjectRoot(projects[0]?.projectRoot ?? "");
   }, [projects, projectsQuery.isLoading, selectedProjectRoot]);
+
+  useEffect(() => {
+    setExpandedStage(null);
+  }, [selectedProjectRoot]);
 
   useEffect(() => {
     if (!board) {
@@ -89,6 +94,7 @@ export function useHistoryPageController() {
   const chooseStage = (stage: WorkflowLogStage) => {
     const group = board?.stages.find((item) => item.stage === stage);
     const nextSection = group?.sections.find((section) => section.enabled);
+    setExpandedStage(stage);
     setSelectedStage(stage);
     setSelectedSection(nextSection?.section ?? group?.sections[0]?.section ?? "decisions");
     setSelectedRecordId(nextSection?.records[0]?.id ?? "");
@@ -109,6 +115,7 @@ export function useHistoryPageController() {
     board,
     chooseSection,
     chooseStage,
+    expandedStage,
     hideRecordList,
     projectState: projectStateQuery.data,
     record: recordQuery.data,
@@ -119,6 +126,7 @@ export function useHistoryPageController() {
     selectedSection,
     selectedStage,
     selectedStageGroup,
+    sectionTabsExpanded: expandedStage === selectedStage,
     setSelectedRecordId,
     startUpdate
   };
