@@ -350,6 +350,25 @@
   }
 }
 
+@media (max-width: 767px) {
+  .landing-hero-body {
+    gap: 1.5rem;
+  }
+
+  .landing-hero-copy,
+  .landing-actions {
+    flex: 0 1 auto;
+  }
+
+  .landing-actions {
+    align-self: stretch;
+  }
+
+  .landing-action-button {
+    flex: 0 1 auto;
+  }
+}
+
 @media (max-width: 640px) {
   .page-title {
     font-size: 1.5rem;
