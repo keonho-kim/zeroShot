@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { GitBranch, Layers3 } from "lucide-react";
+import { GitBranch } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/PageHeader";
@@ -277,11 +277,7 @@ export function LogsPage() {
 
       {selectedProjectRoot ? (
         <section className="workflow-clamp-board" aria-label={t("log.workflowBoard")}>
-          <nav className="workflow-index" aria-label="INDEX">
-            <div className="workflow-index-title">
-              <Layers3 aria-hidden="true" />
-              <span>{t("log.index")}</span>
-            </div>
+          <nav className="workflow-stage-rail" aria-label="Workflow stages">
             <div className="workflow-stage-tabs">
               {stageOrder.map((stage) => {
                 const group = board?.stages.find((item) => item.stage === stage);
@@ -306,7 +302,7 @@ export function LogsPage() {
             </div>
           </nav>
 
-          <main className="workflow-main-panel">
+          <nav className="workflow-section-rail" aria-label="Workflow sections">
             <div className="workflow-section-tabs">
               {selectedStageGroup?.sections.map((section) => (
                 <button
@@ -323,33 +319,31 @@ export function LogsPage() {
                 </button>
               ))}
             </div>
+          </nav>
 
-            <div className="workflow-main-content">
-              <aside className="workflow-record-list">
-                {sectionRecords.map((record) => (
-                  <button
-                    type="button"
-                    key={record.id}
-                    className={cn("workflow-record-button", selectedRecordId === record.id && "selected")}
-                    onClick={() => setSelectedRecordId(record.id)}
-                  >
-                    <strong>{record.title}</strong>
-                    <span>{record.summary}</span>
-                    <small>{formatDate(record.createdAt)}</small>
-                  </button>
-                ))}
-                {!sectionRecords.length ? <p className="logs-empty">{t("log.noSectionRecords")}</p> : null}
-              </aside>
+          <aside className="workflow-record-list">
+            {sectionRecords.map((record) => (
+              <button
+                type="button"
+                key={record.id}
+                className={cn("workflow-record-button", selectedRecordId === record.id && "selected")}
+                onClick={() => setSelectedRecordId(record.id)}
+              >
+                <strong>{record.title}</strong>
+                <span>{record.summary}</span>
+                <small>{formatDate(record.createdAt)}</small>
+              </button>
+            ))}
+            {!sectionRecords.length ? <p className="logs-empty">{t("log.noSectionRecords")}</p> : null}
+          </aside>
 
-              <section className="workflow-record-detail">
-                <div className="workflow-record-heading">
-                  <span>{selectedSection ? t(sectionLabelKeys[selectedSection]) : ""}</span>
-                  <strong>{selectedRecord?.title ?? t("log.chooseEntry")}</strong>
-                </div>
-                <RecordDetail record={selectedRecord} />
-              </section>
+          <section className="workflow-record-detail">
+            <div className="workflow-record-heading">
+              <span>{selectedSection ? t(sectionLabelKeys[selectedSection]) : ""}</span>
+              <strong>{selectedRecord?.title ?? t("log.chooseEntry")}</strong>
             </div>
-          </main>
+            <RecordDetail record={selectedRecord} />
+          </section>
         </section>
       ) : (
         <p className="logs-empty">{t("log.chooseProject")}</p>
