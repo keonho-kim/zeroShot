@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
-import { fetchRunDetail, fetchRuns } from "@/lib/api";
+import { fetchRunDetail, fetchRuns } from "@/lib/api/history";
 import type { JobSnapshot } from "@/types/api";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";

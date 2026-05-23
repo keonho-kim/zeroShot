@@ -1,6 +1,7 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { createProjectDirectory, fetchAppSettings, fetchProjectTree } from "@/lib/api";
+import { fetchAppSettings } from "@/lib/api/settings";
+import { createProjectDirectory, fetchProjectTree } from "@/lib/api/projects";
 import { useAppStore } from "@/stores/app-store";
 import type { DirectoryEntry } from "@/types/api";
 import { getErrorMessage, mergeTreeChildren } from "@/components/project-picker/project-picker-utils";

@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { fetchAppSettings, fetchCodexSettings, fetchProjectCodexSettings, saveAppSettings, saveCodexSettings, saveProjectCodexSettings } from "@/lib/api";
+import { fetchAppSettings, fetchCodexSettings, fetchProjectCodexSettings, saveAppSettings, saveCodexSettings, saveProjectCodexSettings } from "@/lib/api/settings";
 import type { AppConfig, CodexSettings } from "@/types/api";
 import { useAppStore } from "@/stores/app-store";
 import { Button } from "@/components/ui/button";

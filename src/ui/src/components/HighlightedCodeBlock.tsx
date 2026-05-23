@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import type { HighlightLanguage } from "@/entities/code-highlighting/code-language";
-import { highlightCode } from "@/lib/api";
+import { highlightCode } from "@/lib/api/highlight";
 
 function escapeHtml(value: string) {
   return value

@@ -8,7 +8,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { fetchProductArtifact } from "@/lib/api";
+import { fetchProductArtifact } from "@/lib/api/projects";
 import { useI18n } from "@/lib/i18n";
 
 export function ArchitectPage() {

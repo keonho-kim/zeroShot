@@ -3,7 +3,7 @@ import { Bot, Boxes, DraftingCompass, Paintbrush } from "lucide-react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { PageHeader } from "@/components/PageHeader";
-import { fetchProjectState } from "@/lib/api";
+import { fetchProjectState } from "@/lib/api/projects";
 import { useI18n } from "@/lib/i18n";
 import { useAppStore } from "@/stores/app-store";
 import { useBodyClass } from "@/hooks/useBodyClass";

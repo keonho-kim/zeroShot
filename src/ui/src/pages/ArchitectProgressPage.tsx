@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { ArrowLeft, ArrowRight, Check, Eye, Layers3, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Eye, Layers3 } from "lucide-react";
 import { useEffect, useMemo } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useAppStore } from "@/stores/app-store";
@@ -16,65 +16,14 @@ import {
 } from "@/entities/architect/architect-core";
 import {
   createArchitectProductHtmlStream,
-  fetchProjectSettings,
-  fetchProjectState,
   requestArchitectDecisionsStream,
   runArchitectBootstrap
-} from "@/lib/api";
+} from "@/lib/api/architect";
+import { fetchProjectSettings, fetchProjectState } from "@/lib/api/projects";
 import { cn } from "@/utils/cn";
 import { clearMissingProjectSelection, hasValidSelectedProject, isMissingSelectedProjectError } from "@/entities/project/stale-project";
-
-function bootstrapArg(args: string[], flag: string): string {
-  const index = args.indexOf(flag);
-  const value = index >= 0 ? args[index + 1] : "";
-  return value && !value.startsWith("--") ? value : "";
-}
-
-function titleCase(value: string): string {
-  if (!value) {
-    return "";
-  }
-  if (value === "typescript") {
-    return "TypeScript";
-  }
-  if (value === "javascript") {
-    return "JavaScript";
-  }
-  return value.charAt(0).toUpperCase() + value.slice(1);
-}
-
-function bootstrapLanguageSummary(args: string[]): { summary: string; profile: string } | null {
-  const projectType = bootstrapArg(args, "--type");
-  if (!projectType) {
-    return null;
-  }
-
-  const language = bootstrapArg(args, "--language");
-  const serverLanguage = bootstrapArg(args, "--server-language") || language;
-  const uiLanguage = bootstrapArg(args, "--ui-language");
-  const profile = bootstrapArg(args, "--profile");
-  const typeLabel = titleCase(projectType);
-  let stackLabel = "";
-
-  if (projectType === "fullstack") {
-    const serverLabel = titleCase(serverLanguage);
-    const uiLabel = uiLanguage === "typescript" || uiLanguage === "javascript" ? "React" : titleCase(uiLanguage);
-    stackLabel = [serverLabel, uiLabel].filter(Boolean).join(" + ");
-  } else if (projectType === "frontend") {
-    stackLabel = titleCase(uiLanguage || language);
-  } else {
-    stackLabel = titleCase(serverLanguage || language);
-  }
-
-  if (!stackLabel) {
-    return null;
-  }
-
-  return {
-    summary: `${typeLabel} · ${stackLabel}`,
-    profile: profile === "llm" ? "LLM profile" : ""
-  };
-}
+import { bootstrapLanguageSummary } from "@/pages/architect-progress/bootstrap-summary";
+import { ArchitectOverlays } from "@/pages/architect-progress/ArchitectOverlays";
 
 export function ArchitectProgressPage() {
   const { locale, t } = useI18n();
@@ -535,42 +484,16 @@ export function ArchitectProgressPage() {
           ) : null}
         </section>
       </div>
-      {tutorialOpen ? (
-        <div className="blueprint-tutorial" role="dialog" aria-modal="true" aria-label="Blueprint tutorial">
-          <div className="tutorial-callout">
-            <p>{t("architect.previewHint")}</p>
-          </div>
-        </div>
-      ) : null}
-      {blueprintOpen ? (
-        <div className="blueprint-viewer-backdrop" role="dialog" aria-modal="true" aria-label="Product blueprint">
-          <div className="blueprint-viewer">
-            <button type="button" className="blueprint-close" aria-label="Close blueprint" onClick={closeBlueprint}>
-              <X className="size-6" />
-            </button>
-            <iframe title="Product blueprint" srcDoc={blueprintHtml} />
-          </div>
-        </div>
-      ) : null}
-      {continuePromptOpen ? (
-        <div className="app-modal-backdrop" role="dialog" aria-modal="true" aria-label="Continue destination">
-          <Card className="app-modal">
-            <p className="modal-eyebrow">CONTINUE TO?</p>
-            <h2>{t("architect.nextStep")}</h2>
-            <p>{t("architect.nextStepDetail")}</p>
-            <div className="modal-actions">
-              <Button
-                variant="outline"
-                disabled={createBlueprintMutation.isPending}
-                onClick={() => navigate("/makeover", { state: { fromArchitect: true } })}
-              >
-                DESIGN
-              </Button>
-              <Button variant="outline" onClick={() => setContinuePromptOpen(false)}>{t("common.cancel")}</Button>
-            </div>
-          </Card>
-        </div>
-      ) : null}
+      <ArchitectOverlays
+        blueprintHtml={blueprintHtml}
+        blueprintOpen={blueprintOpen}
+        continuePromptOpen={continuePromptOpen}
+        tutorialOpen={tutorialOpen}
+        createBlueprintPending={createBlueprintMutation.isPending}
+        onCloseBlueprint={closeBlueprint}
+        onContinueDesign={() => navigate("/makeover", { state: { fromArchitect: true } })}
+        onDismissContinue={() => setContinuePromptOpen(false)}
+      />
     </div>
   );
 }

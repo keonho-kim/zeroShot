@@ -1,7 +1,7 @@
 import { SendHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import type { ArtifactEditTarget } from "@/entities/design/artifact-editor";
+import type { ArtifactEditTarget } from "@/entities/design/artifact-editor/types";
 import type { ArtifactChatMessage, ArtifactCommentCapture } from "@/pages/design/artifact-workbench/types";
 import { useI18n } from "@/lib/i18n";
 

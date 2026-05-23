@@ -6,7 +6,7 @@ import { CodexLoadingPanel } from "@/components/CodexLoadingPanel";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { requestOmakaseStream } from "@/lib/api";
+import { requestOmakaseStream } from "@/lib/api/omakase";
 import { useI18n } from "@/lib/i18n";
 import { useAppStore } from "@/stores/app-store";
 import { useBodyClass } from "@/hooks/useBodyClass";

@@ -1,4 +1,4 @@
-import type { ArtifactHistoryEntry } from "@/entities/design/artifact-editor";
+import type { ArtifactHistoryEntry } from "@/entities/design/artifact-editor/types";
 
 export function ArtifactHistoryPanel(props: {
   sourceHistory: ArtifactHistoryEntry[];

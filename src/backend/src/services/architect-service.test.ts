@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { buildArchitectPrompt } from "@backend/llm/architect/prompt";
 import { buildArchitectProductHtmlPrompt } from "@backend/llm/architect/product-html-prompt";
-import { ensureDevelopmentLanguageDecision, extractArchitectChatMessage, type ArchitectDecisionResponse } from "@backend/services/architect-service";
+import { ensureDevelopmentLanguageDecision, extractArchitectChatMessage, type ArchitectDecisionResponse } from "@backend/services/architect/service";
 import { visiblePreludePrompt } from "@backend/services/codex-visible-stream-service";
 
 const baseDecision: ArchitectDecisionResponse["decisions"][number] = {

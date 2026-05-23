@@ -1,0 +1,129 @@
+.architect-page {
+  position: relative;
+}
+
+.view-blueprint-button {
+  position: fixed;
+  right: clamp(1rem, 3vw, 2rem);
+  top: clamp(1rem, 3vw, 2rem);
+  z-index: 64;
+  box-shadow: 0 11px 29px rgb(0 113 227 / 24%);
+}
+
+.blueprint-tutorial {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background:
+    radial-gradient(circle at calc(100% - 120px) 42px, transparent 0 92px, rgb(29 29 31 / 68%) 94px),
+    rgb(29 29 31 / 68%);
+  pointer-events: none;
+}
+
+.tutorial-callout {
+  position: fixed;
+  right: clamp(1rem, 3vw, 2rem);
+  top: 5.25rem;
+  width: min(232px, calc(100vw - 2rem));
+  border: 1px solid rgb(255 255 255 / 38%);
+  border-radius: 1.25rem;
+  background: rgb(255 255 255 / 94%);
+  padding: 1rem;
+  color: var(--foreground);
+  box-shadow: var(--shadow-popover);
+}
+
+.tutorial-callout p {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 650;
+  line-height: 1.45;
+}
+
+.blueprint-viewer-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: grid;
+  place-items: center;
+  background: rgb(29 29 31 / 42%);
+  padding: 1rem;
+  backdrop-filter: blur(18px);
+}
+
+.blueprint-viewer {
+  position: relative;
+  height: min(88vh, 682px);
+  width: min(100%, 390px);
+  overflow: hidden;
+  border: 2px solid var(--border);
+  border-radius: 2px;
+  background: var(--panel);
+  box-shadow: var(--shadow-popover);
+}
+
+.blueprint-viewer iframe {
+  height: 100%;
+  width: 100%;
+  border: 0;
+  background: var(--background);
+}
+
+.blueprint-close {
+  position: absolute;
+  right: 0.875rem;
+  top: 0.875rem;
+  z-index: 2;
+  display: grid;
+  height: 2.2rem;
+  width: 2.2rem;
+  place-items: center;
+  border: 2px solid var(--border);
+  border-radius: 2px;
+  background: var(--foreground);
+  color: var(--background);
+  box-shadow: none;
+  transition:
+    transform 150ms ease,
+    background-color 150ms ease;
+}
+
+.blueprint-close:hover {
+  background: var(--accent);
+  transform: translate(-1px, -1px);
+}
+
+.architect-chat {
+  display: grid;
+  width: min(100%, 860px);
+  margin: clamp(1.5rem, 5vh, 4rem) auto 0;
+  gap: 1rem;
+}
+
+.architect-chat-board {
+  width: min(100%, 1200px);
+}
+
+.architect-existing-product-chat {
+  width: min(100%, 1180px);
+  grid-template-columns: minmax(320px, 0.9fr) minmax(420px, 1.1fr);
+  align-items: start;
+}
+
+.architect-thread {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+  gap: 0.875rem;
+}
+
+.architect-loading-card {
+  display: grid;
+  min-height: min(42vh, 288px);
+  place-items: center;
+  border: 2px solid var(--border);
+  border-radius: 2px;
+  background: var(--panel);
+  padding: clamp(1.5rem, 5vw, 3rem);
+  box-shadow: var(--shadow-card);
+}

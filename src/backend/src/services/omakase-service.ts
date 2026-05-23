@@ -1,10 +1,10 @@
 import { loadAppConfig } from "@backend/config/app-config";
 import { normalizeLocale } from "@backend/i18n/locale";
-import { buildArchitectDecisions, buildArchitectProductHtml, type ArchitectDecisionResponse, type ArchitectProgressEvent } from "@backend/services/architect-service";
+import { buildArchitectDecisions, buildArchitectProductHtml, type ArchitectDecisionResponse, type ArchitectProgressEvent } from "@backend/services/architect/service";
 import { recordArchitectSession } from "@backend/services/app-storage-service";
 import { saveArchitectProductFiles, saveDesignRuntimeArtifacts } from "@backend/services/artifact-workflow-service";
 import { inferBootstrapRequest, runBootstrap } from "@backend/services/bootstrap-service";
-import { buildDesignRuntime, recommendDesignResources } from "@backend/services/design-service";
+import { buildDesignRuntime, recommendDesignResources } from "@backend/services/design/service";
 import { jobManager } from "@backend/services/job-manager";
 import { startPipelineRun } from "@backend/services/pipeline-run-service";
 import { readProjectState } from "@backend/services/project-service";

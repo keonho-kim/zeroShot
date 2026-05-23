@@ -1,4 +1,4 @@
-import type { ArchitectDecisionResponse } from "@backend/services/architect-service";
+import type { ArchitectDecisionResponse } from "@backend/services/architect/service";
 import { textByLocale } from "@backend/i18n/locale";
 
 function hasDevelopmentLanguageInfo(goal: string): boolean {

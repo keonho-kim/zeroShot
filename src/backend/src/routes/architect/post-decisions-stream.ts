@@ -2,7 +2,7 @@ import type { Request, Response } from "express";
 import { loadAppConfig } from "@backend/config/app-config";
 import { createSseStream } from "@backend/core/sse";
 import { normalizeLocale } from "@backend/i18n/locale";
-import { buildArchitectDecisions, type ArchitectProgressEvent } from "@backend/services/architect-service";
+import { buildArchitectDecisions, type ArchitectProgressEvent } from "@backend/services/architect/service";
 import { recordArchitectSession } from "@backend/services/app-storage-service";
 import { readAuthStatus } from "@backend/services/auth-service";
 import { appendAppEvent } from "@backend/services/event-log-service";

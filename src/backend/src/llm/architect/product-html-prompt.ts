@@ -1,4 +1,4 @@
-import type { ArchitectDecisionResponse } from "@backend/services/architect-service";
+import type { ArchitectDecisionResponse } from "@backend/services/architect/service";
 
 function selectedRequirements(decisionSet: ArchitectDecisionResponse, answers: Record<string, string>): string {
   return decisionSet.decisions.map((decision) => {

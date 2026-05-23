@@ -1,10 +1,7 @@
 import { describe, expect, test } from "bun:test";
-import {
-  createDefaultArtifactHtml,
-  isArtifactBridgeMessage,
-  nextTextFromKey,
-  translatedStyle
-} from "@/entities/design/artifact-editor";
+import { isArtifactBridgeMessage } from "@/entities/design/artifact-editor/bridge-message";
+import { createDefaultArtifactHtml } from "@/entities/design/artifact-editor/srcdoc";
+import { nextTextFromKey, translatedStyle } from "@/entities/design/artifact-editor/text-edit";
 
 describe("artifact editor core", () => {
   test("creates an editable HTML artifact with stable ids", () => {

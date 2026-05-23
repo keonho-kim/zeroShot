@@ -3,7 +3,7 @@ import type {
   ArtifactEditorMode,
   ArtifactEditTarget,
   ArtifactHistoryEntry,
-} from "@/entities/design/artifact-editor";
+} from "@/entities/design/artifact-editor/types";
 import type { DesignTimelineItem } from "@/pages/design/design-page-model";
 
 export type ArtifactViewport = "desktop" | "tablet" | "mobile";

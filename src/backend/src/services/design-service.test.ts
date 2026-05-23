@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { buildDesignPrompt } from "@backend/llm/makeover/prompt";
 import { buildRecommendationPrompt } from "@backend/llm/makeover/recommendation-prompt";
-import { composeDesignMarkdown, extractDesignChatMessage, validateDesignRecommendations } from "@backend/services/design-service";
+import { composeDesignMarkdown, extractDesignChatMessage, validateDesignRecommendations } from "@backend/services/design/service";
 import type { DesignRuntimeResponse } from "@backend/types/design";
 import type { ResourceManifest } from "@backend/types/resource";
 

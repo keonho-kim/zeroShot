@@ -1,7 +1,7 @@
 import { appendAppEvent } from "@backend/services/event-log-service";
 import { designEntryPath, readProductHtmlSnapshot, upsertArtifactManifest, writeArtifactFile } from "@backend/services/file-service";
 import { recordDesignSession } from "@backend/services/app-storage-service";
-import type { ArchitectProductFile } from "@backend/services/architect-service";
+import type { ArchitectProductFile } from "@backend/services/architect/service";
 import type { DesignRuntimeMode, DesignRuntimeResponse } from "@backend/types/design";
 
 export async function saveArchitectProductFiles(projectRoot: string, files: ArchitectProductFile[]) {

@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 import { normalizeLocale } from "@backend/i18n/locale";
-import { buildArchitectDecisions } from "@backend/services/architect-service";
+import { buildArchitectDecisions } from "@backend/services/architect/service";
 import { readAuthStatus } from "@backend/services/auth-service";
 import { recordArchitectSession } from "@backend/services/app-storage-service";
 import { loadAppConfig } from "@backend/config/app-config";

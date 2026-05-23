@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { omakaseStages, selectOmakaseDesignResources, selectRecommendedArchitectAnswers } from "@backend/services/omakase-service";
-import type { ArchitectDecisionResponse } from "@backend/services/architect-service";
+import type { ArchitectDecisionResponse } from "@backend/services/architect/service";
 import type { DesignRecommendationResponse } from "@backend/types/design";
 
 describe("omakase service", () => {

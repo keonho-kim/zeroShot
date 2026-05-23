@@ -1,6 +1,6 @@
 import { Codex, type ApprovalMode, type ModelReasoningEffort, type SandboxMode, type ThreadEvent, type ThreadOptions } from "@openai/codex-sdk";
 import { z } from "zod";
-import { extractArchitectChatMessage } from "@backend/services/architect-service";
+import { extractArchitectChatMessage } from "@backend/services/architect/service";
 import { buildUpdatePrompt } from "@backend/llm/update/prompt";
 import { textByLocale } from "@backend/i18n/locale";
 import { describeCodexProgress } from "@backend/services/codex-progress-service";
