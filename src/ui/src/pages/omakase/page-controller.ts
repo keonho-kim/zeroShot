@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { buildLogText, initialOmakaseStageStatuses, omakaseStageLabel, type OmakaseProgressItem, type OmakaseRunStatus, type OmakaseStageStatus } from "@/entities/omakase/omakase-progress";
 import { useBodyClass } from "@/hooks/useBodyClass";
 import { requestOmakaseStream } from "@/lib/api/omakase";
@@ -8,6 +9,7 @@ import type { OmakaseStage, OmakaseStagePayload } from "@/types/api";
 
 export function useOmakasePageController() {
   const { locale, responseLanguage } = useI18n();
+  const navigate = useNavigate();
   const projectRoot = useAppStore((state) => state.projectRoot);
   const setCurrentJob = useAppStore((state) => state.setCurrentJob);
   const [brief, setBrief] = useState("");
@@ -128,6 +130,7 @@ export function useOmakasePageController() {
       );
       setCurrentJob(job);
       setRunStatus("completed");
+      navigate("/history");
     } catch (caught) {
       setRunStatus("failed");
       setError(caught instanceof Error ? caught.message : String(caught));
