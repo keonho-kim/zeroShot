@@ -320,6 +320,10 @@
   text-shadow: 3px 3px 0 var(--panel);
 }
 
+.action-card-title-stacked span {
+  display: block;
+}
+
 .action-card-description {
   color: inherit;
   font-size: 0.9375rem;

@@ -42,7 +42,10 @@ export function StartModePage() {
             <SlidersHorizontal aria-hidden="true" />
           </div>
           <p className="action-card-eyebrow">{t("home.manualEyebrow")}</p>
-          <p className="action-card-title">MANUAL MODE</p>
+          <p className="action-card-title action-card-title-stacked" aria-label="MANUAL MODE">
+            <span>MANUAL</span>
+            <span>MODE</span>
+          </p>
           <p className="action-card-description">{t("home.manualDescription")}</p>
         </button>
         <button type="button" className="action-card action-card-mint text-left" onClick={() => navigate("/omakase")}>
