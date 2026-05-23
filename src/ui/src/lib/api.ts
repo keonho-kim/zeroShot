@@ -13,6 +13,8 @@ import type {
   DesignRuntimeResponse,
   DirectoryEntry,
   JobSnapshot,
+  OmakaseBuildLogPayload,
+  OmakaseStagePayload,
   PipelineOptions,
   ProductArtifactFile,
   ProjectCodexSettingsStatus,
@@ -491,6 +493,85 @@ export async function requestDesignRecommendationsStream(
   }
 
   throw new Error("Design recommendation stream ended before recommendations were returned.");
+}
+
+export async function requestOmakaseStream(
+  payload: {
+    projectRoot: string;
+    brief: string;
+    locale: string;
+    options?: PipelineOptions;
+  },
+  handlers: {
+    onStageStarted?: (payload: OmakaseStagePayload) => void;
+    onStageProgress?: (payload: OmakaseStagePayload) => void;
+    onStageMessage?: (payload: OmakaseStagePayload) => void;
+    onStageCompleted?: (payload: OmakaseStagePayload) => void;
+    onStageFailed?: (payload: OmakaseStagePayload) => void;
+    onBuildLog?: (payload: OmakaseBuildLogPayload) => void;
+  }
+) {
+  const response = await fetch("/api/omakase/stream", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || "Omakase request failed.");
+  }
+  if (!response.body) {
+    throw new Error("Omakase stream is unavailable.");
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  while (true) {
+    const { done, value } = await reader.read();
+    buffer += decoder.decode(value, { stream: !done });
+    const parts = buffer.split("\n\n");
+    buffer = parts.pop() ?? "";
+
+    for (const part of parts) {
+      const parsed = parseStreamEvent(part);
+      if (!parsed) {
+        continue;
+      }
+      if (parsed.event === "stage_started") {
+        handlers.onStageStarted?.(parsed.data as OmakaseStagePayload);
+      }
+      if (parsed.event === "stage_progress") {
+        handlers.onStageProgress?.(parsed.data as OmakaseStagePayload);
+      }
+      if (parsed.event === "stage_message") {
+        handlers.onStageMessage?.(parsed.data as OmakaseStagePayload);
+      }
+      if (parsed.event === "stage_completed") {
+        handlers.onStageCompleted?.(parsed.data as OmakaseStagePayload);
+      }
+      if (parsed.event === "stage_failed") {
+        handlers.onStageFailed?.(parsed.data as OmakaseStagePayload);
+      }
+      if (parsed.event === "build_log") {
+        handlers.onBuildLog?.(parsed.data as OmakaseBuildLogPayload);
+      }
+      if (parsed.event === "complete") {
+        return (parsed.data as { job: JobSnapshot }).job;
+      }
+      if (parsed.event === "error") {
+        throw new Error((parsed.data as { message: string }).message);
+      }
+    }
+
+    if (done) {
+      break;
+    }
+  }
+
+  throw new Error("Omakase stream ended before completion.");
 }
 
 export async function startBuild(payload: { projectRoot: string; productContent?: string; options?: PipelineOptions }) {

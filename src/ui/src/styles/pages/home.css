@@ -289,6 +289,10 @@
   grid-template-columns: minmax(0, 1fr);
 }
 
+.start-mode-grid {
+  align-items: stretch;
+}
+
 .action-card-icon {
   display: grid;
   height: calc(3.25rem * var(--home-component-scale));
@@ -323,6 +327,91 @@
   max-width: 32rem;
 }
 
+.omakase-page .home-console-title {
+  font-size: clamp(2rem, 5vw, 4.5rem);
+}
+
+.omakase-input-card,
+.omakase-log-panel {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 1rem;
+  border: var(--border-strong) solid var(--border);
+  border-radius: 1px;
+  background: var(--panel);
+  box-shadow: var(--shadow-card);
+  padding: 1rem;
+}
+
+.omakase-input-card textarea {
+  min-height: 12rem;
+  resize: vertical;
+}
+
+.omakase-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.omakase-timeline {
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
+  border: var(--border-strong) solid var(--border);
+  background: var(--surface);
+  padding: 0.75rem;
+}
+
+.omakase-timeline-item {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: var(--border-strong) solid var(--border);
+  background: var(--muted);
+  color: var(--muted-foreground);
+  padding: 0.65rem 0.85rem;
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 0.78rem;
+  font-weight: 950;
+  line-height: 1;
+}
+
+.omakase-timeline-item.running {
+  background: var(--success-surface);
+  color: var(--foreground);
+}
+
+.omakase-timeline-item.completed {
+  background: var(--muted);
+  color: var(--text-subtle);
+}
+
+.omakase-timeline-item.failed {
+  background: var(--destructive);
+  color: var(--destructive-foreground);
+}
+
+.omakase-timeline-icon {
+  display: grid;
+  height: 1.25rem;
+  width: 1.25rem;
+  flex: 0 0 auto;
+  place-items: center;
+}
+
+.omakase-timeline-icon svg {
+  height: 1.1rem;
+  width: 1.1rem;
+}
+
+.omakase-timeline-item.completed .omakase-timeline-icon {
+  color: #006fba;
+}
+
 @media (min-width: 768px) {
   .landing-hero {
     padding: calc(2rem * var(--home-component-scale));
@@ -347,6 +436,15 @@
 
   .action-card {
     padding: calc(2rem * var(--home-component-scale));
+  }
+
+  .start-mode-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .omakase-input-card,
+  .omakase-log-panel {
+    padding: 1.25rem;
   }
 }
 
@@ -380,5 +478,14 @@
 
   .home-console-path {
     white-space: normal;
+  }
+
+  .omakase-timeline {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .omakase-timeline-item {
+    justify-content: flex-start;
   }
 }

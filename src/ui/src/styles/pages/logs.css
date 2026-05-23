@@ -189,8 +189,26 @@
   place-items: center;
 }
 
+.logs-mode-panel {
+  min-height: 360px;
+}
+
+.logs-mode-actions {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(0, 1fr);
+}
+
 @media (min-width: 1180px) {
   .logs-grid {
     grid-template-columns: minmax(240px, 0.82fr) minmax(300px, 1fr) minmax(520px, 1.9fr);
+  }
+
+  .logs-grid-hub {
+    grid-template-columns: minmax(240px, 0.82fr) minmax(0, 2.9fr);
+  }
+
+  .logs-mode-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }

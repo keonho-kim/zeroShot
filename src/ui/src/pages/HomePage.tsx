@@ -62,7 +62,7 @@ export function HomePage() {
       <ProjectPickerModal
         open={isProjectPickerOpen}
         freshStart
-        onProjectSelected={() => navigate("/workspace")}
+        onProjectSelected={() => navigate("/start-mode")}
         onClose={() => {
           setProjectPickerOpen(false);
         }}

@@ -18,7 +18,6 @@ export function ArchitectPage() {
   const userBrief = useArchitectFlowStore((state) => state.userBrief);
   const setUserBrief = useArchitectFlowStore((state) => state.setUserBrief);
   const prepareRequest = useArchitectFlowStore((state) => state.prepareRequest);
-  const [omakaseMode, setOmakaseMode] = useState(false);
   const [existingProductRequest, setExistingProductRequest] = useState("");
 
   const productArtifactQuery = useQuery({
@@ -49,7 +48,7 @@ export function ArchitectPage() {
         existingProductHtml
       ].join("\n"),
       requestKey: [projectRoot, locale, "existing-product-chat", trimmed, productArtifactQuery.data?.etag ?? existingProductHtml.length].join("\n"),
-      omakaseMode: true
+      omakaseMode: false
     });
     navigate("/architect/progress");
   };
@@ -62,8 +61,8 @@ export function ArchitectPage() {
 
     prepareRequest({
       brief: trimmed,
-      requestKey: [projectRoot, locale, omakaseMode ? "omakase" : "guided", trimmed].join("\n"),
-      omakaseMode
+      requestKey: [projectRoot, locale, "guided", trimmed].join("\n"),
+      omakaseMode: false
     });
     navigate("/architect/progress");
   };
@@ -109,24 +108,6 @@ export function ArchitectPage() {
                 <h2>{t("architect.promptTitle")}</h2>
                 <p>{t("architect.promptDescription")}</p>
               </div>
-              <div className="build-choice-grid">
-                <button
-                  type="button"
-                  className={omakaseMode ? "build-choice-card" : "build-choice-card selected"}
-                  onClick={() => setOmakaseMode(false)}
-                >
-                  <span>{t("architect.planTogether")}</span>
-                  <small>{t("architect.planTogetherDetail")}</small>
-                </button>
-                <button
-                  type="button"
-                  className={omakaseMode ? "build-choice-card selected" : "build-choice-card"}
-                  onClick={() => setOmakaseMode(true)}
-                >
-                  <span>{t("architect.omakase")}</span>
-                  <small>{t("architect.omakaseDetail")}</small>
-                </button>
-              </div>
               <Textarea
                 value={userBrief}
                 onChange={(event) => setUserBrief(event.target.value)}
@@ -135,9 +116,7 @@ export function ArchitectPage() {
               <div className="decision-actions architect-input-actions">
                 <Button type="button" disabled={!userBrief.trim()} onClick={startArchitectFlow}>
                   <Send className="size-4" />
-                  {omakaseMode
-                    ? t("architect.assignCodex")
-                    : t("architect.shapeProduct")}
+                  {t("architect.shapeProduct")}
                 </Button>
               </div>
             </Card>

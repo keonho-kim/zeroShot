@@ -1,10 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
+import { GitBranch, ScrollText } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/PageHeader";
 import { DocumentPreview, titleFromFilename } from "@/components/DocumentPreview";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { fetchWorkLogEntries, fetchWorkLogEntryDetail, fetchWorkLogProjects } from "@/lib/api";
+import { fetchProjectState, fetchWorkLogEntries, fetchWorkLogEntryDetail, fetchWorkLogProjects } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { useAppStore } from "@/stores/app-store";
 import { cn } from "@/utils/cn";
@@ -75,11 +77,13 @@ function EntryButton({
 
 export function LogsPage() {
   const { t } = useI18n();
+  const navigate = useNavigate();
   const currentProjectRoot = useAppStore((state) => state.projectRoot);
   const setProjectRoot = useAppStore((state) => state.setProjectRoot);
   const [selectedProjectRoot, setSelectedProjectRoot] = useState(currentProjectRoot);
   const [selectedEntryId, setSelectedEntryId] = useState("");
   const [selectedDoc, setSelectedDoc] = useState("");
+  const [selectedMode, setSelectedMode] = useState<"hub" | "log">("hub");
 
   const projectsQuery = useQuery({
     queryKey: ["work-log-projects"],
@@ -87,6 +91,11 @@ export function LogsPage() {
   });
   const projects = projectsQuery.data ?? [];
   const selectedProject = projects.find((project) => project.projectRoot === selectedProjectRoot) ?? null;
+  const projectStateQuery = useQuery({
+    queryKey: ["project-state", selectedProjectRoot],
+    queryFn: () => fetchProjectState(selectedProjectRoot),
+    enabled: Boolean(selectedProjectRoot)
+  });
 
   useEffect(() => {
     if (selectedProjectRoot && projects.some((project) => project.projectRoot === selectedProjectRoot)) {
@@ -98,7 +107,7 @@ export function LogsPage() {
   const entriesQuery = useQuery({
     queryKey: ["work-log-entries", selectedProjectRoot],
     queryFn: () => fetchWorkLogEntries(selectedProjectRoot),
-    enabled: Boolean(selectedProjectRoot)
+    enabled: Boolean(selectedProjectRoot && selectedMode === "log")
   });
   const entries = entriesQuery.data ?? [];
 
@@ -112,7 +121,7 @@ export function LogsPage() {
   const detailQuery = useQuery({
     queryKey: ["work-log-entry-detail", selectedProjectRoot, selectedEntryId],
     queryFn: () => fetchWorkLogEntryDetail(selectedProjectRoot, selectedEntryId),
-    enabled: Boolean(selectedProjectRoot && selectedEntryId)
+    enabled: Boolean(selectedProjectRoot && selectedEntryId && selectedMode === "log")
   });
 
   const documents = detailQuery.data?.documents ?? {};
@@ -132,10 +141,18 @@ export function LogsPage() {
     }
   }, [documentNames, documents, selectedDoc]);
 
+  const selectedProjectState = projectStateQuery.data;
+  const updateDisabled = !selectedProjectState?.updateEnabled;
+  const updateReason = !selectedProjectState
+    ? t("common.loading")
+    : selectedProjectState.runsCount < 1
+      ? t("update.needsBuild")
+      : t("update.noSourceToUpdate");
+
   return (
     <div className="builder-shell logs-page">
       <PageHeader title="LOGS" projectRoot={selectedProjectRoot || currentProjectRoot} />
-      <div className="logs-grid">
+      <div className={cn("logs-grid", selectedMode === "hub" && "logs-grid-hub")}>
         <Card className="logs-panel">
           <div className="logs-panel-header">
             <span>{t("log.projectList")}</span>
@@ -150,6 +167,7 @@ export function LogsPage() {
                 onClick={() => {
                   setSelectedProjectRoot(project.projectRoot);
                   setProjectRoot(project.projectRoot);
+                  setSelectedMode("hub");
                   setSelectedEntryId("");
                   setSelectedDoc("");
                 }}
@@ -159,62 +177,101 @@ export function LogsPage() {
           </div>
         </Card>
 
-        <Card className="logs-panel">
-          <div className="logs-panel-header">
-            <span>{t("log.entryList")}</span>
-            <strong>{entries.length}</strong>
-          </div>
-          <div className="logs-list">
-            {selectedProject ? entries.map((entry) => (
-              <EntryButton
-                key={entry.id}
-                entry={entry}
-                selected={selectedEntryId === entry.id}
-                onClick={() => {
-                  setSelectedEntryId(entry.id);
-                  setSelectedDoc("");
-                }}
-              />
-            )) : <p className="logs-empty">{t("log.chooseProject")}</p>}
-            {selectedProject && !entriesQuery.isLoading && !entries.length ? <p className="logs-empty">{t("log.noRuns")}</p> : null}
-          </div>
-        </Card>
+        {selectedMode === "hub" ? (
+          <Card className="logs-panel logs-mode-panel">
+            <div className="logs-panel-header">
+              <span>{selectedProject?.name ?? t("log.chooseProject")}</span>
+              <strong>{selectedProject ? t("common.select") : "WAIT"}</strong>
+            </div>
+            {selectedProject ? (
+              <div className="logs-mode-actions">
+                <button
+                  type="button"
+                  className="action-card action-card-cyan text-left"
+                  disabled={updateDisabled}
+                  onClick={() => {
+                    setProjectRoot(selectedProject.projectRoot);
+                    navigate("/update");
+                  }}
+                >
+                  <div className="action-card-icon">
+                    <GitBranch aria-hidden="true" />
+                  </div>
+                  <p className="action-card-eyebrow">{t("home.afterBuild")}</p>
+                  <p className="action-card-title">UPDATE</p>
+                  <p className="action-card-description">{updateDisabled ? updateReason : t("home.updateReady")}</p>
+                </button>
+                <button type="button" className="action-card action-card-mint text-left" onClick={() => setSelectedMode("log")}>
+                  <div className="action-card-icon">
+                    <ScrollText aria-hidden="true" />
+                  </div>
+                  <p className="action-card-eyebrow">{t("home.logsArchive")}</p>
+                  <p className="action-card-title">LOG</p>
+                  <p className="action-card-description">{t("home.logsReady")}</p>
+                </button>
+              </div>
+            ) : <p className="logs-empty">{t("log.chooseProject")}</p>}
+          </Card>
+        ) : (
+          <>
+            <Card className="logs-panel">
+              <div className="logs-panel-header">
+                <span>{t("log.entryList")}</span>
+                <strong>{entries.length}</strong>
+              </div>
+              <div className="logs-list">
+                {selectedProject ? entries.map((entry) => (
+                  <EntryButton
+                    key={entry.id}
+                    entry={entry}
+                    selected={selectedEntryId === entry.id}
+                    onClick={() => {
+                      setSelectedEntryId(entry.id);
+                      setSelectedDoc("");
+                    }}
+                  />
+                )) : <p className="logs-empty">{t("log.chooseProject")}</p>}
+                {selectedProject && !entriesQuery.isLoading && !entries.length ? <p className="logs-empty">{t("log.noRuns")}</p> : null}
+              </div>
+            </Card>
 
-        <Card className="logs-panel logs-detail-panel">
-          <div className="logs-panel-header">
-            <span>{t("log.detail")}</span>
-            <strong>{detailQuery.data?.summary.label ?? "WAIT"}</strong>
-          </div>
-          {detailQuery.data ? (
-            <div className="logs-detail-summary">
-              <span className="logs-entry-label">{detailQuery.data.summary.label}</span>
-              <div>
-                <h2>{detailQuery.data.summary.title}</h2>
-                <p>{detailQuery.data.summary.summary}</p>
+            <Card className="logs-panel logs-detail-panel">
+              <div className="logs-panel-header">
+                <span>{t("log.detail")}</span>
+                <strong>{detailQuery.data?.summary.label ?? "WAIT"}</strong>
               </div>
-            </div>
-          ) : null}
-          {documentNames.length ? (
-            <>
-              <div className="logs-doc-tabs">
-                {documentNames.map((doc) => (
-                  <Button key={doc} variant={activeDoc === doc ? "default" : "outline"} onClick={() => setSelectedDoc(doc)}>
-                    {titleFromFilename(doc)}
-                  </Button>
-                ))}
-              </div>
-              <DocumentPreview
-                className="logs-document-frame"
-                filename={activeDoc}
-                content={documents[activeDoc] ?? ""}
-              />
-            </>
-          ) : (
-            <div className="logs-empty logs-detail-empty">
-              {selectedEntryId ? t("runArtifacts.loading") : t("log.chooseEntry")}
-            </div>
-          )}
-        </Card>
+              {detailQuery.data ? (
+                <div className="logs-detail-summary">
+                  <span className="logs-entry-label">{detailQuery.data.summary.label}</span>
+                  <div>
+                    <h2>{detailQuery.data.summary.title}</h2>
+                    <p>{detailQuery.data.summary.summary}</p>
+                  </div>
+                </div>
+              ) : null}
+              {documentNames.length ? (
+                <>
+                  <div className="logs-doc-tabs">
+                    {documentNames.map((doc) => (
+                      <Button key={doc} variant={activeDoc === doc ? "default" : "outline"} onClick={() => setSelectedDoc(doc)}>
+                        {titleFromFilename(doc)}
+                      </Button>
+                    ))}
+                  </div>
+                  <DocumentPreview
+                    className="logs-document-frame"
+                    filename={activeDoc}
+                    content={documents[activeDoc] ?? ""}
+                  />
+                </>
+              ) : (
+                <div className="logs-empty logs-detail-empty">
+                  {selectedEntryId ? t("runArtifacts.loading") : t("log.chooseEntry")}
+                </div>
+              )}
+            </Card>
+          </>
+        )}
       </div>
     </div>
   );

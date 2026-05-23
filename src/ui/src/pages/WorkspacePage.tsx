@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Bot, Boxes, DraftingCompass, GitBranch, Paintbrush } from "lucide-react";
+import { Bot, Boxes, DraftingCompass, Paintbrush } from "lucide-react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { PageHeader } from "@/components/PageHeader";
@@ -7,7 +7,7 @@ import { fetchProjectState } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { useAppStore } from "@/stores/app-store";
 import { useBodyClass } from "@/hooks/useBodyClass";
-import { canStartBuild, canStartDesign, canStartUpdate } from "@/entities/project/project-core";
+import { canStartBuild, canStartDesign } from "@/entities/project/project-core";
 import { isMissingSelectedProjectError } from "@/entities/project/stale-project";
 import { cn } from "@/utils/cn";
 
@@ -98,14 +98,7 @@ export function WorkspacePage() {
   const buildEnabled = Boolean(projectState && canStartBuild(projectState));
   const designDisabled = !projectState || !canStartDesign(projectState);
   const buildDisabled = !buildEnabled;
-  const updateEnabled = Boolean(projectState && canStartUpdate(projectState));
-  const updateDisabled = !updateEnabled;
   const buildReason = projectState ? t("build.disabled") : t("home.architectNoProject");
-  const updateReason = projectState
-    ? projectState.runsCount < 1
-      ? t("update.needsBuild")
-      : t("update.noSourceToUpdate")
-    : t("home.architectNoProject");
 
   return (
     <div className="home-shell mx-auto flex max-w-[1180px] flex-col gap-6 md:gap-8">
@@ -135,10 +128,6 @@ export function WorkspacePage() {
           <div>
             <span>{t("home.designBrief")}</span>
             <strong>{projectState?.hasDesign ? t("common.ready") : t("common.wait")}</strong>
-          </div>
-          <div>
-            <span>{t("home.updateRequest")}</span>
-            <strong>{projectState?.hasUpdate ? t("common.ready") : t("common.none")}</strong>
           </div>
           <div>
             <span>{t("home.source")}</span>
@@ -181,15 +170,6 @@ export function WorkspacePage() {
           accent="mint"
           disabled={buildDisabled}
           onClick={() => navigate("/build")}
-        />
-        <ActionCard
-          title="UPDATE"
-          eyebrow={t("home.afterBuild")}
-          description={updateDisabled ? updateReason : t("home.updateReady")}
-          icon={<GitBranch aria-hidden="true" />}
-          accent="cyan"
-          disabled={updateDisabled}
-          onClick={() => navigate("/update")}
         />
       </div>
     </div>

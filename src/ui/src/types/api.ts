@@ -138,6 +138,12 @@ export interface JobSnapshot {
   exitCode?: number;
 }
 
+export interface JobEvent {
+  seq: number;
+  type: "job_started" | "stdout" | "stderr" | "phase" | "job_finished" | "job_failed";
+  data: Record<string, unknown>;
+}
+
 export interface PipelineOptions {
   responseLanguage?: string;
   additionalDirectories?: string[];
@@ -276,6 +282,21 @@ export interface ArchitectProgressEvent {
   title: string;
   detail: string;
   status: "running" | "completed" | "failed";
+}
+
+export type OmakaseStage = "architect" | "design" | "build";
+
+export interface OmakaseStagePayload {
+  stage: OmakaseStage;
+  title?: string;
+  detail?: string;
+  message?: string;
+  event?: ArchitectProgressEvent | DesignProgressEvent;
+  job?: JobSnapshot;
+}
+
+export interface OmakaseBuildLogPayload {
+  event: JobEvent;
 }
 
 export type UpdateDecisionOption = ArchitectDecisionOption;

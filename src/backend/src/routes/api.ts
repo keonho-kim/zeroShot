@@ -6,16 +6,19 @@ import { loadCodexSettings, readProjectCodexSettings, saveCodexSettings, savePro
 import { assertPathWithinRoots, assertProjectRootWithinRoots, isWithin, listDirectoryEntries } from "@backend/core/path-guards.js";
 import { createSseStream } from "@backend/core/sse.js";
 import { readAuthStatus, saveAuthFile } from "@backend/services/auth-service.js";
-import { buildArchitectDecisions, buildArchitectProductHtml, type ArchitectProductFile, type ArchitectProgressEvent } from "@backend/services/architect-service.js";
-import { readLatestDesignSession, readProjectSettings, recordArchitectSession, recordDesignSession, saveProjectSettings } from "@backend/services/app-storage-service.js";
+import { buildArchitectDecisions, buildArchitectProductHtml, type ArchitectProgressEvent } from "@backend/services/architect-service.js";
+import { readLatestDesignSession, readProjectSettings, recordArchitectSession, saveProjectSettings } from "@backend/services/app-storage-service.js";
+import { saveArchitectProductFiles, saveDesignRuntimeArtifacts } from "@backend/services/artifact-workflow-service.js";
 import { inferBootstrapRequest, runBootstrap } from "@backend/services/bootstrap-service.js";
 import { buildDesignRuntime, recommendDesignResources } from "@backend/services/design-service.js";
 import { highlightCode, normalizeHighlightLanguage } from "@backend/services/code-highlighting-service.js";
 import { appendAppEvent } from "@backend/services/event-log-service.js";
-import { createDirectory, deleteEntry, designEntryPath, readDesignHtmlSnapshot, readProductHtml, readProductHtmlSnapshot, upsertArtifactManifest, writeArtifactFile, writeDesignHtmlSnapshot, writeProductHtml, writeProductHtmlSnapshot, writeUpdateDocument } from "@backend/services/file-service.js";
+import { createDirectory, deleteEntry, readDesignHtmlSnapshot, readProductHtml, readProductHtmlSnapshot, upsertArtifactManifest, writeDesignHtmlSnapshot, writeProductHtml, writeProductHtmlSnapshot, writeUpdateDocument } from "@backend/services/file-service.js";
 import { readRunDetail, listRuns } from "@backend/services/history-service.js";
 import { jobManager } from "@backend/services/job-manager.js";
 import { listWorkLogEntries, listWorkLogProjects, readWorkLogEntryDetail } from "@backend/services/log-service.js";
+import { runOmakasePipeline } from "@backend/services/omakase-service.js";
+import { startPipelineRun } from "@backend/services/pipeline-run-service.js";
 import { readProjectHistoryMeta, readProjectState } from "@backend/services/project-service.js";
 import { buildResourcePromptContext, listResourceCatalog } from "@backend/services/resource-service.js";
 import { buildUpdateDecisions, type UpdateProgressEvent } from "@backend/services/update-service.js";
@@ -26,32 +29,6 @@ const router: Router = express.Router();
 
 function asyncHandler(handler: RequestHandler): RequestHandler {
   return (req: Request, res: Response, next: NextFunction) => Promise.resolve(handler(req, res, next)).catch(next);
-}
-
-async function saveArchitectProductFiles(projectRoot: string, files: ArchitectProductFile[]) {
-  for (const file of files) {
-    if (file.path !== "ARCHITECT/PRODUCT.html"
-      && !file.path.startsWith("ARCHITECT/pages/")
-      && !file.path.startsWith("ARCHITECT/components/")
-      && !file.path.startsWith("ARCHITECT/assets/")) {
-      throw new Error(`Architect product returned a file outside ARCHITECT/: ${file.path}`);
-    }
-    await writeArtifactFile(projectRoot, file.path, file.content);
-  }
-
-  const entry = await readProductHtmlSnapshot(projectRoot);
-  await upsertArtifactManifest(projectRoot, files.map((file) => ({
-    path: file.path,
-    type: file.type,
-    title: file.title,
-    entry: file.path === "ARCHITECT/PRODUCT.html"
-  })));
-  await appendAppEvent("product_artifact_saved", {
-    projectRoot,
-    path: entry.path,
-    etag: entry.etag
-  });
-  return entry;
 }
 
 async function getValidatedProjectRoot(projectRoot: string): Promise<string> {
@@ -718,34 +695,7 @@ router.post("/design/runtime/stream", asyncHandler(async (req: Request, res: Res
       onMessage: (message) => stream.write("message", { message }),
       onRaw: (event) => stream.write("raw", event)
     });
-    for (const file of design.files) {
-      if (!file.path.startsWith("DESIGN/")) {
-        throw new Error(`Design runtime returned a file outside DESIGN/: ${file.path}`);
-      }
-      await writeArtifactFile(projectRoot, file.path, file.content);
-    }
-    await writeArtifactFile(projectRoot, "DESIGN/runtime.json", `${JSON.stringify(design, null, 2)}\n`);
-    await upsertArtifactManifest(projectRoot, [
-      ...design.artifacts.map((artifact) => ({
-        path: artifact.path,
-        type: artifact.type,
-        title: artifact.title,
-        entry: artifact.path === designEntryPath
-      })),
-      ...design.files.map((file) => ({
-        path: file.path,
-        type: file.type,
-        title: file.title,
-        entry: file.path === designEntryPath
-      }))
-    ]);
-    await recordDesignSession(design);
-    await appendAppEvent("design_runtime_created", {
-      projectRoot,
-      mode,
-      designId: design.id,
-      title: design.title
-    });
+    await saveDesignRuntimeArtifacts(projectRoot, mode, design);
     await stream.write("complete", { design });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -793,12 +743,44 @@ async function startPipeline(mode: RunMode, req: Request, res: Response) {
     await writeUpdateDocument(projectRoot, body.updateContent);
   }
 
-  const job = await jobManager.start(mode, projectRoot, body.options);
-  await appendAppEvent("pipeline_started", { projectRoot, mode, jobId: job.id });
+  const job = await startPipelineRun(mode, projectRoot, body.options);
   res.status(202).json(job);
 }
 
 router.post("/build", asyncHandler(async (req: Request, res: Response) => startPipeline("build", req, res)));
+
+router.post("/omakase/stream", asyncHandler(async (req: Request, res: Response) => {
+  const auth = await readAuthStatus();
+  if (!auth.valid) {
+    res.status(412).json(auth);
+    return;
+  }
+
+  const body = req.body as {
+    projectRoot?: string;
+    brief?: string;
+    locale?: string;
+    options?: PipelineOptions;
+  };
+  const projectRoot = await getValidatedProjectRoot(String(body.projectRoot ?? ""));
+  const brief = typeof body.brief === "string" ? body.brief.trim() : "";
+  if (!brief) {
+    res.status(400).json({ message: "Omakase brief is required." });
+    return;
+  }
+
+  const stream = createSseStream(res);
+  try {
+    await runOmakasePipeline({
+      projectRoot,
+      brief,
+      locale: body.locale,
+      options: body.options
+    }, stream);
+  } finally {
+    stream.close();
+  }
+}));
 
 router.post("/update/decisions/stream", asyncHandler(async (req: Request, res: Response) => {
   const auth = await readAuthStatus();
