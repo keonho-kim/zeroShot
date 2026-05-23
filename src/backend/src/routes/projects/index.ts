@@ -1,0 +1,31 @@
+import express, { type Router } from "express";
+import { asyncHandler } from "../shared/async-handler.js";
+import { deleteProjectDirectory } from "./delete-directory.js";
+import { getDesignArtifact } from "./get-design-artifact.js";
+import { getProductArtifact } from "./get-product-artifact.js";
+import { getProductHtml } from "./get-product-html.js";
+import { getProjectSettings } from "./get-settings.js";
+import { getProjectState } from "./get-state.js";
+import { getProjectTree } from "./get-tree.js";
+import { postAllowProject } from "./post-allow.js";
+import { postProjectDirectory } from "./post-directory.js";
+import { putDesignArtifact } from "./put-design-artifact.js";
+import { putProductArtifact } from "./put-product-artifact.js";
+import { putProductHtml } from "./put-product-html.js";
+import { putProjectSettings } from "./put-settings.js";
+
+export const projectsRouter: Router = express.Router();
+
+projectsRouter.get("/tree", asyncHandler(getProjectTree));
+projectsRouter.post("/allow", asyncHandler(postAllowProject));
+projectsRouter.post("/directory", asyncHandler(postProjectDirectory));
+projectsRouter.delete("/directory", asyncHandler(deleteProjectDirectory));
+projectsRouter.get("/state", asyncHandler(getProjectState));
+projectsRouter.get("/settings", asyncHandler(getProjectSettings));
+projectsRouter.put("/settings", asyncHandler(putProjectSettings));
+projectsRouter.get("/product-html", asyncHandler(getProductHtml));
+projectsRouter.put("/product-html", asyncHandler(putProductHtml));
+projectsRouter.get("/product-artifact", asyncHandler(getProductArtifact));
+projectsRouter.put("/product-artifact", asyncHandler(putProductArtifact));
+projectsRouter.get("/design-artifact", asyncHandler(getDesignArtifact));
+projectsRouter.put("/design-artifact", asyncHandler(putDesignArtifact));

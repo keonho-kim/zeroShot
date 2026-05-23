@@ -1,0 +1,32 @@
+import type { Request, Response } from "express";
+import { appendAppEvent } from "@backend/services/event-log-service.js";
+import { upsertArtifactManifest, writeProductHtmlSnapshot } from "@backend/services/file-service.js";
+import { getValidatedProjectRoot } from "../shared/project-root.js";
+
+export async function putProductArtifact(req: Request, res: Response) {
+  const body = req.body as { projectRoot: string; content?: string; markdownMirror?: string; etag?: string };
+  const projectRoot = await getValidatedProjectRoot(body.projectRoot);
+  if (typeof body.content !== "string" || !body.content.trim()) {
+    res.status(400).json({ message: "Product blueprint content is required" });
+    return;
+  }
+
+  try {
+    const file = await writeProductHtmlSnapshot(projectRoot, body.content, body.etag);
+    await upsertArtifactManifest(projectRoot, [{
+      path: file.path,
+      type: "text/html",
+      title: "PRODUCT BLUEPRINT",
+      entry: true
+    }]);
+    await appendAppEvent("product_artifact_saved", {
+      projectRoot,
+      path: file.path,
+      etag: file.etag
+    });
+    res.json(file);
+  } catch (error) {
+    const err = error as Error & { statusCode?: number };
+    res.status(err.statusCode ?? 500).json({ message: err.message });
+  }
+}
