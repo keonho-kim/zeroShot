@@ -101,6 +101,11 @@ export async function writeArtifactFile(projectRoot: string, relativePath: strin
   await ensureFileContent(join(projectRoot, safePath), content);
 }
 
+export async function readArtifactFile(projectRoot: string, relativePath: string): Promise<string> {
+  const safePath = assertValidArtifactPath(relativePath);
+  return readFile(join(projectRoot, safePath), "utf8");
+}
+
 export async function readArtifactManifest(projectRoot: string): Promise<ArtifactManifest> {
   try {
     const raw = await readFile(join(projectRoot, "artifacts.json"), "utf8");

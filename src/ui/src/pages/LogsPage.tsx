@@ -1,16 +1,39 @@
 import { useQuery } from "@tanstack/react-query";
-import { GitBranch, ScrollText } from "lucide-react";
+import { GitBranch, Layers3 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/PageHeader";
-import { DocumentPreview, titleFromFilename } from "@/components/DocumentPreview";
+import { DocumentPreview } from "@/components/DocumentPreview";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { fetchProjectState, fetchWorkLogEntries, fetchWorkLogEntryDetail, fetchWorkLogProjects } from "@/lib/api";
+import { fetchProjectState, fetchWorkflowLogBoard, fetchWorkflowLogRecord, fetchWorkLogProjects } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { useAppStore } from "@/stores/app-store";
 import { cn } from "@/utils/cn";
-import type { WorkLogEntrySummary, WorkLogProjectSummary } from "@/types/api";
+import type {
+  WorkflowLogRecordDetail,
+  WorkflowLogRecordSummary,
+  WorkflowLogSection,
+  WorkflowLogStage,
+  WorkLogProjectSummary
+} from "@/types/api";
+
+const stageOrder: WorkflowLogStage[] = ["product", "design", "build", "update"];
+const stageLabelKeys: Record<WorkflowLogStage, Parameters<ReturnType<typeof useI18n>["t"]>[0]> = {
+  product: "log.stage.product",
+  design: "log.stage.design",
+  build: "log.stage.build",
+  update: "log.stage.update"
+};
+const sectionLabelKeys: Record<WorkflowLogSection, Parameters<ReturnType<typeof useI18n>["t"]>[0]> = {
+  blueprint: "log.section.blueprint",
+  preview: "log.section.preview",
+  decisions: "log.section.decisions",
+  logs: "log.section.logs",
+  "build-log": "log.section.buildLog",
+  request: "log.section.request",
+  "update-log": "log.section.updateLog"
+};
 
 function formatProjectPath(path: string): string {
   return path.replace(/^\/Users\/[^/]+/, "~");
@@ -30,6 +53,10 @@ function formatDate(value?: string): string {
     hour: "2-digit",
     minute: "2-digit"
   }).format(date);
+}
+
+function projectTitle(projectRoot: string): string {
+  return projectRoot.split("/").filter(Boolean).at(-1) || projectRoot;
 }
 
 function ProjectButton({
@@ -54,25 +81,108 @@ function ProjectButton({
   );
 }
 
-function EntryButton({
-  entry,
-  selected,
-  onClick
-}: {
-  entry: WorkLogEntrySummary;
-  selected: boolean;
-  onClick: () => void;
-}) {
+function selectedAnswerLabel(payload: unknown, decisionId: string): string {
+  if (!payload || typeof payload !== "object" || !("answers" in payload)) {
+    return "";
+  }
+  const answers = (payload as { answers?: Record<string, string> }).answers ?? {};
+  return answers[decisionId] ?? "";
+}
+
+function DecisionView({ record }: { record: WorkflowLogRecordDetail }) {
+  const payload = record.payload as {
+    decisionSet?: {
+      decisions?: Array<{
+        id: string;
+        title: string;
+        prompt?: string;
+        section?: string;
+        options: Array<{ id: string; label: string; detail: string; productRequirement: string }>;
+      }>;
+    };
+    mode?: string;
+    goal?: string;
+    activeSkillId?: string;
+    activeDesignTemplateId?: string;
+    activeDesignSystemId?: string;
+  } | undefined;
+  const decisions = payload?.decisionSet?.decisions ?? [];
+
+  if (!decisions.length) {
+    return (
+      <div className="workflow-json-panel">
+        <pre>{JSON.stringify(record.payload ?? {}, null, 2)}</pre>
+      </div>
+    );
+  }
+
   return (
-    <button type="button" className={cn("logs-entry-button", selected && "logs-entry-button-active")} onClick={onClick}>
-      <span className="logs-entry-label">{entry.label}</span>
-      <span className="logs-entry-copy">
-        <strong>{entry.title}</strong>
-        <small>{entry.summary}</small>
-      </span>
-      {entry.createdAt ? <span className="logs-entry-date">{formatDate(entry.createdAt)}</span> : null}
-    </button>
+    <div className="workflow-decision-list">
+      {decisions.map((decision) => {
+        const answerId = selectedAnswerLabel(record.payload, decision.id);
+        const option = decision.options.find((candidate) => candidate.id === answerId) ?? decision.options[0];
+        return (
+          <article className="workflow-decision-card" key={decision.id}>
+            <span>{decision.section}</span>
+            <h3>{decision.title}</h3>
+            {decision.prompt ? <p>{decision.prompt}</p> : null}
+            {option ? (
+              <div>
+                <strong>{option.label}</strong>
+                <small>{option.detail}</small>
+                <p>{option.productRequirement}</p>
+              </div>
+            ) : null}
+          </article>
+        );
+      })}
+    </div>
   );
+}
+
+function RequestView({ record }: { record: WorkflowLogRecordDetail }) {
+  const payload = record.payload as { request?: string } | undefined;
+  return (
+    <div className="workflow-request-panel">
+      <pre>{payload?.request ?? record.summary}</pre>
+    </div>
+  );
+}
+
+function EventsView({ record }: { record: WorkflowLogRecordDetail }) {
+  const { t } = useI18n();
+  return (
+    <div className="workflow-event-list">
+      {record.events.map((event) => (
+        <article className="workflow-event-row" key={event.id}>
+          <span>{event.seq}</span>
+          <div>
+            <strong>{event.type}</strong>
+            <p>{event.message || JSON.stringify(event.payload ?? {})}</p>
+          </div>
+          <time>{formatDate(event.createdAt)}</time>
+        </article>
+      ))}
+      {!record.events.length ? <p className="logs-empty">{t("log.noEventLogs")}</p> : null}
+    </div>
+  );
+}
+
+function RecordDetail({ record }: { record: WorkflowLogRecordDetail | undefined }) {
+  const { t } = useI18n();
+  if (!record) {
+    return <div className="logs-empty logs-detail-empty">{t("log.selectRecord")}</div>;
+  }
+  if (record.kind === "artifact" && record.content?.trim()) {
+    return <DocumentPreview className="logs-document-frame" filename={record.summary} content={record.content} />;
+  }
+  if (record.kind === "decisions" || record.section === "decisions") {
+    return <DecisionView record={record} />;
+  }
+  if (record.kind === "request" || record.section === "request") {
+    return <RequestView record={record} />;
+  }
+  return <EventsView record={record} />;
 }
 
 export function LogsPage() {
@@ -81,20 +191,33 @@ export function LogsPage() {
   const currentProjectRoot = useAppStore((state) => state.projectRoot);
   const setProjectRoot = useAppStore((state) => state.setProjectRoot);
   const [selectedProjectRoot, setSelectedProjectRoot] = useState(currentProjectRoot);
-  const [selectedEntryId, setSelectedEntryId] = useState("");
-  const [selectedDoc, setSelectedDoc] = useState("");
-  const [selectedMode, setSelectedMode] = useState<"hub" | "log">("hub");
+  const [selectedStage, setSelectedStage] = useState<WorkflowLogStage>("product");
+  const [selectedSection, setSelectedSection] = useState<WorkflowLogSection>("blueprint");
+  const [selectedRecordId, setSelectedRecordId] = useState("");
 
   const projectsQuery = useQuery({
     queryKey: ["work-log-projects"],
     queryFn: fetchWorkLogProjects
   });
   const projects = projectsQuery.data ?? [];
-  const selectedProject = projects.find((project) => project.projectRoot === selectedProjectRoot) ?? null;
   const projectStateQuery = useQuery({
     queryKey: ["project-state", selectedProjectRoot],
     queryFn: () => fetchProjectState(selectedProjectRoot),
     enabled: Boolean(selectedProjectRoot)
+  });
+  const boardQuery = useQuery({
+    queryKey: ["workflow-log-board", selectedProjectRoot],
+    queryFn: () => fetchWorkflowLogBoard(selectedProjectRoot),
+    enabled: Boolean(selectedProjectRoot)
+  });
+  const board = boardQuery.data;
+  const selectedStageGroup = board?.stages.find((stage) => stage.stage === selectedStage);
+  const selectedSectionGroup = selectedStageGroup?.sections.find((section) => section.section === selectedSection);
+  const selectedRecords = selectedSectionGroup?.records ?? [];
+  const recordQuery = useQuery({
+    queryKey: ["workflow-log-record", selectedProjectRoot, selectedRecordId],
+    queryFn: () => fetchWorkflowLogRecord(selectedProjectRoot, selectedRecordId),
+    enabled: Boolean(selectedProjectRoot && selectedRecordId)
   });
 
   useEffect(() => {
@@ -104,175 +227,164 @@ export function LogsPage() {
     setSelectedProjectRoot(projects[0]?.projectRoot ?? "");
   }, [projects, selectedProjectRoot]);
 
-  const entriesQuery = useQuery({
-    queryKey: ["work-log-entries", selectedProjectRoot],
-    queryFn: () => fetchWorkLogEntries(selectedProjectRoot),
-    enabled: Boolean(selectedProjectRoot && selectedMode === "log")
-  });
-  const entries = entriesQuery.data ?? [];
-
   useEffect(() => {
-    if (selectedEntryId && entries.some((entry) => entry.id === selectedEntryId)) {
+    if (!board) {
       return;
     }
-    setSelectedEntryId(entries[0]?.id ?? "");
-  }, [entries, selectedEntryId]);
-
-  const detailQuery = useQuery({
-    queryKey: ["work-log-entry-detail", selectedProjectRoot, selectedEntryId],
-    queryFn: () => fetchWorkLogEntryDetail(selectedProjectRoot, selectedEntryId),
-    enabled: Boolean(selectedProjectRoot && selectedEntryId && selectedMode === "log")
-  });
-
-  const documents = detailQuery.data?.documents ?? {};
-  const documentNames = useMemo(
-    () => Object.keys(documents).filter((doc) => documents[doc]?.trim()),
-    [documents]
-  );
-  const activeDoc = selectedDoc && documents[selectedDoc] ? selectedDoc : documentNames[0] ?? "";
-
-  useEffect(() => {
-    if (!documentNames.length) {
-      setSelectedDoc("");
+    const currentStage = board.stages.find((stage) => stage.stage === selectedStage && stage.enabled);
+    const nextStage = currentStage ?? board.stages.find((stage) => stage.enabled);
+    if (!nextStage) {
+      setSelectedRecordId("");
       return;
     }
-    if (!selectedDoc || !documents[selectedDoc]) {
-      setSelectedDoc(documentNames[0]);
+    if (nextStage.stage !== selectedStage) {
+      setSelectedStage(nextStage.stage);
+      setSelectedSection(nextStage.sections.find((section) => section.enabled)?.section ?? nextStage.sections[0].section);
+      setSelectedRecordId("");
+      return;
     }
-  }, [documentNames, documents, selectedDoc]);
+    const currentSection = nextStage.sections.find((section) => section.section === selectedSection && section.enabled);
+    const nextSection = currentSection ?? nextStage.sections.find((section) => section.enabled);
+    if (!nextSection) {
+      setSelectedRecordId("");
+      return;
+    }
+    if (nextSection.section !== selectedSection) {
+      setSelectedSection(nextSection.section);
+      setSelectedRecordId("");
+      return;
+    }
+    if (!selectedRecordId || !nextSection.records.some((record) => record.id === selectedRecordId)) {
+      setSelectedRecordId(nextSection.records[0]?.id ?? "");
+    }
+  }, [board, selectedRecordId, selectedSection, selectedStage]);
 
-  const selectedProjectState = projectStateQuery.data;
-  const updateDisabled = !selectedProjectState?.updateEnabled;
-  const updateReason = !selectedProjectState
-    ? t("common.loading")
-    : selectedProjectState.runsCount < 1
-      ? t("update.needsBuild")
-      : t("update.noSourceToUpdate");
+  const updateDisabled = !projectStateQuery.data?.updateEnabled;
+  const headerTitle = selectedProjectRoot ? projectTitle(selectedProjectRoot) : t("log.pageTitle");
+  const selectedRecord = recordQuery.data;
+  const sectionRecords = useMemo<WorkflowLogRecordSummary[]>(() => selectedRecords, [selectedRecords]);
 
   return (
     <div className="builder-shell logs-page">
-      <PageHeader title="LOGS" projectRoot={selectedProjectRoot || currentProjectRoot} />
-      <div className={cn("logs-grid", selectedMode === "hub" && "logs-grid-hub")}>
-        <Card className="logs-panel">
-          <div className="logs-panel-header">
-            <span>{t("log.projectList")}</span>
-            <strong>{projects.length}</strong>
-          </div>
-          <div className="logs-list">
-            {projects.map((project) => (
-              <ProjectButton
-                key={project.projectRoot}
-                project={project}
-                selected={selectedProjectRoot === project.projectRoot}
-                onClick={() => {
-                  setSelectedProjectRoot(project.projectRoot);
-                  setProjectRoot(project.projectRoot);
-                  setSelectedMode("hub");
-                  setSelectedEntryId("");
-                  setSelectedDoc("");
-                }}
-              />
-            ))}
-            {!projectsQuery.isLoading && !projects.length ? <p className="logs-empty">{t("log.noProjects")}</p> : null}
-          </div>
-        </Card>
+      <PageHeader
+        title={headerTitle}
+        projectRoot={selectedProjectRoot || currentProjectRoot}
+        rightSlot={selectedProjectRoot ? (
+          <Button
+            className="nav-tile logs-update-button"
+            disabled={updateDisabled}
+            onClick={() => {
+              setProjectRoot(selectedProjectRoot);
+              navigate("/update");
+            }}
+          >
+            <GitBranch aria-hidden="true" />
+            <span>UPDATE</span>
+          </Button>
+        ) : undefined}
+      />
 
-        {selectedMode === "hub" ? (
-          <Card className="logs-panel logs-mode-panel">
-            <div className="logs-panel-header">
-              <span>{selectedProject?.name ?? t("log.chooseProject")}</span>
-              <strong>{selectedProject ? t("common.select") : "WAIT"}</strong>
+      <Card className="logs-panel logs-project-strip">
+        <div className="logs-panel-header">
+          <span>{t("log.projectList")}</span>
+          <strong>{projects.length}</strong>
+        </div>
+        <div className="logs-project-list">
+          {projects.map((project) => (
+            <ProjectButton
+              key={project.projectRoot}
+              project={project}
+              selected={selectedProjectRoot === project.projectRoot}
+              onClick={() => {
+                setSelectedProjectRoot(project.projectRoot);
+                setProjectRoot(project.projectRoot);
+                setSelectedRecordId("");
+              }}
+            />
+          ))}
+          {!projectsQuery.isLoading && !projects.length ? <p className="logs-empty">{t("log.noProjects")}</p> : null}
+        </div>
+      </Card>
+
+      {selectedProjectRoot ? (
+        <section className="workflow-clamp-board" aria-label={t("log.workflowBoard")}>
+          <nav className="workflow-index" aria-label="INDEX">
+            <div className="workflow-index-title">
+              <Layers3 aria-hidden="true" />
+              <span>{t("log.index")}</span>
             </div>
-            {selectedProject ? (
-              <div className="logs-mode-actions">
+            <div className="workflow-stage-tabs">
+              {stageOrder.map((stage) => {
+                const group = board?.stages.find((item) => item.stage === stage);
+                return (
+                  <button
+                    type="button"
+                    key={stage}
+                    className={cn("workflow-stage-tab", selectedStage === stage && "selected")}
+                    disabled={!group?.enabled}
+                    onClick={() => {
+                      const nextSection = group?.sections.find((section) => section.enabled);
+                      setSelectedStage(stage);
+                      setSelectedSection(nextSection?.section ?? group?.sections[0]?.section ?? "decisions");
+                      setSelectedRecordId(nextSection?.records[0]?.id ?? "");
+                    }}
+                  >
+                    <span>{t(stageLabelKeys[stage])}</span>
+                    <small>{group?.sections.reduce((count, section) => count + section.records.length, 0) ?? 0}</small>
+                  </button>
+                );
+              })}
+            </div>
+          </nav>
+
+          <main className="workflow-main-panel">
+            <div className="workflow-section-tabs">
+              {selectedStageGroup?.sections.map((section) => (
                 <button
                   type="button"
-                  className="action-card action-card-cyan text-left"
-                  disabled={updateDisabled}
+                  key={section.section}
+                  className={cn("workflow-section-tab", selectedSection === section.section && "selected")}
+                  disabled={!section.enabled}
                   onClick={() => {
-                    setProjectRoot(selectedProject.projectRoot);
-                    navigate("/update");
+                    setSelectedSection(section.section);
+                    setSelectedRecordId(section.records[0]?.id ?? "");
                   }}
                 >
-                  <div className="action-card-icon">
-                    <GitBranch aria-hidden="true" />
-                  </div>
-                  <p className="action-card-eyebrow">{t("home.afterBuild")}</p>
-                  <p className="action-card-title">UPDATE</p>
-                  <p className="action-card-description">{updateDisabled ? updateReason : t("home.updateReady")}</p>
+                  {t(sectionLabelKeys[section.section])}
                 </button>
-                <button type="button" className="action-card action-card-mint text-left" onClick={() => setSelectedMode("log")}>
-                  <div className="action-card-icon">
-                    <ScrollText aria-hidden="true" />
-                  </div>
-                  <p className="action-card-eyebrow">{t("home.logsArchive")}</p>
-                  <p className="action-card-title">LOG</p>
-                  <p className="action-card-description">{t("home.logsReady")}</p>
-                </button>
-              </div>
-            ) : <p className="logs-empty">{t("log.chooseProject")}</p>}
-          </Card>
-        ) : (
-          <>
-            <Card className="logs-panel">
-              <div className="logs-panel-header">
-                <span>{t("log.entryList")}</span>
-                <strong>{entries.length}</strong>
-              </div>
-              <div className="logs-list">
-                {selectedProject ? entries.map((entry) => (
-                  <EntryButton
-                    key={entry.id}
-                    entry={entry}
-                    selected={selectedEntryId === entry.id}
-                    onClick={() => {
-                      setSelectedEntryId(entry.id);
-                      setSelectedDoc("");
-                    }}
-                  />
-                )) : <p className="logs-empty">{t("log.chooseProject")}</p>}
-                {selectedProject && !entriesQuery.isLoading && !entries.length ? <p className="logs-empty">{t("log.noRuns")}</p> : null}
-              </div>
-            </Card>
+              ))}
+            </div>
 
-            <Card className="logs-panel logs-detail-panel">
-              <div className="logs-panel-header">
-                <span>{t("log.detail")}</span>
-                <strong>{detailQuery.data?.summary.label ?? "WAIT"}</strong>
-              </div>
-              {detailQuery.data ? (
-                <div className="logs-detail-summary">
-                  <span className="logs-entry-label">{detailQuery.data.summary.label}</span>
-                  <div>
-                    <h2>{detailQuery.data.summary.title}</h2>
-                    <p>{detailQuery.data.summary.summary}</p>
-                  </div>
+            <div className="workflow-main-content">
+              <aside className="workflow-record-list">
+                {sectionRecords.map((record) => (
+                  <button
+                    type="button"
+                    key={record.id}
+                    className={cn("workflow-record-button", selectedRecordId === record.id && "selected")}
+                    onClick={() => setSelectedRecordId(record.id)}
+                  >
+                    <strong>{record.title}</strong>
+                    <span>{record.summary}</span>
+                    <small>{formatDate(record.createdAt)}</small>
+                  </button>
+                ))}
+                {!sectionRecords.length ? <p className="logs-empty">{t("log.noSectionRecords")}</p> : null}
+              </aside>
+
+              <section className="workflow-record-detail">
+                <div className="workflow-record-heading">
+                  <span>{selectedSection ? t(sectionLabelKeys[selectedSection]) : ""}</span>
+                  <strong>{selectedRecord?.title ?? t("log.chooseEntry")}</strong>
                 </div>
-              ) : null}
-              {documentNames.length ? (
-                <>
-                  <div className="logs-doc-tabs">
-                    {documentNames.map((doc) => (
-                      <Button key={doc} variant={activeDoc === doc ? "default" : "outline"} onClick={() => setSelectedDoc(doc)}>
-                        {titleFromFilename(doc)}
-                      </Button>
-                    ))}
-                  </div>
-                  <DocumentPreview
-                    className="logs-document-frame"
-                    filename={activeDoc}
-                    content={documents[activeDoc] ?? ""}
-                  />
-                </>
-              ) : (
-                <div className="logs-empty logs-detail-empty">
-                  {selectedEntryId ? t("runArtifacts.loading") : t("log.chooseEntry")}
-                </div>
-              )}
-            </Card>
-          </>
-        )}
-      </div>
+                <RecordDetail record={selectedRecord} />
+              </section>
+            </div>
+          </main>
+        </section>
+      ) : (
+        <p className="logs-empty">{t("log.chooseProject")}</p>
+      )}
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import { Codex, type ApprovalMode, type ModelReasoningEffort, type SandboxMode, type ThreadEvent, type ThreadOptions } from "@openai/codex-sdk";
 import { z } from "zod";
-import { extractArchitectChatMessage, type ArchitectDecisionResponse } from "@backend/services/architect-service.js";
+import { extractArchitectChatMessage } from "@backend/services/architect-service.js";
 import { buildUpdatePrompt } from "@backend/llm/update/prompt.js";
 import { textByLocale } from "@backend/i18n/locale.js";
 import { describeCodexProgress } from "@backend/services/codex-progress-service.js";
@@ -26,7 +26,7 @@ const updateDecisionSchema = {
           options: {
             type: "array",
             minItems: 5,
-            maxItems: 6,
+            maxItems: 5,
             items: {
               type: "object",
               properties: {
@@ -63,7 +63,7 @@ const updateDecisionResponseSchema = z.object({
       label: z.string().trim().min(1),
       detail: z.string().trim().min(1),
       productRequirement: z.string().trim().min(1)
-    })).min(5).max(6)
+    })).length(5)
   })).min(3).max(5)
 });
 
@@ -87,42 +87,13 @@ function progressText(locale: string, ko: string, en: string): string {
   return textByLocale(locale, { ko, en, zh: en, ja: en, es: en, de: en });
 }
 
-function omakaseOption(locale: string): ArchitectDecisionResponse["decisions"][number]["options"][number] {
-  return {
-    id: "omakase",
-    label: textByLocale(locale, {
-      ko: "알아서 해주세요",
-      en: "Let Codex choose",
-      zh: "让 Codex 决定",
-      ja: "Codex に任せる",
-      es: "Que Codex elija",
-      de: "Codex entscheiden lassen"
-    }),
-    detail: textByLocale(locale, {
-      ko: "Codex 추천안을 그대로 사용합니다.",
-      en: "Use the recommended option as-is.",
-      zh: "直接使用推荐方案。",
-      ja: "おすすめの案をそのまま使います。",
-      es: "Usar la opción recomendada tal cual.",
-      de: "Die empfohlene Option unverändert verwenden."
-    }),
-    productRequirement: "Use the recommended first option for this update decision."
-  };
-}
-
-function normalizeUpdateDecisions(response: UpdateDecisionResponse, locale: string): UpdateDecisionResponse {
-  return {
-    ...response,
-    decisions: response.decisions.map((decision) => {
-      const concreteOptions = decision.options
-        .filter((option) => option.id !== "omakase")
-        .slice(0, 5);
-      return {
-        ...decision,
-        options: [...concreteOptions, omakaseOption(locale)]
-      };
-    })
-  };
+export function validateConcreteUpdateDecisions(response: UpdateDecisionResponse): UpdateDecisionResponse {
+  for (const decision of response.decisions) {
+    if (decision.options.some((option) => option.id === "omakase")) {
+      throw new Error("UPDATE decisions must not include Codex self-selection options.");
+    }
+  }
+  return response;
 }
 
 function describeProgress(event: ThreadEvent, locale: string): UpdateProgressEvent | null {
@@ -249,5 +220,5 @@ export async function buildUpdateDecisions(params: {
   }
 
   const parsed = updateDecisionResponseSchema.parse(JSON.parse(finalResponse));
-  return normalizeUpdateDecisions(parsed, params.locale);
+  return validateConcreteUpdateDecisions(parsed);
 }

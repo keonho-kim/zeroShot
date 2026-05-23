@@ -119,6 +119,9 @@ export function UpdatePage() {
       return startUpdate({
         projectRoot,
         updateContent: composeUpdateContent({ request: updateContent, decisionSet, answers }),
+        updateRequest: updateContent,
+        updateDecisionSet: decisionSet,
+        updateAnswers: answers,
         options: { responseLanguage }
       });
     },

@@ -9,6 +9,7 @@ import { jobManager } from "@backend/services/job-manager.js";
 import { startPipelineRun } from "@backend/services/pipeline-run-service.js";
 import { readProjectState } from "@backend/services/project-service.js";
 import { buildResourcePromptContext } from "@backend/services/resource-service.js";
+import { appendWorkflowLogEvent, createWorkflowLogRecord } from "@backend/services/workflow-log-service.js";
 import type {
   DesignProgressEvent,
   DesignRecommendationResponse,
@@ -33,6 +34,10 @@ export interface OmakaseRequest {
 }
 
 type StageProgressEvent = ArchitectProgressEvent | DesignProgressEvent;
+
+function progressMessage(event: StageProgressEvent): string {
+  return [event.title, event.detail, event.status].filter(Boolean).join(" · ");
+}
 
 function stageTitle(stage: OmakaseStage): string {
   return stage === "architect" ? "ARCHITECT" : stage === "design" ? "DESIGN" : "BUILD";
@@ -151,7 +156,16 @@ export async function runOmakasePipeline(request: OmakaseRequest, stream: Omakas
   let activeStage: OmakaseStage = "architect";
   try {
     activeStage = "architect";
+    const architectLog = await createWorkflowLogRecord({
+      projectRoot: request.projectRoot,
+      stage: "product",
+      section: "logs",
+      kind: "log",
+      title: "OMAKASE ARCHITECT",
+      summary: brief
+    });
     await writeStageStarted(stream, "architect", "Codex is planning the product and selecting the best path.");
+    await appendWorkflowLogEvent(architectLog.id, { type: "stage_started", message: "Codex is planning the product and selecting the best path." });
     const decisionSet = await buildArchitectDecisions({
       projectRoot: request.projectRoot,
       goal: omakaseArchitectGoal(brief),
@@ -159,8 +173,14 @@ export async function runOmakasePipeline(request: OmakaseRequest, stream: Omakas
       reasoning: appConfig.defaults.planReasoning,
       additionalDirectories: [appConfig.resourceRoots.skills, appConfig.resourceRoots.designTemplates, appConfig.resourceRoots.designSystems],
       resourceContext: await buildResourcePromptContext({ includeCatalogSummary: true }),
-      onProgress: (event) => writeStageProgress(stream, "architect", event),
-      onMessage: (message) => writeStageMessage(stream, "architect", message)
+      onProgress: async (event) => {
+        await appendWorkflowLogEvent(architectLog.id, { type: "progress", message: progressMessage(event), payload: event });
+        await writeStageProgress(stream, "architect", event);
+      },
+      onMessage: async (message) => {
+        await appendWorkflowLogEvent(architectLog.id, { type: "message", message, payload: { message } });
+        await writeStageMessage(stream, "architect", message);
+      }
     });
     const answers = selectRecommendedArchitectAnswers(decisionSet.decisions);
     await recordArchitectSession({
@@ -170,13 +190,28 @@ export async function runOmakasePipeline(request: OmakaseRequest, stream: Omakas
       summary: decisionSet.summary,
       decisions: decisionSet
     });
+    await createWorkflowLogRecord({
+      projectRoot: request.projectRoot,
+      stage: "product",
+      section: "decisions",
+      kind: "decisions",
+      title: decisionSet.title,
+      summary: decisionSet.summary,
+      payload: {
+        mode: "omakase",
+        decisionSet,
+        answers
+      }
+    });
     await writeStageMessage(stream, "architect", "Codex selected the recommended architecture choices.");
+    await appendWorkflowLogEvent(architectLog.id, { type: "message", message: "Codex selected the recommended architecture choices." });
     await runBootstrap(inferBootstrapRequest({
       projectRoot: request.projectRoot,
       answers,
       decisions: decisionSet.decisions
     }));
     await writeStageMessage(stream, "architect", "Initial project structure is ready.");
+    await appendWorkflowLogEvent(architectLog.id, { type: "message", message: "Initial project structure is ready." });
     const productFiles = await buildArchitectProductHtml({
       projectRoot: request.projectRoot,
       userBrief: brief,
@@ -186,22 +221,45 @@ export async function runOmakasePipeline(request: OmakaseRequest, stream: Omakas
       reasoning: appConfig.defaults.planReasoning,
       additionalDirectories: [appConfig.resourceRoots.skills, appConfig.resourceRoots.designTemplates, appConfig.resourceRoots.designSystems],
       resourceContext: await buildResourcePromptContext({ includeCatalogSummary: true }),
-      onProgress: (event) => writeStageProgress(stream, "architect", event),
-      onMessage: (message) => writeStageMessage(stream, "architect", message)
+      onProgress: async (event) => {
+        await appendWorkflowLogEvent(architectLog.id, { type: "progress", message: progressMessage(event), payload: event });
+        await writeStageProgress(stream, "architect", event);
+      },
+      onMessage: async (message) => {
+        await appendWorkflowLogEvent(architectLog.id, { type: "message", message, payload: { message } });
+        await writeStageMessage(stream, "architect", message);
+      }
     });
     await saveArchitectProductFiles(request.projectRoot, productFiles);
     await writeStageCompleted(stream, "architect", "Product blueprint and project structure are ready.");
+    await appendWorkflowLogEvent(architectLog.id, { type: "stage_completed", message: "Product blueprint and project structure are ready." });
 
     activeStage = "design";
+    const designLog = await createWorkflowLogRecord({
+      projectRoot: request.projectRoot,
+      stage: "design",
+      section: "logs",
+      kind: "log",
+      title: "OMAKASE DESIGN",
+      summary: brief
+    });
     await writeStageStarted(stream, "design", "Codex is exploring design systems and templates.");
+    await appendWorkflowLogEvent(designLog.id, { type: "stage_started", message: "Codex is exploring design systems and templates." });
     const recommendations = await recommendDesignResources({
       projectRoot: request.projectRoot,
       locale,
-      onProgress: (event) => writeStageProgress(stream, "design", event),
-      onMessage: (message) => writeStageMessage(stream, "design", message)
+      onProgress: async (event) => {
+        await appendWorkflowLogEvent(designLog.id, { type: "progress", message: progressMessage(event), payload: event });
+        await writeStageProgress(stream, "design", event);
+      },
+      onMessage: async (message) => {
+        await appendWorkflowLogEvent(designLog.id, { type: "message", message, payload: { message } });
+        await writeStageMessage(stream, "design", message);
+      }
     });
     const { activeDesignSystemId, activeDesignTemplateId } = selectOmakaseDesignResources(recommendations);
     await writeStageMessage(stream, "design", "Codex selected the first recommended design system and template.");
+    await appendWorkflowLogEvent(designLog.id, { type: "message", message: "Codex selected the first recommended design system and template." });
     const design = await buildDesignRuntime({
       projectRoot: request.projectRoot,
       mode: "codex",
@@ -209,14 +267,35 @@ export async function runOmakasePipeline(request: OmakaseRequest, stream: Omakas
       locale,
       activeDesignSystemId,
       activeDesignTemplateId,
-      onProgress: (event) => writeStageProgress(stream, "design", event),
-      onMessage: (message) => writeStageMessage(stream, "design", message)
+      onProgress: async (event) => {
+        await appendWorkflowLogEvent(designLog.id, { type: "progress", message: progressMessage(event), payload: event });
+        await writeStageProgress(stream, "design", event);
+      },
+      onMessage: async (message) => {
+        await appendWorkflowLogEvent(designLog.id, { type: "message", message, payload: { message } });
+        await writeStageMessage(stream, "design", message);
+      }
     });
     await saveDesignRuntimeArtifacts(request.projectRoot, "codex", design);
+    await createWorkflowLogRecord({
+      projectRoot: request.projectRoot,
+      stage: "design",
+      section: "decisions",
+      kind: "decisions",
+      title: "OMAKASE DESIGN decisions",
+      summary: design.title,
+      payload: {
+        mode: "omakase",
+        recommendations,
+        activeDesignSystemId,
+        activeDesignTemplateId
+      }
+    });
     await writeStageCompleted(stream, "design", "Design handoff is ready.", {
       activeDesignSystemId,
       activeDesignTemplateId
     });
+    await appendWorkflowLogEvent(designLog.id, { type: "stage_completed", message: "Design handoff is ready." });
 
     activeStage = "build";
     await writeStageStarted(stream, "build", "Codex is starting BUILD.");

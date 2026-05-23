@@ -8,5 +8,8 @@ describe("update prompt", () => {
     expect(prompt.startsWith("/goal")).toBe(false);
     expect(prompt).toContain("Convert the request into concrete update decisions");
     expect(prompt).toContain("Do not edit files or run commands");
+    expect(prompt).toContain("exactly 5 mutually exclusive concrete options");
+    expect(prompt).not.toContain("Let Codex choose");
+    expect(prompt).not.toContain("알아서 해주세요");
   });
 });

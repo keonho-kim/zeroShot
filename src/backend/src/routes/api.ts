@@ -16,12 +16,13 @@ import { appendAppEvent } from "@backend/services/event-log-service.js";
 import { createDirectory, deleteEntry, readDesignHtmlSnapshot, readProductHtml, readProductHtmlSnapshot, upsertArtifactManifest, writeDesignHtmlSnapshot, writeProductHtml, writeProductHtmlSnapshot, writeUpdateDocument } from "@backend/services/file-service.js";
 import { readRunDetail, listRuns } from "@backend/services/history-service.js";
 import { jobManager } from "@backend/services/job-manager.js";
-import { listWorkLogEntries, listWorkLogProjects, readWorkLogEntryDetail } from "@backend/services/log-service.js";
+import { listWorkLogProjects } from "@backend/services/log-service.js";
 import { runOmakasePipeline } from "@backend/services/omakase-service.js";
 import { startPipelineRun } from "@backend/services/pipeline-run-service.js";
 import { readProjectHistoryMeta, readProjectState } from "@backend/services/project-service.js";
 import { buildResourcePromptContext, listResourceCatalog } from "@backend/services/resource-service.js";
 import { buildUpdateDecisions, type UpdateProgressEvent } from "@backend/services/update-service.js";
+import { appendWorkflowLogEvent, createWorkflowLogRecord, readWorkflowLogBoard, readWorkflowLogRecord } from "@backend/services/workflow-log-service.js";
 import { normalizeLocale } from "@backend/i18n/locale.js";
 import type { BootstrapRequest, DesignProgressEvent, DesignRuntimeMode, PipelineOptions, RunMode } from "@backend/types.js";
 
@@ -102,6 +103,17 @@ function escapeHtml(value: string): string {
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
     .replaceAll("\"", "&quot;");
+}
+
+function workflowProgressMessage(event: { title?: string; detail?: string; status?: string }): string {
+  return [event.title, event.detail, event.status].filter(Boolean).join(" · ");
+}
+
+function workflowRawMessage(event: unknown): string {
+  if (event && typeof event === "object" && "type" in event) {
+    return String((event as { type?: unknown }).type ?? "raw");
+  }
+  return "raw";
 }
 
 async function buildDirectoryEntry(projectRoot: string, absolutePath: string, allowedRoots: string[]) {
@@ -372,6 +384,14 @@ router.post("/architect/decisions/stream", asyncHandler(async (req: Request, res
 
   try {
     const appConfig = await loadAppConfig();
+    const workflowRecord = await createWorkflowLogRecord({
+      projectRoot,
+      stage: "product",
+      section: "logs",
+      kind: "log",
+      title: "ARCHITECT decisions",
+      summary: body.goal.trim()
+    });
     const decisions = await buildArchitectDecisions({
       projectRoot,
       goal: body.goal.trim(),
@@ -385,9 +405,18 @@ router.post("/architect/decisions/stream", asyncHandler(async (req: Request, res
         activeDesignSystemId: body.activeDesignSystemId,
         includeCatalogSummary: true
       }),
-      onProgress: (event: ArchitectProgressEvent) => stream.write("progress", event),
-      onMessage: (message) => stream.write("message", { message }),
-      onRaw: (event) => stream.write("raw", event)
+      onProgress: async (event: ArchitectProgressEvent) => {
+        await appendWorkflowLogEvent(workflowRecord.id, { type: "progress", message: workflowProgressMessage(event), payload: event });
+        await stream.write("progress", event);
+      },
+      onMessage: async (message) => {
+        await appendWorkflowLogEvent(workflowRecord.id, { type: "message", message, payload: { message } });
+        await stream.write("message", { message });
+      },
+      onRaw: async (event) => {
+        await appendWorkflowLogEvent(workflowRecord.id, { type: "raw", message: workflowRawMessage(event), payload: event });
+        await stream.write("raw", event);
+      }
     });
     await recordArchitectSession({
       projectRoot,
@@ -401,6 +430,7 @@ router.post("/architect/decisions/stream", asyncHandler(async (req: Request, res
       title: decisions.title,
       decisionsCount: decisions.decisions.length
     });
+    await appendWorkflowLogEvent(workflowRecord.id, { type: "complete", message: decisions.title, payload: { decisionsCount: decisions.decisions.length } });
     await stream.write("complete", { decisions });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -471,6 +501,19 @@ router.post("/architect/product-html", asyncHandler(async (req: Request, res: Re
       })
     });
     const file = await saveArchitectProductFiles(projectRoot, files);
+    await createWorkflowLogRecord({
+      projectRoot,
+      stage: "product",
+      section: "decisions",
+      kind: "decisions",
+      title: (body.decisionSet as { title?: string }).title ?? "PRODUCT decisions",
+      summary: body.userBrief.trim(),
+      payload: {
+        mode: "manual",
+        decisionSet: body.decisionSet,
+        answers: body.answers ?? {}
+      }
+    });
     res.json(file);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -506,6 +549,14 @@ router.post("/architect/product-html/stream", asyncHandler(async (req: Request, 
 
   try {
     const appConfig = await loadAppConfig();
+    const workflowRecord = await createWorkflowLogRecord({
+      projectRoot,
+      stage: "product",
+      section: "logs",
+      kind: "log",
+      title: "PRODUCT blueprint generation",
+      summary: body.userBrief.trim()
+    });
     const files = await buildArchitectProductHtml({
       projectRoot,
       userBrief: body.userBrief.trim(),
@@ -521,11 +572,34 @@ router.post("/architect/product-html/stream", asyncHandler(async (req: Request, 
         activeDesignSystemId: body.activeDesignSystemId,
         includeCatalogSummary: true
       }),
-      onProgress: (event: ArchitectProgressEvent) => stream.write("progress", event),
-      onMessage: (message) => stream.write("message", { message }),
-      onRaw: (event) => stream.write("raw", event)
+      onProgress: async (event: ArchitectProgressEvent) => {
+        await appendWorkflowLogEvent(workflowRecord.id, { type: "progress", message: workflowProgressMessage(event), payload: event });
+        await stream.write("progress", event);
+      },
+      onMessage: async (message) => {
+        await appendWorkflowLogEvent(workflowRecord.id, { type: "message", message, payload: { message } });
+        await stream.write("message", { message });
+      },
+      onRaw: async (event) => {
+        await appendWorkflowLogEvent(workflowRecord.id, { type: "raw", message: workflowRawMessage(event), payload: event });
+        await stream.write("raw", event);
+      }
     });
     const file = await saveArchitectProductFiles(projectRoot, files);
+    await createWorkflowLogRecord({
+      projectRoot,
+      stage: "product",
+      section: "decisions",
+      kind: "decisions",
+      title: (body.decisionSet as { title?: string }).title ?? "PRODUCT decisions",
+      summary: body.userBrief.trim(),
+      payload: {
+        mode: "manual",
+        decisionSet: body.decisionSet,
+        answers: body.answers ?? {}
+      }
+    });
+    await appendWorkflowLogEvent(workflowRecord.id, { type: "complete", message: file.path, payload: { file } });
     await stream.write("complete", { file });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -637,14 +711,32 @@ router.post("/design/recommendations/stream", asyncHandler(async (req: Request, 
   const stream = createSseStream(res);
 
   try {
+    const workflowRecord = await createWorkflowLogRecord({
+      projectRoot,
+      stage: "design",
+      section: "logs",
+      kind: "log",
+      title: "DESIGN recommendations",
+      summary: "Codex explored design systems and templates."
+    });
     const recommendations = await recommendDesignResources({
       projectRoot,
       locale: normalizeLocale(body.locale),
       model: typeof body.model === "string" && body.model.trim() ? body.model.trim() : undefined,
-      onProgress: (event: DesignProgressEvent) => stream.write("progress", event),
-      onMessage: (message) => stream.write("message", { message }),
-      onRaw: (event) => stream.write("raw", event)
+      onProgress: async (event: DesignProgressEvent) => {
+        await appendWorkflowLogEvent(workflowRecord.id, { type: "progress", message: workflowProgressMessage(event), payload: event });
+        await stream.write("progress", event);
+      },
+      onMessage: async (message) => {
+        await appendWorkflowLogEvent(workflowRecord.id, { type: "message", message, payload: { message } });
+        await stream.write("message", { message });
+      },
+      onRaw: async (event) => {
+        await appendWorkflowLogEvent(workflowRecord.id, { type: "raw", message: workflowRawMessage(event), payload: event });
+        await stream.write("raw", event);
+      }
     });
+    await appendWorkflowLogEvent(workflowRecord.id, { type: "complete", message: recommendations.title, payload: { recommendations } });
     await stream.write("complete", { recommendations });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -682,6 +774,14 @@ router.post("/design/runtime/stream", asyncHandler(async (req: Request, res: Res
   const stream = createSseStream(res);
 
   try {
+    const workflowRecord = await createWorkflowLogRecord({
+      projectRoot,
+      stage: "design",
+      section: "logs",
+      kind: "log",
+      title: "DESIGN runtime",
+      summary: typeof body.goal === "string" ? body.goal.trim() : ""
+    });
     const design = await buildDesignRuntime({
       projectRoot,
       mode,
@@ -691,11 +791,36 @@ router.post("/design/runtime/stream", asyncHandler(async (req: Request, res: Res
       activeDesignTemplateId: body.activeDesignTemplateId,
       activeDesignSystemId: body.activeDesignSystemId,
       model: typeof body.model === "string" && body.model.trim() ? body.model.trim() : undefined,
-      onProgress: (event: DesignProgressEvent) => stream.write("progress", event),
-      onMessage: (message) => stream.write("message", { message }),
-      onRaw: (event) => stream.write("raw", event)
+      onProgress: async (event: DesignProgressEvent) => {
+        await appendWorkflowLogEvent(workflowRecord.id, { type: "progress", message: workflowProgressMessage(event), payload: event });
+        await stream.write("progress", event);
+      },
+      onMessage: async (message) => {
+        await appendWorkflowLogEvent(workflowRecord.id, { type: "message", message, payload: { message } });
+        await stream.write("message", { message });
+      },
+      onRaw: async (event) => {
+        await appendWorkflowLogEvent(workflowRecord.id, { type: "raw", message: workflowRawMessage(event), payload: event });
+        await stream.write("raw", event);
+      }
     });
     await saveDesignRuntimeArtifacts(projectRoot, mode, design);
+    await createWorkflowLogRecord({
+      projectRoot,
+      stage: "design",
+      section: "decisions",
+      kind: "decisions",
+      title: "DESIGN decisions",
+      summary: design.title,
+      payload: {
+        mode,
+        goal: typeof body.goal === "string" ? body.goal.trim() : "",
+        activeSkillId: body.activeSkillId,
+        activeDesignTemplateId: body.activeDesignTemplateId,
+        activeDesignSystemId: body.activeDesignSystemId
+      }
+    });
+    await appendWorkflowLogEvent(workflowRecord.id, { type: "complete", message: design.title, payload: { designId: design.id } });
     await stream.write("complete", { design });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -716,6 +841,9 @@ async function startPipeline(mode: RunMode, req: Request, res: Response) {
     projectRoot: string;
     productContent?: string;
     updateContent?: string;
+    updateRequest?: string;
+    updateDecisionSet?: unknown;
+    updateAnswers?: Record<string, string>;
     options?: PipelineOptions;
   };
   const projectRoot = await getValidatedProjectRoot(body.projectRoot);
@@ -741,6 +869,31 @@ async function startPipeline(mode: RunMode, req: Request, res: Response) {
   }
   if (mode === "update" && typeof body.updateContent === "string") {
     await writeUpdateDocument(projectRoot, body.updateContent);
+    if (typeof body.updateRequest === "string" && body.updateRequest.trim()) {
+      await createWorkflowLogRecord({
+        projectRoot,
+        stage: "update",
+        section: "request",
+        kind: "request",
+        title: "UPDATE request",
+        summary: body.updateRequest.trim().slice(0, 160),
+        payload: { request: body.updateRequest.trim() }
+      });
+    }
+    if (body.updateDecisionSet) {
+      await createWorkflowLogRecord({
+        projectRoot,
+        stage: "update",
+        section: "decisions",
+        kind: "decisions",
+        title: (body.updateDecisionSet as { title?: string }).title ?? "UPDATE decisions",
+        summary: (body.updateDecisionSet as { summary?: string }).summary ?? "",
+        payload: {
+          decisionSet: body.updateDecisionSet,
+          answers: body.updateAnswers ?? {}
+        }
+      });
+    }
   }
 
   const job = await startPipelineRun(mode, projectRoot, body.options);
@@ -810,6 +963,14 @@ router.post("/update/decisions/stream", asyncHandler(async (req: Request, res: R
 
   try {
     const appConfig = await loadAppConfig();
+    const workflowRecord = await createWorkflowLogRecord({
+      projectRoot,
+      stage: "update",
+      section: "update-log",
+      kind: "log",
+      title: "UPDATE decision generation",
+      summary: body.updateRequest.trim()
+    });
     const decisions = await buildUpdateDecisions({
       projectRoot,
       updateRequest: body.updateRequest.trim(),
@@ -817,15 +978,25 @@ router.post("/update/decisions/stream", asyncHandler(async (req: Request, res: R
       reasoning: appConfig.defaults.planReasoning,
       model: typeof body.model === "string" && body.model.trim() ? body.model.trim() : undefined,
       additionalDirectories: [appConfig.resourceRoots.skills, appConfig.resourceRoots.designTemplates, appConfig.resourceRoots.designSystems],
-      onProgress: (event: UpdateProgressEvent) => stream.write("progress", event),
-      onMessage: (message) => stream.write("message", { message }),
-      onRaw: (event) => stream.write("raw", event)
+      onProgress: async (event: UpdateProgressEvent) => {
+        await appendWorkflowLogEvent(workflowRecord.id, { type: "progress", message: workflowProgressMessage(event), payload: event });
+        await stream.write("progress", event);
+      },
+      onMessage: async (message) => {
+        await appendWorkflowLogEvent(workflowRecord.id, { type: "message", message, payload: { message } });
+        await stream.write("message", { message });
+      },
+      onRaw: async (event) => {
+        await appendWorkflowLogEvent(workflowRecord.id, { type: "raw", message: workflowRawMessage(event), payload: event });
+        await stream.write("raw", event);
+      }
     });
     await appendAppEvent("update_decisions_created", {
       projectRoot,
       title: decisions.title,
       decisionsCount: decisions.decisions.length
     });
+    await appendWorkflowLogEvent(workflowRecord.id, { type: "complete", message: decisions.title, payload: { decisionsCount: decisions.decisions.length } });
     await stream.write("complete", { decisions });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -877,14 +1048,14 @@ router.get("/history/projects", asyncHandler(async (_req: Request, res: Response
   res.json({ projects: await listWorkLogProjects() });
 }));
 
-router.get("/history/entries", asyncHandler(async (req: Request, res: Response) => {
+router.get("/history/board", asyncHandler(async (req: Request, res: Response) => {
   const projectRoot = await getValidatedProjectRoot(String(req.query.projectRoot ?? ""));
-  res.json({ entries: await listWorkLogEntries(projectRoot) });
+  res.json(await readWorkflowLogBoard(projectRoot));
 }));
 
-router.get("/history/entries/:entryId", asyncHandler(async (req: Request, res: Response) => {
+router.get("/history/records/:recordId", asyncHandler(async (req: Request, res: Response) => {
   const projectRoot = await getValidatedProjectRoot(String(req.query.projectRoot ?? ""));
-  res.json(await readWorkLogEntryDetail(projectRoot, String(req.params.entryId)));
+  res.json(await readWorkflowLogRecord(projectRoot, String(req.params.recordId)));
 }));
 
 router.get("/history/:runName", asyncHandler(async (req: Request, res: Response) => {

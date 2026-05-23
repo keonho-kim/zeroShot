@@ -1,4 +1,5 @@
 import { House, SlidersHorizontal } from "lucide-react";
+import type { ReactNode } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/lib/i18n";
@@ -7,6 +8,7 @@ interface Props {
   title: string;
   projectRoot?: string;
   rightAction?: "settings";
+  rightSlot?: ReactNode;
 }
 
 function formatProjectLabel(projectRoot: string): string {
@@ -14,7 +16,7 @@ function formatProjectLabel(projectRoot: string): string {
   return parts.at(-1) || projectRoot;
 }
 
-export function PageHeader({ title, projectRoot, rightAction }: Props) {
+export function PageHeader({ title, projectRoot, rightAction, rightSlot }: Props) {
   const navigate = useNavigate();
   const { t } = useI18n();
 
@@ -39,7 +41,7 @@ export function PageHeader({ title, projectRoot, rightAction }: Props) {
             </p>
           ) : null}
         </div>
-        {rightAction === "settings" ? (
+        {rightSlot ?? (rightAction === "settings" ? (
           <Button variant="outline" asChild className="nav-tile" aria-label={t("common.config")} title={t("common.config")}>
             <Link to="/settings">
               <SlidersHorizontal aria-hidden="true" />
@@ -48,7 +50,7 @@ export function PageHeader({ title, projectRoot, rightAction }: Props) {
           </Button>
         ) : (
           <span className="nav-tile-spacer" aria-hidden="true" />
-        )}
+        ))}
       </div>
     </div>
   );

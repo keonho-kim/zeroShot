@@ -121,8 +121,6 @@ export interface RunDetail {
   documents: Record<string, string>;
 }
 
-export type WorkLogLabel = "ARCHITECT" | "DESIGN" | "BUILD" | "UPDATE";
-
 export interface WorkLogProjectSummary {
   projectRoot: string;
   name: string;
@@ -131,17 +129,54 @@ export interface WorkLogProjectSummary {
   lastActivityAt?: string;
 }
 
-export interface WorkLogEntrySummary {
+export type WorkflowLogStage = "product" | "design" | "build" | "update";
+export type WorkflowLogSection = "blueprint" | "preview" | "decisions" | "logs" | "build-log" | "request" | "update-log";
+export type WorkflowLogRecordKind = "artifact" | "decisions" | "log" | "request" | "context";
+
+export interface WorkflowLogEvent {
   id: string;
-  label: WorkLogLabel;
-  title: string;
-  summary: string;
-  createdAt?: string;
+  recordId: string;
+  seq: number;
+  type: string;
+  message: string;
+  payload?: unknown;
+  createdAt: string;
 }
 
-export interface WorkLogEntryDetail {
-  summary: WorkLogEntrySummary;
-  documents: Record<string, string>;
+export interface WorkflowLogRecordSummary {
+  id: string;
+  projectRoot: string;
+  stage: WorkflowLogStage;
+  section: WorkflowLogSection;
+  kind: WorkflowLogRecordKind;
+  title: string;
+  summary: string;
+  contentType?: string;
+  createdAt: string;
+  eventCount: number;
+}
+
+export interface WorkflowLogRecordDetail extends WorkflowLogRecordSummary {
+  content?: string;
+  payload?: unknown;
+  events: WorkflowLogEvent[];
+}
+
+export interface WorkflowLogSectionGroup {
+  section: WorkflowLogSection;
+  enabled: boolean;
+  records: WorkflowLogRecordSummary[];
+}
+
+export interface WorkflowLogStageGroup {
+  stage: WorkflowLogStage;
+  enabled: boolean;
+  sections: WorkflowLogSectionGroup[];
+}
+
+export interface WorkflowLogBoard {
+  projectRoot: string;
+  stages: WorkflowLogStageGroup[];
 }
 
 export interface PipelineOptions {

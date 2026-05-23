@@ -25,8 +25,8 @@ import type {
   RunSummary,
   UpdateDecisionResponse,
   UpdateProgressEvent,
-  WorkLogEntryDetail,
-  WorkLogEntrySummary,
+  WorkflowLogBoard,
+  WorkflowLogRecordDetail,
   WorkLogProjectSummary
 } from "@/types/api";
 
@@ -578,7 +578,14 @@ export async function startBuild(payload: { projectRoot: string; productContent?
   return (await client.post<JobSnapshot>("/build", payload)).data;
 }
 
-export async function startUpdate(payload: { projectRoot: string; updateContent: string; options?: PipelineOptions }) {
+export async function startUpdate(payload: {
+  projectRoot: string;
+  updateContent: string;
+  updateRequest?: string;
+  updateDecisionSet?: UpdateDecisionResponse;
+  updateAnswers?: Record<string, string>;
+  options?: PipelineOptions;
+}) {
   return (await client.post<JobSnapshot>("/update", payload)).data;
 }
 
@@ -598,12 +605,12 @@ export async function fetchWorkLogProjects() {
   return (await client.get<{ projects: WorkLogProjectSummary[] }>("/history/projects")).data.projects;
 }
 
-export async function fetchWorkLogEntries(projectRoot: string) {
-  return (await client.get<{ entries: WorkLogEntrySummary[] }>("/history/entries", { params: { projectRoot } })).data.entries;
+export async function fetchWorkflowLogBoard(projectRoot: string) {
+  return (await client.get<WorkflowLogBoard>("/history/board", { params: { projectRoot } })).data;
 }
 
-export async function fetchWorkLogEntryDetail(projectRoot: string, entryId: string) {
-  return (await client.get<WorkLogEntryDetail>(`/history/entries/${encodeURIComponent(entryId)}`, { params: { projectRoot } })).data;
+export async function fetchWorkflowLogRecord(projectRoot: string, recordId: string) {
+  return (await client.get<WorkflowLogRecordDetail>(`/history/records/${encodeURIComponent(recordId)}`, { params: { projectRoot } })).data;
 }
 
 export async function highlightCode(payload: { code: string; language: string }) {

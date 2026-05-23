@@ -4,6 +4,7 @@ import { createInterface } from "node:readline";
 import { loadAppConfig } from "@backend/config/app-config.js";
 import { buildPipelineCommandSpec } from "@backend/core/cli-command.js";
 import { ensureResourceStoreSeeded } from "@backend/services/resource-seed-service.js";
+import { appendWorkflowLogEvent } from "@backend/services/workflow-log-service.js";
 import type { JobEvent, JobSnapshot, PipelineOptions, RunMode } from "@backend/types.js";
 
 const PHASE_NAMES = new Set(["prepare", "normalize", "iter", "replan", "validate", "sync-product", "closeout", "build", "codex"]);
@@ -14,6 +15,7 @@ class JobManager {
   private currentJobId: string | null = null;
   private seq = 0;
   private eventHistory = new Map<string, JobEvent[]>();
+  private workflowLogRecords = new Map<string, string>();
 
   getCurrentJob(): JobSnapshot | null {
     return this.currentJob;
@@ -34,10 +36,18 @@ class JobManager {
     const history = this.eventHistory.get(jobId) ?? [];
     history.push(event);
     this.eventHistory.set(jobId, history.slice(-500));
+    const workflowLogRecordId = this.workflowLogRecords.get(jobId);
+    if (workflowLogRecordId) {
+      void appendWorkflowLogEvent(workflowLogRecordId, {
+        type,
+        message: String(data.line ?? data.phase ?? data.status ?? data.message ?? ""),
+        payload: event
+      });
+    }
     this.emitter.emit(`job:${jobId}`, event);
   }
 
-  async start(mode: RunMode, projectRoot: string, options: PipelineOptions = {}): Promise<JobSnapshot> {
+  async start(mode: RunMode, projectRoot: string, options: PipelineOptions = {}, workflowLogRecordId?: string): Promise<JobSnapshot> {
     if (this.currentJob?.status === "running") {
       throw Object.assign(new Error("A job is already running"), { statusCode: 409 });
     }
@@ -54,6 +64,9 @@ class JobManager {
       ]
     });
     const jobId = crypto.randomUUID();
+    if (workflowLogRecordId) {
+      this.workflowLogRecords.set(jobId, workflowLogRecordId);
+    }
 
     this.currentJobId = jobId;
     this.currentJob = {
