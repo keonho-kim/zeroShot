@@ -14,9 +14,7 @@
   gap: calc(2rem * var(--home-component-scale));
   border: var(--border-strong) solid var(--border);
   border-radius: 1px;
-  background:
-    linear-gradient(90deg, var(--arcade-cyan) 0 14px, transparent 14px calc(100% - 14px), var(--arcade-yellow) calc(100% - 14px) 100%),
-    linear-gradient(180deg, var(--panel) 0 calc(100% - 18px), var(--success-surface) calc(100% - 18px) 100%);
+  background: var(--panel);
   box-shadow:
     calc(8px * var(--home-component-scale))
     calc(8px * var(--home-component-scale))
@@ -35,21 +33,6 @@
     linear-gradient(rgb(16 16 16 / 5%) 50%, transparent 50%);
   background-size: 10px 10px;
   pointer-events: none;
-}
-
-.landing-hero-topline {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  color: var(--primary);
-  font-family: ui-monospace, "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-  font-size: 0.75rem;
-  font-weight: 950;
-  line-height: 1.2;
-  text-transform: uppercase;
 }
 
 .landing-hero-body {
@@ -75,19 +58,6 @@
   text-shadow:
     4px 4px 0 var(--warning-surface),
     7px 7px 0 var(--arcade-cyan);
-}
-
-.landing-description {
-  border: var(--border-strong) solid var(--border);
-  background: var(--panel);
-  box-shadow: var(--shadow-button);
-  color: var(--foreground);
-  font-size: 1rem;
-  font-weight: 750;
-  line-height: 1.65;
-  margin-top: 1.25rem;
-  max-width: 42rem;
-  padding: 1rem;
 }
 
 .landing-actions {
@@ -383,11 +353,6 @@
 @media (max-width: 640px) {
   .page-title {
     font-size: 1.5rem;
-  }
-
-  .landing-hero-topline {
-    align-items: flex-start;
-    flex-direction: column;
   }
 
   .landing-title {

@@ -3,12 +3,8 @@ import { defineTranslations } from "@/lib/i18n/define-translations";
 export const homeTranslations = defineTranslations({
   en: {
     "home.landingAria": "ZeroShot landing",
-    "home.landingKicker": "Codex workbench",
-    "home.landingDescription": "Pick a workspace, shape the product blueprint, and hand the build to Codex from one compact control deck.",
     "home.primaryActions": "Primary actions",
     "home.login": "Log in",
-    "home.loginNeeded": "Login needed",
-    "home.loginReady": "Logged in",
     "home.loginComplete": "Logged in",
     "home.start": "Start",
     "home.workHistory": "Work history",
@@ -42,12 +38,8 @@ export const homeTranslations = defineTranslations({
   },
   ko: {
     "home.landingAria": "ZeroShot 랜딩",
-    "home.landingKicker": "Codex 워크벤치",
-    "home.landingDescription": "워크스페이스를 고르고, 제품 블루프린트를 만들고, Codex 빌드까지 한 화면에서 시작합니다.",
     "home.primaryActions": "주요 작업",
     "home.login": "로그인",
-    "home.loginNeeded": "로그인 필요",
-    "home.loginReady": "로그인됨",
     "home.loginComplete": "로그인됨",
     "home.start": "시작하기",
     "home.workHistory": "작업 기록",
@@ -80,12 +72,8 @@ export const homeTranslations = defineTranslations({
   },
   zh: {
     "home.landingAria": "ZeroShot 首页",
-    "home.landingKicker": "Codex 工作台",
-    "home.landingDescription": "选择工作区，整理产品蓝图，并从同一个控制台启动 Codex 构建。",
     "home.primaryActions": "主要操作",
     "home.login": "登录",
-    "home.loginNeeded": "需要登录",
-    "home.loginReady": "已登录",
     "home.loginComplete": "已登录",
     "home.start": "开始",
     "home.workHistory": "工作记录",

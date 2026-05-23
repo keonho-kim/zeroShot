@@ -33,14 +33,9 @@ export function HomePage() {
   return (
     <div className="home-shell landing-shell mx-auto flex max-w-[1180px] flex-col gap-6 md:gap-8">
       <section className="landing-hero" aria-label={t("home.landingAria")}>
-        <div className="landing-hero-topline">
-          <span>{t("home.landingKicker")}</span>
-          <span>{authValid ? t("home.loginReady") : t("home.loginNeeded")}</span>
-        </div>
         <div className="landing-hero-body">
           <div className="landing-hero-copy">
             <h1 className="landing-title">ZERO SHOT</h1>
-            <p className="landing-description">{t("home.landingDescription")}</p>
           </div>
           <div className="landing-actions" aria-label={t("home.primaryActions")}>
             <Button
