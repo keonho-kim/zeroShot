@@ -27,7 +27,6 @@ export function StageTabs({
               onClick={() => onSelect(stage)}
             >
               <span>{t(workflowStageLabelKeys[stage])}</span>
-              <small>{group?.sections.reduce((count, section) => count + section.records.length, 0) ?? 0}</small>
             </button>
           );
         })}

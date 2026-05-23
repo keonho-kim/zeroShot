@@ -1,11 +1,15 @@
 .history-page {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 0;
 }
 
 .history-page.builder-shell {
   width: min(calc(100vw - 2rem), 1440px);
+}
+
+.history-page .page-header {
+  margin-bottom: 0;
 }
 
 .history-update-button {
@@ -30,7 +34,7 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: center;
-  gap: 0.35rem;
+  gap: 0.45rem;
   color: var(--muted-foreground);
   font-size: 0.72rem;
   font-weight: 800;
@@ -40,6 +44,33 @@
   text-align: center;
 }
 
+.history-title-chip {
+  display: inline-flex;
+  min-width: 0;
+  max-width: min(28rem, 64vw);
+  align-items: center;
+  gap: 0.35rem;
+  border: var(--border-thin) solid color-mix(in srgb, var(--border) 68%, transparent);
+  border-radius: 1px;
+  background: color-mix(in srgb, var(--panel) 72%, white 28%);
+  color: var(--muted-foreground);
+  padding: 0.22rem 0.42rem;
+}
+
+.history-title-chip svg {
+  width: 0.82rem;
+  height: 0.82rem;
+  flex: 0 0 auto;
+  color: var(--foreground);
+}
+
+.history-title-chip span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .history-empty {
   border: var(--border-strong) dashed var(--border);
   background: var(--muted);
@@ -47,6 +78,7 @@
   font-size: 0.875rem;
   font-weight: 700;
   line-height: 1.5;
+  margin-top: 1rem;
   padding: 1rem;
 }
 
@@ -68,11 +100,10 @@
   display: grid;
   gap: 0.55rem;
   grid-template-areas:
-    "stage"
-    "section"
     "records"
     "detail";
   grid-template-columns: minmax(0, 1fr);
+  margin-top: 0.75rem;
   border: var(--border-strong) solid var(--border);
   border-radius: 1px;
   background: var(--panel);
@@ -82,9 +113,18 @@
 
 .workflow-clamp-board-direct {
   grid-template-areas:
-    "stage"
-    "section"
     "detail";
+}
+
+.workflow-history-nav {
+  display: grid;
+  gap: 0.55rem;
+  border: var(--border-strong) solid var(--border);
+  border-top: 0;
+  border-radius: 0 0 1px 1px;
+  background: var(--panel);
+  box-shadow: var(--shadow-card);
+  padding: 0.75rem;
 }
 
 .workflow-stage-rail,
@@ -100,14 +140,6 @@
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-}
-
-.workflow-stage-rail {
-  grid-area: stage;
-}
-
-.workflow-section-rail {
-  grid-area: section;
 }
 
 .workflow-stage-tabs,
@@ -148,11 +180,6 @@
 
 .workflow-stage-tab::after {
   display: none;
-}
-
-.workflow-stage-tab small {
-  font-family: ui-monospace, "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-  font-size: 0.68rem;
 }
 
 .workflow-stage-tab.selected,
@@ -298,8 +325,6 @@
   .workflow-clamp-board {
     gap: 0.75rem;
     grid-template-areas:
-      "stage stage"
-      "section section"
       "records detail";
     grid-template-columns: minmax(240px, 0.34fr) minmax(0, 1fr);
     padding: 0.9rem;
@@ -307,10 +332,13 @@
 
   .workflow-clamp-board-direct {
     grid-template-areas:
-      "stage"
-      "section"
       "detail";
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .workflow-history-nav {
+    gap: 0.75rem;
+    padding: 0.9rem;
   }
 
   .workflow-stage-tabs,

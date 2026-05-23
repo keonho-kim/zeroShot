@@ -1,4 +1,4 @@
-import { GitBranch } from "lucide-react";
+import { Clock3, FolderOpen, GitBranch } from "lucide-react";
 import { formatProjectPath, formatWorkflowDate, workflowProjectTitle } from "@/entities/workflow-log/format";
 import { useI18n } from "@/lib/i18n";
 import { useHistoryPageController } from "@/pages/history/page-controller";
@@ -15,15 +15,18 @@ export function HistoryPage() {
   const headerTitle = controller.selectedProjectRoot ? workflowProjectTitle(controller.selectedProjectRoot) : t("log.pageTitle");
   const updateDisabled = !controller.projectState?.updateEnabled;
   const headerMeta = controller.selectedProjectRoot ? (
-    <p className="history-title-meta" title={controller.selectedProjectRoot}>
-      <span>{t("log.projectPathLabel")} {formatProjectPath(controller.selectedProjectRoot)}</span>
+    <div className="history-title-meta">
+      <span className="history-title-chip" title={controller.selectedProjectRoot}>
+        <FolderOpen aria-hidden="true" />
+        <span>{formatProjectPath(controller.selectedProjectRoot)}</span>
+      </span>
       {controller.selectedProject?.lastActivityAt ? (
-        <>
-          <span aria-hidden="true">·</span>
-          <span>{t("log.lastActivityLabel")} {formatWorkflowDate(controller.selectedProject.lastActivityAt)}</span>
-        </>
+        <span className="history-title-chip" title={formatWorkflowDate(controller.selectedProject.lastActivityAt)}>
+          <Clock3 aria-hidden="true" />
+          <span>{formatWorkflowDate(controller.selectedProject.lastActivityAt)}</span>
+        </span>
       ) : null}
-    </p>
+    </div>
   ) : undefined;
 
   return (
@@ -44,28 +47,32 @@ export function HistoryPage() {
       />
 
       {controller.selectedProjectRoot ? (
-        <section className={cn("workflow-clamp-board", controller.hideRecordList && "workflow-clamp-board-direct")} aria-label={t("log.workflowBoard")}>
-          <StageTabs
-            stages={controller.board?.stages}
-            selectedStage={controller.selectedStage}
-            onSelect={controller.chooseStage}
-          />
-          <SectionTabs
-            selectedStageGroup={controller.selectedStageGroup}
-            selectedSection={controller.selectedSection}
-            onSelect={controller.chooseSection}
-          />
-          {!controller.hideRecordList ? (
-            <RecordList
-              records={controller.sectionRecords}
-              selectedRecordId={controller.selectedRecordId}
-              onSelect={controller.setSelectedRecordId}
+        <>
+          <div className="workflow-history-nav">
+            <StageTabs
+              stages={controller.board?.stages}
+              selectedStage={controller.selectedStage}
+              onSelect={controller.chooseStage}
             />
-          ) : null}
-          <section className="workflow-record-detail">
-            <RecordDetail record={controller.record} />
+            <SectionTabs
+              selectedStageGroup={controller.selectedStageGroup}
+              selectedSection={controller.selectedSection}
+              onSelect={controller.chooseSection}
+            />
+          </div>
+          <section className={cn("workflow-clamp-board", controller.hideRecordList && "workflow-clamp-board-direct")}>
+            {!controller.hideRecordList ? (
+              <RecordList
+                records={controller.sectionRecords}
+                selectedRecordId={controller.selectedRecordId}
+                onSelect={controller.setSelectedRecordId}
+              />
+            ) : null}
+            <section className="workflow-record-detail">
+              <RecordDetail record={controller.record} />
+            </section>
           </section>
-        </section>
+        </>
       ) : (
         <p className="history-empty">{t("log.chooseProject")}</p>
       )}
