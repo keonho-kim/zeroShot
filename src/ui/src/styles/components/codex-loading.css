@@ -88,6 +88,22 @@
   align-content: center;
 }
 
+.codex-loading-panel.compact {
+  height: auto;
+  gap: clamp(0.875rem, 1.75vw, 1.5rem);
+}
+
+.codex-loading-panel.compact > .agent-loading-stage {
+  flex: none;
+  min-height: 4.5rem;
+}
+
+.codex-loading-panel.compact .codex-loading-log {
+  height: auto;
+  min-height: 8rem;
+  max-height: min(46vh, 28rem);
+}
+
 .codex-loading-panel-note {
   display: grid;
   max-width: 44rem;

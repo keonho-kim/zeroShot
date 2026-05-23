@@ -1,15 +1,27 @@
 import { useEffect, useRef } from "react";
-import { buildCodexLoadingLogItems, type CodexLoadingProgressItem } from "@/entities/codex/codex-loading-log";
+import { buildCodexLoadingLogItems, type CodexLoadingLogSource, type CodexLoadingProgressItem } from "@/entities/codex/codex-loading-log";
+import { useI18n } from "@/lib/i18n";
 import { MarkdownRenderer } from "@/shared/ui/MarkdownRenderer";
 
 export function CodexLoadingLog(props: {
   progressItems: CodexLoadingProgressItem[];
-  messages: string[];
+  sources: CodexLoadingLogSource[];
   emptyMessage: string;
 }) {
+  const { t } = useI18n();
   const logRef = useRef<HTMLDivElement>(null);
-  const items = buildCodexLoadingLogItems(props.progressItems, props.messages);
-  const itemSignature = items.map((item) => `${item.id}:${item.detail}`).join("\n");
+  const items = buildCodexLoadingLogItems(props.progressItems, props.sources, t);
+  const itemSignature = items.map((item) => `${item.id}:${item.title}:${item.detail}:${item.status ?? ""}`).join("\n");
+
+  const statusLabel = (status: NonNullable<typeof items[number]["status"]>) => {
+    if (status === "running") {
+      return t("log.status.running");
+    }
+    if (status === "completed") {
+      return t("log.status.completed");
+    }
+    return t("log.status.failed");
+  };
 
   useEffect(() => {
     const log = logRef.current;
@@ -41,12 +53,12 @@ export function CodexLoadingLog(props: {
               <p>
                 <strong>{item.icon} {item.title}</strong>
                 {item.detail ? <span>{item.detail}</span> : null}
-                {item.status ? <span className={`codex-loading-status ${item.status}`}>{item.status}</span> : null}
+                {item.status ? <span className={`codex-loading-status ${item.status}`}>{statusLabel(item.status)}</span> : null}
               </p>
             ) : (
               <>
                 <strong>{item.title}</strong>
-                <pre>{item.detail}</pre>
+                <MarkdownRenderer markdown={item.detail} className="codex-loading-markdown" />
               </>
             )}
           </div>

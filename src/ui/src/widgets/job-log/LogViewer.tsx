@@ -1,4 +1,5 @@
 import { useEffect, useMemo } from "react";
+import type { CodexLoadingLogSource } from "@/entities/codex/codex-loading-log";
 import type { JobSnapshot } from "@/types/api";
 import { useAppStore, type LogLine } from "@/store/app-store";
 import { Card } from "@/shared/ui/card";
@@ -50,44 +51,16 @@ function lineDetail(line: LogLine): string {
   return line.text.replace(/^\[[^\]]+\]\s*/, "").trim();
 }
 
-function compact(value: string, maxLength = 160): string {
-  const normalized = value.replace(/\s+/g, " ").trim();
-  return normalized.length > maxLength ? `${normalized.slice(0, maxLength - 1)}…` : normalized;
-}
-
-function readableCodexLine(value: string): string {
-  const detail = value.replace(/^\[codex\]\s*/, "").trim();
-  const webSearch = /^(?:item updated|item completed): web_search\s+(?<query>.+)$/.exec(detail);
-  if (webSearch?.groups?.query) {
-    return `검색 중: ${compact(webSearch.groups.query)}`;
-  }
-  const tool = /^(?:item updated|item completed): mcp\s+(?<tool>\S+)(?:\s+(?<status>\S+))?/.exec(detail);
-  if (tool?.groups?.tool) {
-    return `도구 호출: ${compact([tool.groups.tool, tool.groups.status].filter(Boolean).join(" · "))}`;
-  }
-  const command = /^(?:item updated|item completed): command\s+(?<status>\S+)\s+(?<command>.+)$/.exec(detail);
-  if (command?.groups?.command) {
-    return `명령 실행: ${compact([command.groups.status, command.groups.command].filter(Boolean).join(" · "))}`;
-  }
-  const fileChange = /^(?:item updated|item completed): file_change\s+(?<status>\S+)\s+(?<changes>.+)$/.exec(detail);
-  if (fileChange?.groups?.changes) {
-    return `파일 변경: ${compact([fileChange.groups.status, fileChange.groups.changes].filter(Boolean).join(" · "))}`;
-  }
-  if (/^(?:item updated|item completed): agent_message$/.test(detail)) {
-    return "Codex 응답: 최종 보고와 다음 작업 상태를 작성하고 있습니다.";
-  }
-  return `작업 로그: ${compact(detail)}`;
-}
-
-function latestUnique(items: string[], limit: number): string[] {
+function latestUniqueSources(items: CodexLoadingLogSource[], limit: number): CodexLoadingLogSource[] {
   const seen = new Set<string>();
-  const result: string[] = [];
+  const result: CodexLoadingLogSource[] = [];
   for (let index = items.length - 1; index >= 0 && result.length < limit; index -= 1) {
     const item = items[index];
-    if (seen.has(item)) {
+    const key = item.source === "job" ? `${item.source}:${item.lineType}:${item.text}` : JSON.stringify(item);
+    if (seen.has(key)) {
       continue;
     }
-    seen.add(item);
+    seen.add(key);
     result.unshift(item);
   }
   return result;
@@ -118,13 +91,17 @@ function toProgressItems(job: JobSnapshot | null, logs: LogLine[], t: ReturnType
   });
 }
 
-function toMessages(logs: LogLine[]): string[] {
-  const messages = logs
+function toLogSources(logs: LogLine[]): CodexLoadingLogSource[] {
+  const sources = logs
     .filter((line) => line.type === "stdout" || line.type === "stderr")
-    .map((line) => readableCodexLine(lineDetail(line)))
-    .filter(Boolean)
-    .filter((line, index, items) => items[index - 1] !== line);
-  return latestUnique(messages, 20);
+    .map((line, index) => ({
+      source: "job" as const,
+      id: `manual-${index}`,
+      lineType: line.type,
+      text: lineDetail(line)
+    }))
+    .filter((line) => line.text);
+  return latestUniqueSources(sources, 20);
 }
 
 export function LogViewer({ job }: Props) {
@@ -134,7 +111,7 @@ export function LogViewer({ job }: Props) {
   const setCurrentJob = useAppStore((state) => state.setCurrentJob);
   const visibleLogs = job ? logs : [];
   const progressItems = useMemo(() => toProgressItems(job, visibleLogs, t), [job, t, visibleLogs]);
-  const messages = useMemo(() => toMessages(visibleLogs), [visibleLogs]);
+  const logSources = useMemo(() => toLogSources(visibleLogs), [visibleLogs]);
 
   useEffect(() => {
     if (!job || job.status !== "running") {
@@ -176,7 +153,7 @@ export function LogViewer({ job }: Props) {
           noteTitle={t("log.streamTitle")}
           noteDetail={t("log.streamDetail")}
           progressItems={progressItems}
-          messages={messages}
+          sources={logSources}
           emptyMessage={job ? t("log.waiting") : t("log.notStarted")}
         />
       </Card>

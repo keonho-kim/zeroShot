@@ -68,7 +68,7 @@ export function OmakasePage() {
       ) : (
         <OmakaseLogViewer
           error={controller.error}
-          messages={controller.messages}
+          logSources={controller.logSources}
           onRetry={controller.startOmakase}
           progressItems={controller.progressItems}
           runStatus={controller.runStatus}

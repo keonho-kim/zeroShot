@@ -1,6 +1,6 @@
 import { AgentLoadingStage } from "@/widgets/codex-loading/AgentLoadingStage";
 import { CodexLoadingLog } from "@/widgets/codex-loading/CodexLoadingLog";
-import { hasCodexThreadStarted } from "@/entities/codex/codex-loading-log";
+import { codexLogSources, hasCodexThreadStarted, type CodexLoadingLogSource } from "@/entities/codex/codex-loading-log";
 import { useI18n } from "@/lib/i18n";
 
 interface CodexLoadingProgressItem {
@@ -13,16 +13,19 @@ interface CodexLoadingProgressItem {
 export function CodexLoadingPanel(props: {
   label: string;
   progressItems: CodexLoadingProgressItem[];
-  messages: string[];
+  messages?: string[];
+  sources?: CodexLoadingLogSource[];
   emptyMessage: string;
   noteTitle?: string;
   noteDetail?: string;
+  density?: "default" | "compact";
 }) {
   const { t } = useI18n();
-  const threadStarted = hasCodexThreadStarted(props.messages);
+  const sources = props.sources ?? codexLogSources(props.messages ?? []);
+  const threadStarted = hasCodexThreadStarted(sources);
 
   return (
-    <div className="codex-loading-panel">
+    <div className={`codex-loading-panel ${props.density ?? "default"}`}>
       <AgentLoadingStage
         label={threadStarted ? t("common.codexThreadRunning") : props.label}
         phase={threadStarted ? "running" : "starting"}
@@ -35,7 +38,7 @@ export function CodexLoadingPanel(props: {
       ) : null}
       <CodexLoadingLog
         progressItems={props.progressItems}
-        messages={props.messages}
+        sources={sources}
         emptyMessage={props.emptyMessage}
       />
     </div>

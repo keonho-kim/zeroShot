@@ -1,5 +1,26 @@
 import { describe, expect, test } from "bun:test";
-import { buildCodexLoadingLogItems, hasCodexThreadStarted } from "@/entities/codex/codex-loading-log";
+import {
+  buildCodexLoadingLogItems as buildItems,
+  codexLogSources,
+  hasCodexThreadStarted as hasThreadStarted,
+  type CodexLoadingLogSource,
+  type CodexLoadingProgressItem
+} from "@/entities/codex/codex-loading-log";
+import { translateForLocale } from "@/lib/i18n";
+
+const t = (key: Parameters<typeof translateForLocale>[1], params?: Record<string, string | number>) => translateForLocale("en", key, params);
+
+function buildCodexLoadingLogItems(progressItems: CodexLoadingProgressItem[], rawMessages: string[]) {
+  return buildItems(progressItems, codexLogSources(rawMessages), t);
+}
+
+function buildLogItems(progressItems: CodexLoadingProgressItem[], sources: CodexLoadingLogSource[]) {
+  return buildItems(progressItems, sources, t);
+}
+
+function hasCodexThreadStarted(rawMessages: string[]) {
+  return hasThreadStarted(codexLogSources(rawMessages));
+}
 
 describe("codex loading log model", () => {
   test("formats agent messages as user-facing chat items", () => {
@@ -68,6 +89,21 @@ describe("codex loading log model", () => {
     expect(items[0]?.detail).toBe("Checked README.md before planning.");
   });
 
+  test("renders external bare URLs as markdown links", () => {
+    const items = buildCodexLoadingLogItems([], [
+      JSON.stringify({
+        type: "item.completed",
+        item: {
+          id: "item_1",
+          type: "agent_message",
+          text: "See https://docs.cloud.google.com/translate/docs/advanced/batch-translation, FeedZero https://www.feedzero.app/"
+        }
+      })
+    ]);
+
+    expect(items[0]?.detail).toBe("See [docs.cloud.google.com](https://docs.cloud.google.com/translate/docs/advanced/batch-translation), [FeedZero](https://www.feedzero.app/)");
+  });
+
   test("keeps agent messages from separate Codex threads as separate rows", () => {
     const items = buildCodexLoadingLogItems([], [
       JSON.stringify({ type: "thread.started", thread_id: "thread_a" }),
@@ -103,6 +139,32 @@ describe("codex loading log model", () => {
     expect(items).toHaveLength(120);
     expect(items[0]?.detail).toBe("Work note 1");
     expect(items.at(-1)?.detail).toBe("Work note 120");
+  });
+
+  test("uses a friendly title for unknown raw text", () => {
+    const items = buildCodexLoadingLogItems([], [
+      "plain log output"
+    ]);
+
+    expect(items[0]?.title).toBe("Work event");
+    expect(items[0]?.title).not.toMatch(/^raw /);
+  });
+
+  test("localizes stable OMAKASE messages through the common mapper", () => {
+    const items = buildItems([], [{
+      source: "omakase",
+      stage: "architect",
+      message: "Codex selected the recommended architecture choices."
+    }], (key, params) => translateForLocale("ko", key, params));
+
+    expect(items).toEqual([{
+      id: "omakase-architect-0",
+      kind: "agent",
+      title: "에이전트 메시지",
+      detail: "Codex가 추천 아키텍처 선택지를 적용했습니다.",
+      status: "running",
+      icon: "💬"
+    }]);
   });
 
   test("formats tool calls with an icon, tool name, and detail", () => {
@@ -286,6 +348,30 @@ describe("codex loading log model", () => {
       ["📁", "Browse files"]
     ]);
     expect(items.every((item) => item.detail === "")).toBe(true);
+  });
+
+  test("maps manual job Codex log lines through the common tool renderer", () => {
+    const items = buildLogItems([], [
+      { source: "job", lineType: "stdout", text: "item updated: web_search RSS reader apps" },
+      { source: "job", lineType: "stdout", text: "item completed: agent_message" }
+    ]);
+
+    expect(items).toEqual([
+      {
+        id: "job-web-0",
+        kind: "tool",
+        title: "Web search",
+        detail: "RSS reader apps",
+        icon: "🌐"
+      },
+      {
+        id: "job-agent-1",
+        kind: "agent",
+        title: "Agent message",
+        detail: "Codex is writing the response and work status.",
+        icon: "💬"
+      }
+    ]);
   });
 
   test("detects when a Codex thread has started", () => {

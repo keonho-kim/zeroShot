@@ -1,11 +1,12 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { buildLogText, initialOmakaseStageStatuses, omakaseStageLabel, type OmakaseProgressItem, type OmakaseRunStatus, type OmakaseStageStatus } from "@/entities/omakase/omakase-progress";
+import type { CodexLoadingLogSource } from "@/entities/codex/codex-loading-log";
 import { useBodyClass } from "@/hooks/useBodyClass";
 import { requestOmakaseStream } from "@/lib/api/omakase";
 import { useI18n } from "@/lib/i18n";
 import { useAppStore } from "@/store/app-store";
-import type { OmakaseStage, OmakaseStagePayload } from "@/types/api";
+import type { JobEvent, OmakaseStage, OmakaseStagePayload } from "@/types/api";
 
 export function useOmakasePageController() {
   const { locale, responseLanguage } = useI18n();
@@ -16,8 +17,9 @@ export function useOmakasePageController() {
   const [runStatus, setRunStatus] = useState<OmakaseRunStatus>("idle");
   const [stageStatuses, setStageStatuses] = useState<Record<OmakaseStage, OmakaseStageStatus>>(initialOmakaseStageStatuses);
   const [progressItems, setProgressItems] = useState<OmakaseProgressItem[]>([]);
-  const [messages, setMessages] = useState<string[]>([]);
+  const [logSources, setLogSources] = useState<CodexLoadingLogSource[]>([]);
   const [error, setError] = useState("");
+  const logIdRef = useRef(0);
 
   useBodyClass("home-page");
 
@@ -30,9 +32,38 @@ export function useOmakasePageController() {
     if (!trimmed) {
       return;
     }
-    setMessages((items) => {
-      const next = `${omakaseStageLabel(stage)}: ${trimmed}`;
-      return items.at(-1) === next ? items : [...items, next].slice(-40);
+    logIdRef.current += 1;
+    setLogSources((items) => {
+      const next: CodexLoadingLogSource = {
+        source: "omakase",
+        id: `omakase-${logIdRef.current}`,
+        stage,
+        message: trimmed
+      };
+      const previous = items.at(-1);
+      return previous?.source === "omakase" && previous.stage === stage && previous.message === trimmed
+        ? items
+        : [...items, next].slice(-80);
+    });
+  };
+
+  const addBuildLog = (event: JobEvent) => {
+    const text = buildLogText(event).trim();
+    if (!text) {
+      return;
+    }
+    logIdRef.current += 1;
+    setLogSources((items) => {
+      const next: CodexLoadingLogSource = {
+        source: "job",
+        id: `omakase-build-${logIdRef.current}`,
+        lineType: event.type,
+        text
+      };
+      const previous = items.at(-1);
+      return previous?.source === "job" && previous.lineType === event.type && previous.text === text
+        ? items
+        : [...items, next].slice(-80);
     });
   };
 
@@ -100,8 +131,9 @@ export function useOmakasePageController() {
     setRunStatus("running");
     setStageStatuses(initialOmakaseStageStatuses);
     setProgressItems([]);
-    setMessages([]);
+    setLogSources([]);
     setError("");
+    logIdRef.current = 0;
 
     try {
       const job = await requestOmakaseStream(
@@ -118,7 +150,7 @@ export function useOmakasePageController() {
           onStageCompleted: handleStageCompleted,
           onStageFailed: handleStageFailed,
           onBuildLog: ({ event }) => {
-            addMessage("build", buildLogText(event));
+            addBuildLog(event);
             if (event.type === "job_finished") {
               updateStageStatus("build", "completed");
             }
@@ -140,7 +172,7 @@ export function useOmakasePageController() {
   return {
     brief,
     error,
-    messages,
+    logSources,
     progressItems,
     projectRoot,
     runStatus,
