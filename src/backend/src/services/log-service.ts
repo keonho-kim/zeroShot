@@ -6,7 +6,7 @@ import { listRuns } from "@backend/services/history-service.js";
 import { listStoredArchitectSessions, listStoredDesignSessions, listStoredSessionProjectRoots } from "@backend/services/app-storage-service.js";
 import { readProjectHistoryMeta } from "@backend/services/project-service.js";
 import { countWorkflowLogRecords, listWorkflowLogProjectRoots } from "@backend/services/workflow-log-service.js";
-import type { WorkLogProjectSummary } from "@backend/types.js";
+import type { WorkLogProjectSummary } from "@backend/types/history.js";
 
 async function existingDirectories(paths: string[]): Promise<string[]> {
   const resolved = await Promise.all(

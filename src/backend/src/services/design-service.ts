@@ -14,9 +14,9 @@ import type {
   DesignRecommendationResponse,
   DesignProgressEvent,
   DesignRuntimeMode,
-  DesignRuntimeResponse,
-  ResourceManifest
-} from "@backend/types.js";
+  DesignRuntimeResponse
+} from "@backend/types/design.js";
+import type { ResourceManifest } from "@backend/types/resource.js";
 
 const makeoverArchitectOnlyToolGuidance = [
   "Use read-only tools only when they help inspect ARCHITECT/PRODUCT.html, supporting files under ARCHITECT/, or selected read-only resource roots.",

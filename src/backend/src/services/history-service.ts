@@ -1,6 +1,6 @@
 import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
-import type { RunDetail, RunSummary } from "@backend/types.js";
+import type { RunDetail, RunSummary } from "@backend/types/history.js";
 
 const USER_RUN_DOCUMENTS = ["work-log.html", "result-report.html"] as const;
 

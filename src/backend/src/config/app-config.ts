@@ -4,7 +4,7 @@ import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 import { expandHomePath } from "@backend/core/path-input.js";
 import { getAppConfigPath } from "@backend/core/workspace.js";
-import type { AppConfig } from "@backend/types.js";
+import type { AppConfig } from "@backend/types/app.js";
 
 const defaultConfig: AppConfig = {
   bootstrapRoots: [homedir()],

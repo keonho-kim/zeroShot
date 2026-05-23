@@ -1,7 +1,7 @@
 import { realpath, readdir, readFile, stat, writeFile, mkdir } from "node:fs/promises";
 import { dirname, join, relative, resolve } from "node:path";
 import { expandHomePath } from "@backend/core/path-input.js";
-import type { DirectoryEntry } from "@backend/types.js";
+import type { DirectoryEntry } from "@backend/types/project.js";
 import { readProjectHistoryMeta } from "@backend/services/project-service.js";
 
 function normalize(path: string): string {

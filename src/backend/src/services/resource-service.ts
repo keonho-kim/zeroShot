@@ -3,7 +3,7 @@ import { join, relative } from "node:path";
 import { loadAppConfig } from "@backend/config/app-config.js";
 import { resourceCatalogSummary, resourcePromptBlock } from "@backend/llm/resources/prompt.js";
 import { ensureResourceStoreSeeded } from "@backend/services/resource-seed-service.js";
-import type { ResourceFileSummary, ResourceManifest } from "@backend/types.js";
+import type { ResourceFileSummary, ResourceManifest } from "@backend/types/resource.js";
 
 type Frontmatter = Record<string, unknown>;
 

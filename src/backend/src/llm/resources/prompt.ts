@@ -1,4 +1,4 @@
-import type { ResourceManifest } from "@backend/types.js";
+import type { ResourceManifest } from "@backend/types/resource.js";
 
 export function resourcePromptBlock(title: string, resource?: ResourceManifest): string {
   if (!resource) {

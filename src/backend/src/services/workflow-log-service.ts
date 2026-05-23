@@ -13,7 +13,7 @@ import type {
   WorkflowLogSection,
   WorkflowLogStage,
   WorkflowLogStageGroup
-} from "@backend/types.js";
+} from "@backend/types/history.js";
 
 const stageSections: Record<WorkflowLogStage, WorkflowLogSection[]> = {
   product: ["blueprint", "decisions", "logs"],

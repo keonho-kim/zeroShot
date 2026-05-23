@@ -4,7 +4,7 @@ import { writeProductHtml, writeUpdateDocument } from "@backend/services/file-se
 import { startPipelineRun } from "@backend/services/pipeline-run-service.js";
 import { readProjectState } from "@backend/services/project-service.js";
 import { createWorkflowLogRecord } from "@backend/services/workflow-log-service.js";
-import type { PipelineOptions, RunMode } from "@backend/types.js";
+import type { PipelineOptions, RunMode } from "@backend/types/pipeline.js";
 import { productContentToHtml, appendActiveResourceContext } from "../shared/product-content.js";
 import { getValidatedProjectRoot } from "../shared/project-root.js";
 

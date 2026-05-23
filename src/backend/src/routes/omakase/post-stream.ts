@@ -2,7 +2,7 @@ import type { Request, Response } from "express";
 import { createSseStream } from "@backend/core/sse.js";
 import { readAuthStatus } from "@backend/services/auth-service.js";
 import { runOmakasePipeline } from "@backend/services/omakase-service.js";
-import type { PipelineOptions } from "@backend/types.js";
+import type { PipelineOptions } from "@backend/types/pipeline.js";
 import { getValidatedProjectRoot } from "../shared/project-root.js";
 
 export async function postOmakaseStream(req: Request, res: Response) {

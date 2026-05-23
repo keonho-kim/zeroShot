@@ -2,7 +2,8 @@ import { Database } from "bun:sqlite";
 import { mkdir } from "node:fs/promises";
 import { dirname } from "node:path";
 import { getAppDatabasePath } from "@backend/core/workspace.js";
-import type { DesignRuntimeResponse, ProjectSettings } from "@backend/types.js";
+import type { DesignRuntimeResponse } from "@backend/types/design.js";
+import type { ProjectSettings } from "@backend/types/project.js";
 
 let database: Database | null = null;
 

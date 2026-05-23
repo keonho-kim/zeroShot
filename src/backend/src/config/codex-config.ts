@@ -2,7 +2,7 @@ import { parse, stringify } from "@iarna/toml";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
-import type { CodexSettings, ProjectCodexSettingsStatus } from "@backend/types.js";
+import type { CodexSettings, ProjectCodexSettingsStatus } from "@backend/types/codex-settings.js";
 
 const defaultProjectCodexSettings = {
   model: "gpt-5.5",

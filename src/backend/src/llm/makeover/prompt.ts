@@ -1,4 +1,4 @@
-import type { DesignRuntimeMode } from "@backend/types.js";
+import type { DesignRuntimeMode } from "@backend/types/design.js";
 import { languageName } from "@backend/i18n/locale.js";
 
 export const designRuntimeRolePrompt = `You are ZeroShot DESIGN runtime.

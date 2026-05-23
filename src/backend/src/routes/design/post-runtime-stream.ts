@@ -6,7 +6,7 @@ import { readAuthStatus } from "@backend/services/auth-service.js";
 import { buildDesignRuntime } from "@backend/services/design-service.js";
 import { readProjectState } from "@backend/services/project-service.js";
 import { appendWorkflowLogEvent, createWorkflowLogRecord } from "@backend/services/workflow-log-service.js";
-import type { DesignProgressEvent } from "@backend/types.js";
+import type { DesignProgressEvent } from "@backend/types/design.js";
 import { getValidatedProjectRoot } from "../shared/project-root.js";
 import { workflowProgressMessage, workflowRawMessage } from "../shared/workflow.js";
 import { toDesignRuntimeMode } from "./shared.js";

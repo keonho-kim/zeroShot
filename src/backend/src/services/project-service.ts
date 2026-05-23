@@ -3,7 +3,7 @@ import { readdir } from "node:fs/promises";
 import { exists } from "@backend/core/path-guards.js";
 import { architectProductPath, designEntryPath } from "@backend/services/file-service.js";
 import { analyzeProjectSource } from "@backend/services/source-analysis-service.js";
-import type { ProjectState } from "@backend/types.js";
+import type { ProjectState } from "@backend/types/project.js";
 
 const nonProjectEntries = new Set([".DS_Store", ".work.history", "runs", "ARCHITECT", "DESIGN", "PRODUCT.md", "PRODUCT.html", "DESIGN.md", "DESIGN.runtime.json", "artifacts.json", "UPDATE.md"]);
 

@@ -12,11 +12,13 @@ import { buildResourcePromptContext } from "@backend/services/resource-service.j
 import { appendWorkflowLogEvent, createWorkflowLogRecord } from "@backend/services/workflow-log-service.js";
 import type {
   DesignProgressEvent,
-  DesignRecommendationResponse,
+  DesignRecommendationResponse
+} from "@backend/types/design.js";
+import type {
   JobEvent,
   JobSnapshot,
   PipelineOptions
-} from "@backend/types.js";
+} from "@backend/types/pipeline.js";
 
 export type OmakaseStage = "architect" | "design" | "build";
 
