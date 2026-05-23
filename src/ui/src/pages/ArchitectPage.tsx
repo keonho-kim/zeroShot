@@ -2,12 +2,12 @@ import { useQuery } from "@tanstack/react-query";
 import { Send } from "lucide-react";
 import { useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
-import { useAppStore } from "@/stores/app-store";
-import { useArchitectFlowStore } from "@/stores/architect-store";
-import { PageHeader } from "@/components/PageHeader";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Textarea } from "@/components/ui/textarea";
+import { useAppStore } from "@/store/app-store";
+import { useArchitectFlowStore } from "@/store/architect-store";
+import { PageHeader } from "@/shared/ui/PageHeader";
+import { Button } from "@/shared/ui/button";
+import { Card } from "@/shared/ui/card";
+import { Textarea } from "@/shared/ui/textarea";
 import { fetchProductArtifact } from "@/lib/api/projects";
 import { useI18n } from "@/lib/i18n";
 

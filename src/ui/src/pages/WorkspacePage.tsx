@@ -2,14 +2,14 @@ import { useQuery } from "@tanstack/react-query";
 import { Bot, Boxes, DraftingCompass, Paintbrush } from "lucide-react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
-import { PageHeader } from "@/components/PageHeader";
+import { PageHeader } from "@/shared/ui/PageHeader";
 import { fetchProjectState } from "@/lib/api/projects";
 import { useI18n } from "@/lib/i18n";
-import { useAppStore } from "@/stores/app-store";
+import { useAppStore } from "@/store/app-store";
 import { useBodyClass } from "@/hooks/useBodyClass";
 import { canStartBuild, canStartDesign } from "@/entities/project/project-core";
 import { isMissingSelectedProjectError } from "@/entities/project/stale-project";
-import { cn } from "@/utils/cn";
+import { cn } from "@/shared/lib/cn";
 
 function formatProjectName(projectRoot: string): string {
   const parts = projectRoot.split("/").filter(Boolean);

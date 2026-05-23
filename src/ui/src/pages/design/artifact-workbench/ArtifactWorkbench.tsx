@@ -1,4 +1,4 @@
-import { Card } from "@/components/ui/card";
+import { Card } from "@/shared/ui/card";
 import { ArtifactCodexPanel } from "@/pages/design/artifact-workbench/ArtifactCodexPanel";
 import { ArtifactRequiredState } from "@/pages/design/artifact-workbench/ArtifactRequiredState";
 import { ArtifactStage } from "@/pages/design/artifact-workbench/ArtifactStage";

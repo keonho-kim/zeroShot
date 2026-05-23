@@ -1,34 +1,12 @@
 import { Check, LogIn, Play, ScrollText } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { ProjectPickerModal } from "@/components/ProjectPickerModal";
-import { Button } from "@/components/ui/button";
 import { useI18n } from "@/lib/i18n";
-import { useAppStore } from "@/stores/app-store";
-import { useBodyClass } from "@/hooks/useBodyClass";
+import { useHomePageController } from "@/pages/home/page-controller";
+import { Button } from "@/shared/ui/button";
+import { ProjectPickerModal } from "@/widgets/project-picker/ProjectPickerModal";
 
 export function HomePage() {
   const { t } = useI18n();
-  const navigate = useNavigate();
-  const authStatus = useAppStore((state) => state.authStatus);
-  const isProjectPickerOpen = useAppStore((state) => state.isProjectPickerOpen);
-  const setProjectPickerOpen = useAppStore((state) => state.setProjectPickerOpen);
-  const setProjectBrowserPath = useAppStore((state) => state.setProjectBrowserPath);
-  const setCandidateProjectPath = useAppStore((state) => state.setCandidateProjectPath);
-  const setSelectedBrowserEntryPath = useAppStore((state) => state.setSelectedBrowserEntryPath);
-  const setProjectPickerHistory = useAppStore((state) => state.setProjectPickerHistory);
-  const setProjectPickerHistoryIndex = useAppStore((state) => state.setProjectPickerHistoryIndex);
-
-  useBodyClass("home-page");
-
-  const authValid = authStatus?.valid === true;
-  const openProjectPicker = () => {
-    setProjectBrowserPath("");
-    setCandidateProjectPath("");
-    setSelectedBrowserEntryPath("");
-    setProjectPickerHistory([]);
-    setProjectPickerHistoryIndex(-1);
-    setProjectPickerOpen(true);
-  };
+  const controller = useHomePageController();
 
   return (
     <div className="home-shell landing-shell mx-auto flex max-w-[1180px] flex-col gap-6 md:gap-8">
@@ -40,19 +18,19 @@ export function HomePage() {
           <div className="landing-actions" aria-label={t("home.primaryActions")}>
             <Button
               type="button"
-              variant={authValid ? "outline" : "default"}
-              disabled={authValid}
-              onClick={() => navigate("/login")}
+              variant={controller.authValid ? "outline" : "default"}
+              disabled={controller.authValid}
+              onClick={() => controller.navigate("/login")}
               className="landing-action-button"
             >
-              {authValid ? <Check aria-hidden="true" className="landing-login-check" /> : <LogIn aria-hidden="true" />}
-              {authValid ? t("home.loginComplete") : t("home.login")}
+              {controller.authValid ? <Check aria-hidden="true" className="landing-login-check" /> : <LogIn aria-hidden="true" />}
+              {controller.authValid ? t("home.loginComplete") : t("home.login")}
             </Button>
-            <Button type="button" onClick={openProjectPicker} className="landing-action-button">
+            <Button type="button" onClick={controller.openProjectPicker} className="landing-action-button">
               <Play aria-hidden="true" />
               {t("home.start")}
             </Button>
-            <Button type="button" variant="outline" onClick={() => navigate("/history")} className="landing-action-button">
+            <Button type="button" variant="outline" onClick={() => controller.navigate("/history")} className="landing-action-button">
               <ScrollText aria-hidden="true" />
               {t("home.workHistory")}
             </Button>
@@ -60,12 +38,10 @@ export function HomePage() {
         </div>
       </section>
       <ProjectPickerModal
-        open={isProjectPickerOpen}
+        open={controller.isProjectPickerOpen}
         freshStart
-        onProjectSelected={() => navigate("/start-mode")}
-        onClose={() => {
-          setProjectPickerOpen(false);
-        }}
+        onProjectSelected={controller.onProjectSelected}
+        onClose={controller.closeProjectPicker}
       />
     </div>
   );

@@ -1,6 +1,6 @@
 import { CheckCircle2, Clock } from "lucide-react";
-import { Card } from "@/components/ui/card";
-import { cn } from "@/utils/cn";
+import { Card } from "@/shared/ui/card";
+import { cn } from "@/shared/lib/cn";
 import type { DesignTimelineItem } from "@/pages/design/design-page-model";
 
 export function DesignTimeline({ items }: { items: DesignTimelineItem[] }) {

@@ -1,14 +1,14 @@
 import { Navigate } from "react-router-dom";
-import { PageHeader } from "@/components/PageHeader";
-import { CodexLoadingPanel } from "@/components/CodexLoadingPanel";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { PageHeader } from "@/shared/ui/PageHeader";
+import { CodexLoadingPanel } from "@/widgets/codex-loading/CodexLoadingPanel";
+import { Button } from "@/shared/ui/button";
+import { Card } from "@/shared/ui/card";
 import { ArtifactWorkbench } from "@/pages/design/artifact-workbench/ArtifactWorkbench";
 import { DesignResult } from "@/pages/design/DesignResult";
 import { DesignRuntimeSetup } from "@/pages/design/DesignRuntimeSetup";
 import { useDesignPageController } from "@/pages/design/page-controller";
 import { useI18n } from "@/lib/i18n";
-import { cn } from "@/utils/cn";
+import { cn } from "@/shared/lib/cn";
 
 export function DesignPage() {
   const { t } = useI18n();

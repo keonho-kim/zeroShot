@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useAppStore } from "@/stores/app-store";
+import { useAppStore } from "@/store/app-store";
 import { fetchLatestDesign, requestDesignRecommendationsStream, requestDesignRuntimeStream } from "@/lib/api/design";
 import {
   fetchDesignArtifact,

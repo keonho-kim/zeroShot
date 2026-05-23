@@ -3,9 +3,9 @@ import { useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { fetchAuthStatus, saveAuthStatus } from "@/lib/api/auth";
 import { useI18n } from "@/lib/i18n";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/shared/ui/button";
+import { Card } from "@/shared/ui/card";
+import { Textarea } from "@/shared/ui/textarea";
 
 export function LoginPage() {
   const { t } = useI18n();

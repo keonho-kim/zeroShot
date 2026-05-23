@@ -1,8 +1,8 @@
 import { Bot, SlidersHorizontal } from "lucide-react";
 import { Navigate, useNavigate } from "react-router-dom";
-import { PageHeader } from "@/components/PageHeader";
+import { PageHeader } from "@/shared/ui/PageHeader";
 import { useI18n } from "@/lib/i18n";
-import { useAppStore } from "@/stores/app-store";
+import { useAppStore } from "@/store/app-store";
 import { useBodyClass } from "@/hooks/useBodyClass";
 
 function projectName(projectRoot: string): string {

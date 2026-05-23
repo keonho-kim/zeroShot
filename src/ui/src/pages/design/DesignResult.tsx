@@ -1,4 +1,4 @@
-import { Card } from "@/components/ui/card";
+import { Card } from "@/shared/ui/card";
 import { designModeLabel } from "@/entities/design/design-runtime";
 import type { DesignRuntimeResponse } from "@/types/api";
 import { modeIcon } from "@/pages/design/design-page-model";

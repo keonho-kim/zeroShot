@@ -1,7 +1,7 @@
 import { Monitor, Smartphone, Tablet } from "lucide-react";
 import type { Dispatch, ReactNode, SetStateAction } from "react";
 import type { ArtifactViewport } from "@/pages/design/artifact-workbench/types";
-import { cn } from "@/utils/cn";
+import { cn } from "@/shared/lib/cn";
 
 const viewportOptions = [
   { id: "desktop", icon: <Monitor aria-hidden="true" />, label: "Desktop" },

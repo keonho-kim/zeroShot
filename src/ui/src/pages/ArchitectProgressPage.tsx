@@ -2,12 +2,12 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { ArrowLeft, ArrowRight, Check, Eye, Layers3 } from "lucide-react";
 import { useEffect, useMemo } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
-import { useAppStore } from "@/stores/app-store";
-import { useArchitectFlowStore } from "@/stores/architect-store";
-import { PageHeader } from "@/components/PageHeader";
-import { CodexLoadingPanel } from "@/components/CodexLoadingPanel";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { useAppStore } from "@/store/app-store";
+import { useArchitectFlowStore } from "@/store/architect-store";
+import { PageHeader } from "@/shared/ui/PageHeader";
+import { CodexLoadingPanel } from "@/widgets/codex-loading/CodexLoadingPanel";
+import { Button } from "@/shared/ui/button";
+import { Card } from "@/shared/ui/card";
 import { useI18n } from "@/lib/i18n";
 import {
   allDecisionsAnswered,
@@ -20,7 +20,7 @@ import {
   runArchitectBootstrap
 } from "@/lib/api/architect";
 import { fetchProjectSettings, fetchProjectState } from "@/lib/api/projects";
-import { cn } from "@/utils/cn";
+import { cn } from "@/shared/lib/cn";
 import { clearMissingProjectSelection, hasValidSelectedProject, isMissingSelectedProjectError } from "@/entities/project/stale-project";
 import { bootstrapLanguageSummary } from "@/pages/architect-progress/bootstrap-summary";
 import { ArchitectOverlays } from "@/pages/architect-progress/ArchitectOverlays";
