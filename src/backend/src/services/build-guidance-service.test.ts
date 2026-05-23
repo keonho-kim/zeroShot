@@ -7,8 +7,11 @@ describe("build guidance service", () => {
     const nextContent = ensureBuildImplementationGuidance(content);
 
     expect(content).toContain("## Build Implementation Guidance");
-    expect(content).toContain("src/ui/src");
-    expect(content).toContain("src/backend/src");
+    expect(content).toContain("full-stack backend code lives under src/server");
+    expect(content).toContain("full-stack frontend code lives under src/ui");
+    expect(content).not.toContain("src/backend/src");
+    expect(content).toContain("services/<domain>/{const|constants");
+    expect(content).toContain("Frontend structure");
     expect(content).toContain("Correctness");
     expect(nextContent).toBe(content);
   });

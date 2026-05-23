@@ -46,33 +46,36 @@ func buildGeneratedAgentsMarkdown(plan []bootstrapTarget, flags *bootstrapFlagSe
 
 ## Backend Layout
 
-- ` + "`api`" + `: HTTP routes, controllers, or external interface boundaries.
-- ` + "`core`" + `: product rules, use cases, and domain logic.
-- ` + "`services`" + `: application orchestration.
+- ` + "`app`" + `: application startup and top-level wiring.
+- ` + "`routes`" + `: HTTP routes, controllers, request/response handling, or external interface boundaries.
+- ` + "`services/<domain>/{const|constants,...,service}`" + `: domain use cases and orchestration. The service file is the public assembly point for that domain.
 - ` + "`integrations`" + `: databases, external APIs, queues, storage, auth providers, and agent protocols.
-- ` + "`models`" + `: domain models, DTOs, schemas, and validation objects.
+- ` + "`core`" + `: domain-neutral execution rules, guards, and shared product logic.
 - ` + "`config`" + `: runtime configuration.
-- ` + "`common`" + `: small shared utilities only.
+- ` + "`types`" + `: shared backend types, DTOs, schemas, and validation objects.
 
 ## Backend Architecture
 
 - Preserve the scaffolded backend folders while organizing growing behavior by product domain.
 - Keep route/controller files thin; they should validate transport input and delegate to domain-oriented services or core use cases.
-- Put domain invariants, state transitions, and product rules in focused modules under ` + "`core`" + ` or a domain-specific service boundary.
+- Put domain invariants, state transitions, and product rules in focused modules under ` + "`services/<domain>`" + ` or ` + "`core`" + `.
 - Keep database, external API, queue, storage, auth, and agent protocol details under ` + "`integrations`" + `.
-- Use ` + "`common`" + ` only for small domain-neutral utilities. Do not turn it into a dumping ground for product behavior.
+- Use ` + "`const`" + ` for TypeScript, JavaScript, and Python service constants. Use ` + "`constants`" + ` for Go, Rust, Java, Ruby, and Zig.
 - Split files when one file owns unrelated domains, transport handling, validation, orchestration, and infrastructure at the same time.
 - Prefer functions and explicit data structures. Use classes only when lifecycle, identity, or encapsulated mutable state is needed now.
 
 ## Frontend Layout
 
+- ` + "`app`" + `: application bootstrap, providers, router, and layout wiring.
 - ` + "`pages`" + `: route-level screens.
-- ` + "`components`" + `: reusable UI components.
+- ` + "`widgets`" + `: reusable composed UI blocks.
+- ` + "`features`" + `: user-action units such as submit, save, upload, search, or checkout.
+- ` + "`entities`" + `: domain models, plain state rules, and UI-independent validation.
+- ` + "`shared`" + `: reusable UI and utilities that are truly domain-neutral.
+- ` + "`lib/api`" + `: backend API clients and route constants by domain.
 - ` + "`hooks`" + `: reusable React hooks.
-- ` + "`stores`" + `: client state.
-- ` + "`types`" + `: shared frontend types.
-- ` + "`common`" + `: UI-neutral utilities.
-- ` + "`lib`" + `: API clients and framework helpers.
+- ` + "`store`" + `: cross-cutting client state.
+- ` + "`styles`" + `: page, component, or domain CSS split by responsibility.
 
 ## Working Rules
 
@@ -128,11 +131,18 @@ Always install package-manager-resolved latest versions unless the user or frame
 
 ## Backend Architecture Guidance
 
-- Backend projects should keep the scaffolded layout while maintaining domain-level ownership.
+- Backend projects should keep the scaffolded app, routes, services, integrations, core, config, and types layout while maintaining domain-level ownership.
 - Routes and controllers should stay thin and delegate to domain-oriented services or core use cases.
 - Domain rules, validation, state transitions, and application decisions should live outside transport handlers.
 - Integrations should isolate databases, external APIs, queues, storage, auth providers, and agent protocols.
-- Common utilities must remain small, generic, and domain-neutral.
+- Constants should live under service domain const folders for TypeScript, JavaScript, and Python, and constants folders for Go, Rust, Java, Ruby, and Zig.
 - During updates, inspect touched backend areas for oversized files, duplicated utilities, weak domain boundaries, and architecture drift.
+
+## Frontend Architecture Guidance
+
+- Frontend projects should keep the scaffolded app, pages, widgets, features, entities, shared, lib/api, hooks, store, and styles layout.
+- Pages should assemble rendering and delegate state, mutation, and event orchestration to page controllers, features, entities, or hooks.
+- API calls should live in lib/api/<domain>, not directly in page components.
+- Domain logic that can be tested without rendering belongs in entities/<domain>.
 `
 }

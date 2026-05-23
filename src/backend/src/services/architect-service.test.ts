@@ -38,6 +38,10 @@ describe("architect service", () => {
     expect(response.decisions[1].prompt).toContain("개발 언어");
     expect(response.decisions).toHaveLength(2);
     expect(response.decisions[1].options[0].productRequirement).toContain("Bootstrap: --type fullstack");
+    expect(response.decisions[1].options[0].productRequirement).toContain("services/<domain>/const");
+    expect(response.decisions[1].options.some((option) => option.productRequirement.includes("--type frontend"))).toBe(true);
+    expect(response.decisions[1].options.some((option) => option.productRequirement.includes("--type library"))).toBe(true);
+    expect(response.decisions[1].options.some((option) => option.productRequirement.includes("--type script"))).toBe(true);
   });
 
   test("does not add a development language decision when the brief already names a stack", () => {
@@ -62,6 +66,10 @@ describe("architect service", () => {
     expect(prompt).toContain("no existing product files, source files, README files, or package metadata");
     expect(prompt).toContain("Actively use web search and web page reading");
     expect(prompt).toContain("compare existing apps or programs");
+    expect(prompt).toContain("Standard application architecture");
+    expect(prompt).toContain("services/<domain>/{const|constants");
+    expect(prompt).toContain("Frontend structure");
+    expect(prompt).toContain("The standard profile is the default for ordinary applications");
     expect(prompt).toContain("zeroshot bootstrap");
     expect(prompt).toContain("--type <backend|frontend|fullstack|library|script>");
     expect(prompt).toContain("typescript, javascript, python, go, rust, java, ruby, zig");
@@ -101,6 +109,8 @@ describe("architect service", () => {
     expect(prompt).toContain("ARCHITECT/pages/");
     expect(prompt).toContain("ARCHITECT/components/");
     expect(prompt).toContain("ARCHITECT/assets/");
+    expect(prompt).toContain("Build constraints must reflect the selected bootstrap language");
+    expect(prompt).toContain("Frontend structure");
   });
 
   test("extracts partial architect chat messages from runtime JSON", () => {

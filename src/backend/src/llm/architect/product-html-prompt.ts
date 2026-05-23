@@ -1,4 +1,5 @@
 import type { ArchitectDecisionResponse } from "@backend/services/architect/service";
+import { standardApplicationArchitecturePrompt, bootstrapScaffoldArchitecturePrompt } from "@backend/llm/architecture/prompt";
 
 function selectedRequirements(decisionSet: ArchitectDecisionResponse, answers: Record<string, string>): string {
   return decisionSet.decisions.map((decision) => {
@@ -33,7 +34,13 @@ export function buildArchitectProductHtmlPrompt(params: {
     "Use self-contained CSS and lightweight JavaScript only when it improves interactive review.",
     "Use compact 80% density in the generated planning document: smaller controls, tighter section spacing, shorter cards, and restrained heading scale while keeping the document readable.",
     "Include product concept, target users, key workflows, core screens, data model, integrations, build constraints, and acceptance criteria.",
+    "Build constraints must reflect the selected bootstrap language and project type, including backend domain service boundaries and frontend Feature-Sliced Design boundaries when relevant.",
     "Write user-facing content in the requested locale.",
+    "",
+    "Architecture guidance for build constraints:",
+    standardApplicationArchitecturePrompt,
+    "",
+    bootstrapScaffoldArchitecturePrompt,
     "",
     `Locale: ${params.locale}`,
     "",

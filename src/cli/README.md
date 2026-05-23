@@ -42,7 +42,7 @@ Codex-related pipeline execution stays in TypeScript because it depends on the T
 - The `llm` profile adds FastAPI, SSE, LangChain, LangGraph, DeepAgents, MCP adapter, FastMCP, and A2A SDK packages.
 - React frontends use the same baseline dependency family as ZeroShot UI, with Tiptap and Ant Design listed for Architect review rather than installed by default.
 
-Full-stack projects use `src/server` and `src/ui`. Backend scaffolds use `api`, `core`, `common`, `integrations`, `services`, `models`, and `config` areas, adapted to each language's conventions. Frontend scaffolds use `app`, `pages`, `components`, `hooks`, `stores`, `types`, `common`, and `lib`.
+Full-stack projects use `src/server` and `src/ui`. Backend scaffolds use `app`, `routes`, `services`, `integrations`, `core`, `config`, and `types` areas, adapted to each language's conventions. Backend services include a neutral `services/system` domain with `const` for TypeScript, JavaScript, and Python, and `constants` for Go, Rust, Java, Ruby, and Zig. Frontend scaffolds use `app`, `pages`, `widgets`, `features`, `entities`, `shared`, `lib/api`, `hooks`, `store`, and `styles`.
 
 `--skip-init` skips package manager and toolchain initialization, including dependency installation and package metadata files such as `pyproject.toml`, `package.json`, `Cargo.toml`, and `go.mod`. It still creates the ZeroShot folders and source layout.
 
