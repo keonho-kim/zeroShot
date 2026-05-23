@@ -1,5 +1,4 @@
 import { GitBranch } from "lucide-react";
-import { workflowSectionLabelKeys } from "@/entities/workflow-log/const/labels";
 import { formatProjectPath, formatWorkflowDate, workflowProjectTitle } from "@/entities/workflow-log/format";
 import { useI18n } from "@/lib/i18n";
 import { useHistoryPageController } from "@/pages/history/page-controller";
@@ -64,10 +63,6 @@ export function HistoryPage() {
             />
           ) : null}
           <section className="workflow-record-detail">
-            <div className="workflow-record-heading">
-              <span>{controller.selectedSection ? t(workflowSectionLabelKeys[controller.selectedSection]) : ""}</span>
-              {!controller.hideRecordList ? <strong>{controller.record?.title ?? t("log.chooseEntry")}</strong> : null}
-            </div>
             <RecordDetail record={controller.record} />
           </section>
         </section>
