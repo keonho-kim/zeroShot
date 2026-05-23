@@ -375,7 +375,7 @@
   }
 
   .landing-title {
-    font-size: 4rem;
+    font-size: clamp(3rem, 15vw, 4rem);
   }
 
   .home-console-path {
