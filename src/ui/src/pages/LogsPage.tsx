@@ -254,6 +254,7 @@ export function LogsPage() {
   ) : undefined;
   const selectedRecord = recordQuery.data;
   const sectionRecords = useMemo<WorkflowLogRecordSummary[]>(() => selectedRecords, [selectedRecords]);
+  const hideRecordList = selectedSection === "blueprint" || selectedSection === "preview";
 
   return (
     <div className="builder-shell logs-page">
@@ -276,7 +277,7 @@ export function LogsPage() {
       />
 
       {selectedProjectRoot ? (
-        <section className="workflow-clamp-board" aria-label={t("log.workflowBoard")}>
+        <section className={cn("workflow-clamp-board", hideRecordList && "workflow-clamp-board-direct")} aria-label={t("log.workflowBoard")}>
           <nav className="workflow-stage-rail" aria-label="Workflow stages">
             <div className="workflow-stage-tabs">
               {stageOrder.map((stage) => {
@@ -321,26 +322,28 @@ export function LogsPage() {
             </div>
           </nav>
 
-          <aside className="workflow-record-list">
-            {sectionRecords.map((record) => (
-              <button
-                type="button"
-                key={record.id}
-                className={cn("workflow-record-button", selectedRecordId === record.id && "selected")}
-                onClick={() => setSelectedRecordId(record.id)}
-              >
-                <strong>{record.title}</strong>
-                <span>{record.summary}</span>
-                <small>{formatDate(record.createdAt)}</small>
-              </button>
-            ))}
-            {!sectionRecords.length ? <p className="logs-empty">{t("log.noSectionRecords")}</p> : null}
-          </aside>
+          {!hideRecordList ? (
+            <aside className="workflow-record-list">
+              {sectionRecords.map((record) => (
+                <button
+                  type="button"
+                  key={record.id}
+                  className={cn("workflow-record-button", selectedRecordId === record.id && "selected")}
+                  onClick={() => setSelectedRecordId(record.id)}
+                >
+                  <strong>{record.title}</strong>
+                  <span>{record.summary}</span>
+                  <small>{formatDate(record.createdAt)}</small>
+                </button>
+              ))}
+              {!sectionRecords.length ? <p className="logs-empty">{t("log.noSectionRecords")}</p> : null}
+            </aside>
+          ) : null}
 
           <section className="workflow-record-detail">
             <div className="workflow-record-heading">
               <span>{selectedSection ? t(sectionLabelKeys[selectedSection]) : ""}</span>
-              <strong>{selectedRecord?.title ?? t("log.chooseEntry")}</strong>
+              {!hideRecordList ? <strong>{selectedRecord?.title ?? t("log.chooseEntry")}</strong> : null}
             </div>
             <RecordDetail record={selectedRecord} />
           </section>
