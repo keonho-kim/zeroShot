@@ -1,6 +1,6 @@
-import { runCodexPhase } from "@cli/pipeline/executor.js";
-import type { PhaseResult, PipelineContext } from "@cli/pipeline/types.js";
-import { createPrompt } from "@cli/pipeline/phase/sync-product/prompt.js";
+import { runCodexPhase } from "@cli/pipeline/executor";
+import type { PhaseResult, PipelineContext } from "@cli/pipeline/types";
+import { createPrompt } from "@cli/pipeline/phase/sync-product/prompt";
 
 export async function syncProductPhase(ctx: PipelineContext): Promise<PhaseResult> {
   console.log("[sync-product] PRODUCT.html 동기화 phase를 시작합니다.");

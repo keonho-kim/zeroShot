@@ -1,0 +1,31 @@
+import express, { type Router } from "express";
+import { asyncHandler } from "@backend/routes/shared/async-handler";
+import { deleteProjectDirectory } from "@backend/routes/projects/delete-directory";
+import { getDesignArtifact } from "@backend/routes/projects/get-design-artifact";
+import { getProductArtifact } from "@backend/routes/projects/get-product-artifact";
+import { getProductHtml } from "@backend/routes/projects/get-product-html";
+import { getProjectSettings } from "@backend/routes/projects/get-settings";
+import { getProjectState } from "@backend/routes/projects/get-state";
+import { getProjectTree } from "@backend/routes/projects/get-tree";
+import { postAllowProject } from "@backend/routes/projects/post-allow";
+import { postProjectDirectory } from "@backend/routes/projects/post-directory";
+import { putDesignArtifact } from "@backend/routes/projects/put-design-artifact";
+import { putProductArtifact } from "@backend/routes/projects/put-product-artifact";
+import { putProductHtml } from "@backend/routes/projects/put-product-html";
+import { putProjectSettings } from "@backend/routes/projects/put-settings";
+
+export const projectsRouter: Router = express.Router();
+
+projectsRouter.get("/tree", asyncHandler(getProjectTree));
+projectsRouter.post("/allow", asyncHandler(postAllowProject));
+projectsRouter.post("/directory", asyncHandler(postProjectDirectory));
+projectsRouter.delete("/directory", asyncHandler(deleteProjectDirectory));
+projectsRouter.get("/state", asyncHandler(getProjectState));
+projectsRouter.get("/settings", asyncHandler(getProjectSettings));
+projectsRouter.put("/settings", asyncHandler(putProjectSettings));
+projectsRouter.get("/product-html", asyncHandler(getProductHtml));
+projectsRouter.put("/product-html", asyncHandler(putProductHtml));
+projectsRouter.get("/product-artifact", asyncHandler(getProductArtifact));
+projectsRouter.put("/product-artifact", asyncHandler(putProductArtifact));
+projectsRouter.get("/design-artifact", asyncHandler(getDesignArtifact));
+projectsRouter.put("/design-artifact", asyncHandler(putDesignArtifact));

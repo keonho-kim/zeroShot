@@ -1,9 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useEffect } from "react";
-import { fetchAuthStatus, fetchCurrentJob } from "@/lib/api";
+import { fetchAuthStatus } from "@/lib/api/auth";
+import { fetchCurrentJob } from "@/lib/api/jobs";
 import { useI18n } from "@/lib/i18n";
-import { useAppStore } from "@/stores/app-store";
+import { useAppStore } from "@/store/app-store";
 
 export function AppLayout() {
   const { t } = useI18n();

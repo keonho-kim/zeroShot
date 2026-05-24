@@ -2,9 +2,9 @@ import { parse, stringify } from "@iarna/toml";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
-import { expandHomePath } from "@backend/core/path-input.js";
-import { getAppConfigPath } from "@backend/core/workspace.js";
-import type { AppConfig } from "@backend/types.js";
+import { expandHomePath } from "@backend/core/path-input";
+import { getAppConfigPath } from "@backend/core/workspace";
+import type { AppConfig } from "@backend/types/app";
 
 const defaultConfig: AppConfig = {
   bootstrapRoots: [homedir()],

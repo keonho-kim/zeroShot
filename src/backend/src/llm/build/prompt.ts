@@ -1,14 +1,15 @@
+import { standardApplicationArchitecturePrompt, bootstrapScaffoldArchitecturePrompt } from "@backend/llm/architecture/prompt";
+
 export const buildImplementationGuidance = `## Build Implementation Guidance
 
 - Determine whether this project is backend-only or requires both frontend and backend before implementing.
 - Practice minimal programming: prefer clear, compact code over verbose code.
-- If frontend work is needed, use the same folder structure as this system under src/ui/src.
-- If backend work is needed, place backend code under src/backend/src with these responsibility folders:
-  - /api
-  - /core
-  - /integrations
-  - /common
-  - /utils
+- Follow .agents/PROJECT_CONTEXT.md when it exists. It is the source of truth for the bootstrapped language, runtime, and project shape.
+- Do not force ZeroShot's own repository paths onto generated apps. Backend-only projects use the scaffolded backend root, full-stack backend code lives under src/server, and full-stack frontend code lives under src/ui.
+
+${standardApplicationArchitecturePrompt}
+
+${bootstrapScaffoldArchitecturePrompt}
 
 ## Engineering Priorities
 

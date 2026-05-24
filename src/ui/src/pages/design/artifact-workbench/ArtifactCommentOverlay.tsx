@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type PointerEvent, type RefObject } from "react";
 import { Eraser, MousePointer2, Paperclip, Pencil, Type, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Button } from "@/shared/ui/button";
+import { Input } from "@/shared/ui/input";
 import { useI18n } from "@/lib/i18n";
 import type { ArtifactCommentCapture } from "@/pages/design/artifact-workbench/types";
 

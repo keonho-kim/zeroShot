@@ -1,4 +1,4 @@
-import { languageName } from "@backend/i18n/locale.js";
+import { languageName } from "@backend/i18n/locale";
 
 export function buildUpdatePrompt(updateRequest: string, locale: string): string {
   const language = languageName(locale);
@@ -11,10 +11,9 @@ Rules:
 - Do not edit files or run commands.
 - Read PRODUCT.html and inspect the repository only if needed to understand the current product and source shape.
 - Ask 3 to 5 concrete decisions.
-- Each decision must include exactly 6 mutually exclusive options.
+- Each decision must include exactly 5 mutually exclusive concrete options.
 - The first option must be the option Codex recommends.
-- Options 2 through 5 must be credible alternatives.
-- Option 6 must be "알아서 해주세요" in Korean or "Let Codex choose" in English, and it must mean "use the recommended first option".
+- Options 2 through 5 must be credible alternatives the user can explicitly select.
 - Decisions should clarify update scope, UX/product behavior, implementation risk, testing expectations, and PRODUCT.html spec impact.
 - Every option productRequirement must be implementation-ready for UPDATE.md and later pipeline work.
 - Include a requirement that the update run executes relevant tests and cross-checks the final implementation against PRODUCT.html feature specifications.

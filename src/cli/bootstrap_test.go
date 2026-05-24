@@ -22,12 +22,19 @@ func TestBootstrapCreatesFullstackScaffoldWithoutInit(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	assertPathExists(t, filepath.Join(root, "src", "server", "src", "api"))
+	assertPathExists(t, filepath.Join(root, "src", "server", "src", "app"))
+	assertPathExists(t, filepath.Join(root, "src", "server", "src", "routes"))
 	assertPathExists(t, filepath.Join(root, "src", "server", "src", "core"))
 	assertPathExists(t, filepath.Join(root, "src", "server", "src", "integrations"))
+	assertPathExists(t, filepath.Join(root, "src", "server", "src", "services", "system", "const", "runtime.ts"))
+	assertPathExists(t, filepath.Join(root, "src", "server", "src", "types", "system.ts"))
 	assertPathExists(t, filepath.Join(root, "src", "ui", "src", "pages"))
-	assertPathExists(t, filepath.Join(root, "src", "ui", "src", "components"))
-	assertPathExists(t, filepath.Join(root, "src", "ui", "src", "stores"))
+	assertPathExists(t, filepath.Join(root, "src", "ui", "src", "widgets"))
+	assertPathExists(t, filepath.Join(root, "src", "ui", "src", "features"))
+	assertPathExists(t, filepath.Join(root, "src", "ui", "src", "entities"))
+	assertPathExists(t, filepath.Join(root, "src", "ui", "src", "store"))
+	assertPathExists(t, filepath.Join(root, "src", "ui", "src", "lib", "api", "const", "routes.ts"))
+	assertPathExists(t, filepath.Join(root, "src", "ui", "src", "lib", "api", "client.ts"))
 	assertPathExists(t, filepath.Join(root, "AGENTS.md"))
 	assertPathExists(t, filepath.Join(root, ".agents", "PROJECT_CONTEXT.md"))
 	assertPathMissing(t, filepath.Join(root, "ARCHITECT", "PRODUCT.html"))
@@ -42,12 +49,21 @@ func TestBootstrapCreatesFullstackScaffoldWithoutInit(t *testing.T) {
 	if !strings.Contains(string(agents), "Backend Architecture") {
 		t.Fatal("expected AGENTS.md to include backend architecture guidance")
 	}
+	if !strings.Contains(string(agents), "services/<domain>/{const|constants,...,service}") {
+		t.Fatal("expected AGENTS.md to include domain service structure")
+	}
+	if !strings.Contains(string(agents), "Frontend Layout") || !strings.Contains(string(agents), "widgets") {
+		t.Fatal("expected AGENTS.md to include frontend architecture guidance")
+	}
 	context, err := os.ReadFile(filepath.Join(root, ".agents", "PROJECT_CONTEXT.md"))
 	if err != nil {
 		t.Fatal(err)
 	}
 	if !strings.Contains(string(context), "domain-level ownership") {
 		t.Fatal("expected PROJECT_CONTEXT.md to include domain-level backend guidance")
+	}
+	if !strings.Contains(string(context), "lib/api/<domain>") {
+		t.Fatal("expected PROJECT_CONTEXT.md to include frontend API boundary guidance")
 	}
 	assertPathExists(t, filepath.Join(root, ".agents", "skills"))
 	assertPathExists(t, filepath.Join(root, ".agents", "assets", "skills"))
@@ -70,10 +86,94 @@ func TestBootstrapCreatesPythonScaffoldWithoutPackageMetadataWhenInitIsSkipped(t
 	packageRoot := filepath.Join(root, "src", "mini_mani_mo")
 	assertPathMissing(t, filepath.Join(root, "pyproject.toml"))
 	assertPathMissing(t, filepath.Join(root, ".python-version"))
-	assertPathExists(t, filepath.Join(packageRoot, "api", "__init__.py"))
+	assertPathExists(t, filepath.Join(packageRoot, "app", "__init__.py"))
+	assertPathExists(t, filepath.Join(packageRoot, "routes", "__init__.py"))
 	assertPathExists(t, filepath.Join(packageRoot, "core", "__init__.py"))
-	assertPathExists(t, filepath.Join(packageRoot, "common", "__init__.py"))
 	assertPathExists(t, filepath.Join(packageRoot, "integrations", "__init__.py"))
+	assertPathExists(t, filepath.Join(packageRoot, "services", "system", "const", "runtime.py"))
+	assertPathExists(t, filepath.Join(packageRoot, "types", "system.py"))
+}
+
+func TestBootstrapUsesLanguageSpecificConstantDirectories(t *testing.T) {
+	tests := []struct {
+		name         string
+		flags        bootstrapFlagSet
+		expectedPath string
+		missingPath  string
+	}{
+		{
+			name: "typescript const",
+			flags: bootstrapFlagSet{
+				projectRoot: t.TempDir(),
+				projectType: "backend",
+				language:    "typescript",
+				name:        "mini-mani-mo",
+				skipInit:    true,
+			},
+			expectedPath: filepath.Join("src", "services", "system", "const", "runtime.ts"),
+			missingPath:  filepath.Join("src", "services", "system", "constants", "runtime.ts"),
+		},
+		{
+			name: "python const",
+			flags: bootstrapFlagSet{
+				projectRoot: t.TempDir(),
+				projectType: "backend",
+				language:    "python",
+				name:        "mini-mani-mo",
+				skipInit:    true,
+			},
+			expectedPath: filepath.Join("src", "mini_mani_mo", "services", "system", "const", "runtime.py"),
+			missingPath:  filepath.Join("src", "mini_mani_mo", "services", "system", "constants", "runtime.py"),
+		},
+		{
+			name: "go constants",
+			flags: bootstrapFlagSet{
+				projectRoot: t.TempDir(),
+				projectType: "backend",
+				language:    "go",
+				name:        "mini-mani-mo",
+				skipInit:    true,
+			},
+			expectedPath: filepath.Join("internal", "services", "system", "constants", "runtime.go"),
+			missingPath:  filepath.Join("internal", "services", "system", "const", "runtime.go"),
+		},
+		{
+			name: "rust constants",
+			flags: bootstrapFlagSet{
+				projectRoot: t.TempDir(),
+				projectType: "backend",
+				language:    "rust",
+				name:        "mini-mani-mo",
+				skipInit:    true,
+			},
+			expectedPath: filepath.Join("src", "services", "system", "constants", "mod.rs"),
+			missingPath:  filepath.Join("src", "services", "system", "const", "mod.rs"),
+		},
+		{
+			name: "java constants",
+			flags: bootstrapFlagSet{
+				projectRoot: t.TempDir(),
+				projectType: "backend",
+				language:    "java",
+				name:        "mini-mani-mo",
+				module:      "com.example.mini",
+				skipInit:    true,
+			},
+			expectedPath: filepath.Join("src", "main", "java", "com", "example", "mini", "services", "system", "constants", "SystemConstants.java"),
+			missingPath:  filepath.Join("src", "main", "java", "com", "example", "mini", "services", "system", "const", "SystemConstants.java"),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			flags := tt.flags
+			if err := runBootstrap(&flags); err != nil {
+				t.Fatal(err)
+			}
+			assertPathExists(t, filepath.Join(flags.projectRoot, tt.expectedPath))
+			assertPathMissing(t, filepath.Join(flags.projectRoot, tt.missingPath))
+		})
+	}
 }
 
 func TestBootstrapRejectsUnsupportedFrontendLanguage(t *testing.T) {

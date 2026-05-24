@@ -1,0 +1,86 @@
+.workflow-event-row,
+.workflow-decision-card {
+  border: var(--border-strong) solid var(--border);
+  border-radius: 1px;
+  background: var(--surface);
+  padding: 0.9rem;
+}
+
+.workflow-event-row {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+}
+
+.workflow-event-row > span {
+  display: grid;
+  min-width: 2rem;
+  place-items: center;
+  border: var(--border-strong) solid var(--border);
+  background: var(--foreground);
+  color: var(--background);
+  font-size: 0.72rem;
+  font-weight: 950;
+}
+
+.workflow-event-row strong,
+.workflow-decision-card h3 {
+  color: var(--foreground);
+  font-size: 0.95rem;
+  font-weight: 950;
+  line-height: 1.25;
+}
+
+.workflow-event-row p,
+.workflow-decision-card p,
+.workflow-decision-card small {
+  color: var(--muted-foreground);
+  font-size: 0.8rem;
+  font-weight: 700;
+  line-height: 1.5;
+  margin: 0.25rem 0 0;
+  overflow-wrap: anywhere;
+}
+
+.workflow-event-row time,
+.workflow-decision-card span {
+  color: var(--text-subtle);
+  font-size: 0.68rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.workflow-decision-card div {
+  margin-top: 0.75rem;
+  border: var(--border-strong) solid var(--border);
+  background: var(--panel);
+  padding: 0.75rem;
+}
+
+.workflow-request-panel,
+.workflow-json-panel {
+  border: var(--border-strong) solid var(--border);
+  background: var(--foreground);
+  color: var(--background);
+  padding: 1rem;
+}
+
+.workflow-request-panel pre,
+.workflow-json-panel pre {
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 0.82rem;
+  line-height: 1.6;
+}
+
+@media (max-width: 1023px) {
+  .workflow-event-row {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .workflow-event-row time {
+    grid-column: 2;
+  }
+}

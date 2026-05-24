@@ -1,8 +1,8 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import type { PipelineContext } from "@cli/pipeline/types.js";
-import { nowHuman } from "@cli/pipeline/utils.js";
-import { additionalDirectoryBlock, commonContractBlock, compactStateBlock, updateInputFileBlock } from "@cli/pipeline/phase/common/prompt-blocks.js";
+import type { PipelineContext } from "@cli/pipeline/types";
+import { nowHuman } from "@cli/pipeline/utils";
+import { additionalDirectoryBlock, commonContractBlock, compactStateBlock, updateInputFileBlock } from "@cli/pipeline/phase/common/prompt-blocks";
 
 function projectContextBlock(ctx: PipelineContext): string {
   const contextPath = join(ctx.projectRoot, ".agents", "PROJECT_CONTEXT.md");

@@ -37,6 +37,52 @@ Do not overbuild, over-preserve, or over-test.
 - UI components should compose behavior from features, entities, and shared logic instead of owning simulation rules directly.
 - Keep actor, simulation, state-transition, persistence, and validation logic in plain TypeScript modules that can be tested without rendering UI.
 
+## Folder-Level Software Architecture
+
+Use domain-centered folder boundaries, thin input/output layers, and explicit assembly points for ordinary software applications. These rules are about folder-level engineering and apply beyond LLM apps or TypeScript-only projects. Use the idiomatic file extension and package/module naming for the selected language while preserving the same responsibilities.
+
+Backend projects should follow this responsibility model:
+
+- `app`: application bootstrap, server creation, dependency wiring, and process entry points.
+- `routes`: HTTP routes, controllers, request/response mapping, transport validation, and external interface boundaries.
+- `services/<domain>`: business use cases, workflow orchestration, state transitions, and domain decisions.
+- `services/<domain>/service`: the public assembly point for that domain. It should compose smaller files in the same domain folder rather than owning all logic itself.
+- `services/<domain>/const` or a language-safe equivalent such as `constants`: stable domain constants, schemas, route keys, policy values, enum-like configuration, and selectors. Use `constants` when `const` is a keyword or poor package name for the target language.
+- `services/<domain>/types`: domain input/output types, DTOs, schemas, or validation objects when the language or framework benefits from a separate type boundary.
+- `services/<domain>/validation`: input validation or schema composition when validation is substantial enough to stand on its own.
+- `services/<domain>/repository`: database, file, or cache access for that domain when persistence exists. Do not scatter persistence calls through unrelated service files.
+- `integrations`: adapters for external systems such as payment providers, email, storage, queues, analytics, auth providers, or third-party APIs. Do not put domain rules here.
+- `core`: domain-neutral execution rules, guards, errors, path safety, and shared product logic that does not belong to a single domain.
+- `config`: environment and runtime configuration.
+
+Frontend projects should follow this responsibility model:
+
+- `app`: application entry point, router, providers, and layout wiring.
+- `pages`: route-level screen assembly. Page components should stay focused on rendering composition.
+- `pages/<page>/page-controller`: page state, mutations, event handlers, and view-model composition when a page needs orchestration.
+- `widgets`: larger reusable UI blocks that compose features, entities, and shared UI.
+- `features`: user-action units such as save, submit, upload, search, checkout, login, or invite.
+- `entities`: product domain models, pure rules, state transitions, validation, and UI-independent logic.
+- `entities/<domain>/const` or a language-safe equivalent: stable selectors, route keys, style properties, validation limits, and other low-change constants.
+- `shared`: reusable UI and utilities that are truly domain-neutral.
+- `lib/api`: backend API clients by domain. API modules should perform transport calls only and should not own UI state or business decisions.
+- `lib/api/const`: endpoint routes and transport-level constants.
+- `hooks`: cross-cutting hooks.
+- `store`: cross-cutting client state.
+- `styles`: page, component, or domain CSS split by responsibility.
+
+Common architecture rules:
+
+- Prefer alias-based absolute imports where the language and toolchain support them.
+- Do not include script file extensions in import specifiers where the repository convention and tooling omit them.
+- Split large single files into domain folders and responsibility-specific files.
+- Do not add compatibility wrappers, meaningless barrels, or legacy bridges unless compatibility is an explicit requirement.
+- Treat files over roughly 500 lines as a signal to inspect mixed responsibilities.
+- Assembly files such as `service` and `page-controller` are composition points, not catch-all files.
+- Create folders only when the responsibility exists now. Do not add speculative layers for a one-file concept.
+- The backend flow should be route to domain service to domain parts, repository, or integration.
+- The frontend flow should be page to controller to feature, entity, API, or shared logic.
+
 ## Dependency and Framework Policy
 
 - Respect the current best practices for the repository’s actual dependency versions.
@@ -112,13 +158,20 @@ When the user asks for development work, use a feature branch named `feat/<featu
 Required development flow:
 
 1. Create the feature branch from the latest `main`.
-2. Implement the requested change with the minimum necessary production-grade scope.
-3. Run the required local verification.
-4. Commit the intended files only.
-5. Push the feature branch.
-6. Open a pull request.
-7. Merge the pull request into `main`.
-8. Confirm the remote feature branch was deleted.
+
+- If current branch is not main, ask first whether keep this branch or create new branch.
+
+1. Implement the requested change with the minimum necessary production-grade scope.
+2. Run the required local verification.
+3. Commit the intended files only.
+4. Push the feature branch.
+5. If user explicitly request,
+  - check workflow.
+  - check version tag.
+  - Open a pull request.
+  - Merge the pull request into `main`
+  - Confirm workflow completed worked.
+  - Confirm the remote feature branch was deleted.
 
 After merging any development pull request into `main`, always check whether the merged change must be reflected in the installable package and GitHub latest release before sending the final report.
 

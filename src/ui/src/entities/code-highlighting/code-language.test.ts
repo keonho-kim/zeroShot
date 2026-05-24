@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { languageForDocument } from "./code-language";
+import { languageForDocument } from "@/entities/code-highlighting/code-language";
 
 describe("languageForDocument", () => {
   test("maps common generated artifacts to Shiki languages", () => {

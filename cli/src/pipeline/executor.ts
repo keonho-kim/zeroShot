@@ -1,14 +1,14 @@
 import { Codex, type ApprovalMode, type ModelReasoningEffort, type SandboxMode, type ThreadEvent } from "@openai/codex-sdk";
-import type { Gate, PhaseResult, PipelineContext } from "@cli/pipeline/types.js";
-import { buildPrompt } from "@cli/pipeline/phase/common/prompt.js";
-import { finalOutputSchema } from "@cli/pipeline/schema.js";
+import type { Gate, PhaseResult, PipelineContext } from "@cli/pipeline/types";
+import { buildPrompt } from "@cli/pipeline/phase/common/prompt";
+import { finalOutputSchema } from "@cli/pipeline/schema";
 import {
   addPipelineUsage,
   mergePhaseResultIntoState,
   recordPhaseResult as recordStoredPhaseResult,
   recordPipelineEvent,
   readPipelineState
-} from "@cli/pipeline/storage.js";
+} from "@cli/pipeline/storage";
 
 function nextPhase(ctx: PipelineContext): void {
   ctx.phaseSeq += 1;

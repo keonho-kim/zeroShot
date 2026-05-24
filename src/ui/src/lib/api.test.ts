@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { formatRawCodexEvent, parseStreamEvent } from "@/lib/api";
+import { formatRawCodexEvent, parseStreamEvent } from "@/lib/api/stream";
 
 describe("api stream parser", () => {
   test("parses progress, message, complete, and error SSE chunks", () => {

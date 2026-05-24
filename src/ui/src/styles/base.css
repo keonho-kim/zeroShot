@@ -2,6 +2,7 @@ html {
   color-scheme: light;
   background: var(--background);
   font-size: calc(100% * var(--ui-scale));
+  overflow-x: clip;
 }
 
 * {
@@ -19,6 +20,7 @@ body {
   background-size: 16px 16px, 16px 16px, 64px 64px, 64px 64px, auto;
   color: var(--foreground);
   min-height: 100vh;
+  overflow-x: clip;
   text-rendering: optimizeLegibility;
   font-family: var(--font-body);
 }

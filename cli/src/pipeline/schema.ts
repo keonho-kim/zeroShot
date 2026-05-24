@@ -1,6 +1,6 @@
 import { writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import type { PipelineContext } from "@cli/pipeline/types.js";
+import type { PipelineContext } from "@cli/pipeline/types";
 
 export const finalOutputSchema = {
   type: "object",

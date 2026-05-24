@@ -1,0 +1,114 @@
+.choice-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.75rem;
+}
+
+.choice-card {
+  display: grid;
+  grid-template-columns: 1.75rem minmax(0, 1fr);
+  gap: 0.25rem 0.75rem;
+  border: 2px solid var(--border);
+  border-radius: 2px;
+  background: var(--surface);
+  padding: 1rem;
+  text-align: left;
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease,
+    transform 150ms ease;
+}
+
+.choice-card:hover {
+  background: var(--surface-hover);
+  transform: translate(-1px, -1px);
+}
+
+.choice-card.selected {
+  border-color: var(--border);
+  background: var(--foreground);
+  color: var(--background);
+}
+
+.choice-card.selected span,
+.choice-card.selected strong {
+  color: var(--background);
+}
+
+.choice-card.selected span:last-child {
+  color: var(--background);
+  opacity: 0.9;
+}
+
+.choice-card strong,
+.choice-card span:last-child {
+  min-width: 0;
+}
+
+.choice-card strong {
+  font-size: 0.95rem;
+}
+
+.choice-card span:last-child {
+  grid-column: 2;
+  color: var(--muted-foreground);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.choice-check {
+  display: grid;
+  height: 1.5rem;
+  width: 1.5rem;
+  place-items: center;
+  border: 2px solid var(--border);
+  border-radius: 2px;
+  background: var(--panel);
+  color: var(--primary);
+}
+
+.decision-actions,
+.modal-actions,
+.work-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.architect-input-actions {
+  justify-content: flex-end;
+}
+
+.product-html-preview {
+  min-height: 416px;
+  overflow: hidden;
+  border: 2px solid var(--border);
+  border-radius: 2px;
+  background: var(--panel);
+  box-shadow: var(--shadow-card);
+}
+
+.product-html-preview iframe {
+  height: 100%;
+  min-height: 416px;
+  width: 100%;
+  border: 0;
+  background: var(--background);
+}
+
+.architect-design-preview {
+  margin-top: 1.5rem;
+  min-height: 448px;
+}
+
+.architect-existing-product-preview {
+  margin-top: 0;
+  border: 2px solid var(--border);
+  border-radius: 2px;
+  background: var(--panel);
+  box-shadow: var(--shadow-card);
+}
+
+.architect-design-preview iframe {
+  min-height: 448px;
+}

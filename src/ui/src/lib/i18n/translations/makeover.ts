@@ -3,11 +3,11 @@ import { defineTranslations } from "@/lib/i18n/define-translations";
 export const makeoverTranslations = defineTranslations({
   en: {
     "makeover.defaultGoal": "Create the best INTERACTIVE CANVAS from the product blueprint, selected design system, and selected template.",
-    "makeover.requiresProduct": "Create a PRODUCT BLUEPRINT before running MAKEOVER.",
+    "makeover.requiresProduct": "Create a PRODUCT BLUEPRINT before running DESIGN.",
     "makeover.loadingMessage": "Preparing the product blueprint, design template, and editing mode.",
-    "makeover.runtimeLoadingLabel": "Making over",
+    "makeover.runtimeLoadingLabel": "Designing",
     "makeover.recommendationLoadingMessage": "Comparing the product blueprint with the design assets.",
-    "makeover.title": "Makeover",
+    "makeover.title": "Design",
     "makeover.description": "Turn the ARCHITECT result into an interactive UI canvas.",
     "makeover.source": "Source",
     "makeover.skill": "Skill",
@@ -19,8 +19,8 @@ export const makeoverTranslations = defineTranslations({
     "makeover.waitingRecommendation": "Waiting for Codex",
     "makeover.candidatesLoading": "Preparing design options",
     "makeover.retryRecommendations": "Get new recommendations",
-    "makeover.request": "Makeover request",
-    "makeover.selectionBoard": "Makeover selections",
+    "makeover.request": "Design request",
+    "makeover.selectionBoard": "Design selections",
     "makeover.designSystem": "Design system",
     "makeover.designTemplate": "Design template",
     "makeover.systemQuestion": "What should the design feel like?",
@@ -31,9 +31,9 @@ export const makeoverTranslations = defineTranslations({
     "makeover.omakaseDetail": "Use the first recommendation Codex thinks fits best.",
     "makeover.omakaseHint": "Let Codex keep the recommended candidate and move on.",
     "makeover.placeholder": "Example: Make the design feel more modern and expand the color range.",
-    "makeover.done": "MAKEOVER complete",
-    "makeover.running": "MAKEOVER running",
-    "makeover.run": "Run MAKEOVER",
+    "makeover.done": "DESIGN complete",
+    "makeover.running": "DESIGN running",
+    "makeover.run": "Run DESIGN",
     "artifact.chatTitle": "Chat UI",
     "artifact.responsePending": "Preparing a response",
     "artifact.ready": "INTERACTIVE CANVAS is ready.",
@@ -50,7 +50,7 @@ export const makeoverTranslations = defineTranslations({
     "makeover.defaultGoal": "제품 기획서와 선택한 디자인 시스템/템플릿에 맞춰 가장 적합한 INTERACTIVE CANVAS를 만들어주세요.",
     "makeover.requiresProduct": "PRODUCT BLUEPRINT를 먼저 만들어야 DESIGN을 실행할 수 있습니다.",
     "makeover.loadingMessage": "제품 블루프린트, 디자인 템플릿, 편집 모드를 정리하고 있습니다.",
-    "makeover.runtimeLoadingLabel": "MAKEOVER 작업 중",
+    "makeover.runtimeLoadingLabel": "DESIGN 작업 중",
     "makeover.recommendationLoadingMessage": "제품 블루프린트와 디자인 자산을 비교하고 있습니다.",
     "makeover.description": "ARCHITECT 결과를 인터랙티브 UI 캔버스로 전환합니다.",
     "makeover.source": "소스",
@@ -63,8 +63,8 @@ export const makeoverTranslations = defineTranslations({
     "makeover.waitingRecommendation": "Codex 추천 대기",
     "makeover.candidatesLoading": "디자인 후보 정리 중",
     "makeover.retryRecommendations": "추천 다시 받기",
-    "makeover.request": "MAKEOVER 요청",
-    "makeover.selectionBoard": "Makeover 선택 항목",
+    "makeover.request": "DESIGN 요청",
+    "makeover.selectionBoard": "Design 선택 항목",
     "makeover.designSystem": "디자인 시스템",
     "makeover.designTemplate": "디자인 템플릿",
     "makeover.systemQuestion": "디자인 기조를 고를까요?",
@@ -75,9 +75,9 @@ export const makeoverTranslations = defineTranslations({
     "makeover.omakaseDetail": "Codex가 가장 적합하다고 판단한 첫 번째 추천안을 사용합니다.",
     "makeover.omakaseHint": "추천 후보를 그대로 맡기고 다음 단계로 진행합니다.",
     "makeover.placeholder": "예: 전체적으로 현대적인 디자인으로 진행하게 해주세요. 컬러감을 확장해주세요.",
-    "makeover.done": "MAKEOVER 완료",
-    "makeover.running": "MAKEOVER 실행 중",
-    "makeover.run": "MAKEOVER 실행",
+    "makeover.done": "DESIGN 완료",
+    "makeover.running": "DESIGN 실행 중",
+    "makeover.run": "DESIGN 실행",
     "artifact.chatTitle": "챗 UI",
     "artifact.responsePending": "응답 준비 중",
     "artifact.ready": "INTERACTIVE CANVAS 준비 완료.",
@@ -92,22 +92,22 @@ export const makeoverTranslations = defineTranslations({
   },
   zh: {
     "makeover.loadingMessage": "正在整理产品蓝图、设计模板和编辑模式。",
-    "makeover.runtimeLoadingLabel": "正在执行 MAKEOVER",
+    "makeover.runtimeLoadingLabel": "正在执行 DESIGN",
     "makeover.recommendationLoadingMessage": "正在对比产品蓝图和设计资源。"
   },
   ja: {
     "makeover.loadingMessage": "プロダクト設計、デザインテンプレート、編集モードを整理しています。",
-    "makeover.runtimeLoadingLabel": "MAKEOVER 作業中",
+    "makeover.runtimeLoadingLabel": "DESIGN 作業中",
     "makeover.recommendationLoadingMessage": "プロダクト設計とデザイン素材を照らし合わせています。"
   },
   es: {
     "makeover.loadingMessage": "Preparando el blueprint del producto, la plantilla de diseño y el modo de edición.",
-    "makeover.runtimeLoadingLabel": "Makeover en curso",
+    "makeover.runtimeLoadingLabel": "Design en curso",
     "makeover.recommendationLoadingMessage": "Comparando el blueprint del producto con los recursos de diseño."
   },
   de: {
     "makeover.loadingMessage": "Produkt-Blueprint, Designvorlage und Bearbeitungsmodus werden vorbereitet.",
-    "makeover.runtimeLoadingLabel": "MAKEOVER läuft",
+    "makeover.runtimeLoadingLabel": "DESIGN läuft",
     "makeover.recommendationLoadingMessage": "Produkt-Blueprint und Designressourcen werden abgeglichen."
   }
 });

@@ -1,3 +1,5 @@
+import { bootstrapScaffoldArchitecturePrompt } from "@backend/llm/architecture/prompt";
+
 export const bootstrapCliContractPrompt = `Bootstrap CLI contract:
 - ZeroShot runs bootstrap automatically after the development overview round has enough information.
 - The executable command is: zeroshot bootstrap.
@@ -30,5 +32,8 @@ export const bootstrapCliContractPrompt = `Bootstrap CLI contract:
 - Ruby expects Gem/Ruby.
 - Zig expects zig init.
 - If the product is an LLM or agent system, choose --profile llm; otherwise choose --profile standard.
+- The standard profile is the default for ordinary applications. The llm profile changes dependency guidance only, not the source architecture.
 - Every development-stack option must map to a valid bootstrap command combination. Put that mapping in productRequirement using concrete language and project type words, for example: "Bootstrap: --type fullstack --server-language python --ui-language typescript --profile llm".
-- Do not propose unsupported languages, unsupported UI languages, or command arguments outside this contract.`;
+- Do not propose unsupported languages, unsupported UI languages, or command arguments outside this contract.
+
+${bootstrapScaffoldArchitecturePrompt}`;

@@ -15,23 +15,54 @@ func applyStandardScaffold(target bootstrapTarget, force bool, pythonVersion str
 	}
 }
 
+func backendConstantDir(language string) string {
+	switch language {
+	case "typescript", "javascript", "python":
+		return "const"
+	default:
+		return "constants"
+	}
+}
+
+func ensureDirs(root string, dirs []string) error {
+	for _, dir := range dirs {
+		if err := ensureDir(filepath.Join(root, dir)); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func scaffoldFrontend(target bootstrapTarget, force bool, writeMetadata bool) error {
 	extension := "ts"
 	if target.language == "javascript" {
 		extension = "js"
 	}
 	sourceRoot := filepath.Join(target.root, "src")
-	for _, dir := range []string{"app", "pages", "components", "hooks", "stores", "types", "common", "lib"} {
-		if err := ensureDir(filepath.Join(sourceRoot, dir)); err != nil {
-			return err
-		}
+	if err := ensureDirs(sourceRoot, []string{"app", "pages", "widgets", "features", "entities", "shared", "lib/api/const", "hooks", "store", "styles"}); err != nil {
+		return err
 	}
 	if writeMetadata {
 		if err := writeFrontendPackageJSON(target, force); err != nil {
 			return err
 		}
 	}
-	return writeFileIfMissing(filepath.Join(sourceRoot, "app", "main."+extension), "export function main() {\n  return null;\n}\n", force)
+	if target.language == "javascript" {
+		if err := writeFileIfMissing(filepath.Join(sourceRoot, "lib", "api", "const", "routes."+extension), "export const API_ROUTES = Object.freeze({\n  health: \"/api/health\"\n});\n", force); err != nil {
+			return err
+		}
+		if err := writeFileIfMissing(filepath.Join(sourceRoot, "lib", "api", "client."+extension), "export async function apiRequest(path, init) {\n  return fetch(path, init);\n}\n", force); err != nil {
+			return err
+		}
+		return writeFileIfMissing(filepath.Join(sourceRoot, "app", "main."+extension), "export function main() {\n  return null;\n}\n", force)
+	}
+	if err := writeFileIfMissing(filepath.Join(sourceRoot, "lib", "api", "const", "routes."+extension), "export const API_ROUTES = {\n  health: \"/api/health\"\n} as const;\n", force); err != nil {
+		return err
+	}
+	if err := writeFileIfMissing(filepath.Join(sourceRoot, "lib", "api", "client."+extension), "export async function apiRequest(path: string, init?: RequestInit): Promise<Response> {\n  return fetch(path, init);\n}\n", force); err != nil {
+		return err
+	}
+	return writeFileIfMissing(filepath.Join(sourceRoot, "app", "main."+extension), "export function main(): null {\n  return null;\n}\n", force)
 }
 
 func scaffoldBackend(target bootstrapTarget, force bool, pythonVersion string, writeMetadata bool) error {
@@ -66,10 +97,11 @@ func scaffoldPython(target bootstrapTarget, force bool, pythonVersion string, wr
 		module = pythonModuleName(target.name)
 	}
 	packageRoot := filepath.Join(target.root, "src", module)
-	for _, dir := range []string{"api", "core", "common", "integrations", "services", "models", "config"} {
-		if err := ensureDir(filepath.Join(packageRoot, dir)); err != nil {
-			return err
-		}
+	dirs := []string{"app", "routes", "services", "services/system", "services/system/const", "integrations", "core", "config", "types"}
+	if err := ensureDirs(packageRoot, dirs); err != nil {
+		return err
+	}
+	for _, dir := range dirs {
 		if err := writeFileIfMissing(filepath.Join(packageRoot, dir, "__init__.py"), "", force); err != nil {
 			return err
 		}
@@ -78,6 +110,18 @@ func scaffoldPython(target bootstrapTarget, force bool, pythonVersion string, wr
 		if err := writeNativePythonProject(target, pythonVersion, force); err != nil {
 			return err
 		}
+	}
+	if err := writeFileIfMissing(filepath.Join(packageRoot, "app", "main.py"), "def main() -> None:\n    print(\"Hello from "+target.name+"!\")\n", force); err != nil {
+		return err
+	}
+	if err := writeFileIfMissing(filepath.Join(packageRoot, "services", "system", "const", "runtime.py"), "SYSTEM_STATUS = \"ready\"\n", force); err != nil {
+		return err
+	}
+	if err := writeFileIfMissing(filepath.Join(packageRoot, "services", "system", "service.py"), "def describe_system() -> dict[str, str]:\n    return {\"status\": \"ready\"}\n", force); err != nil {
+		return err
+	}
+	if err := writeFileIfMissing(filepath.Join(packageRoot, "types", "system.py"), "from typing import TypedDict\n\n\nclass SystemStatus(TypedDict):\n    status: str\n", force); err != nil {
+		return err
 	}
 	return writeFileIfMissing(filepath.Join(packageRoot, "__init__.py"), "def main() -> None:\n    print(\"Hello from "+target.name+"!\")\n", force)
 }
@@ -88,43 +132,94 @@ func scaffoldTypeScriptBackend(target bootstrapTarget, force bool) error {
 		extension = "js"
 	}
 	sourceRoot := filepath.Join(target.root, "src")
-	for _, dir := range []string{"api", "core", "common", "integrations", "services", "models", "config"} {
-		if err := ensureDir(filepath.Join(sourceRoot, dir)); err != nil {
+	constDir := backendConstantDir(target.language)
+	if err := ensureDirs(sourceRoot, []string{"app", "routes", filepath.Join("services", "system", constDir), "integrations", "core", "config", "types"}); err != nil {
+		return err
+	}
+	if target.language == "javascript" {
+		if err := writeFileIfMissing(filepath.Join(sourceRoot, "services", "system", constDir, "runtime."+extension), "export const SYSTEM_STATUS = \"ready\";\n", force); err != nil {
 			return err
 		}
+		if err := writeFileIfMissing(filepath.Join(sourceRoot, "services", "system", "service."+extension), "export function describeSystem() {\n  return { status: \"ready\" };\n}\n", force); err != nil {
+			return err
+		}
+		if err := writeFileIfMissing(filepath.Join(sourceRoot, "types", "system."+extension), "export const systemStatusShape = {\n  status: \"ready\"\n};\n", force); err != nil {
+			return err
+		}
+		return writeFileIfMissing(filepath.Join(sourceRoot, "app", "main."+extension), "export function main() {\n  console.log(\"Hello from "+target.name+"!\");\n}\n\nmain();\n", force)
 	}
-	return writeFileIfMissing(filepath.Join(sourceRoot, "main."+extension), "export function main() {\n  console.log(\"Hello from "+target.name+"!\");\n}\n\nmain();\n", force)
+	if err := writeFileIfMissing(filepath.Join(sourceRoot, "services", "system", constDir, "runtime."+extension), "export const SYSTEM_STATUS = \"ready\" as const;\n", force); err != nil {
+		return err
+	}
+	if err := writeFileIfMissing(filepath.Join(sourceRoot, "services", "system", "service."+extension), "export interface SystemStatus {\n  status: \"ready\";\n}\n\nexport function describeSystem(): SystemStatus {\n  return { status: \"ready\" };\n}\n", force); err != nil {
+		return err
+	}
+	if err := writeFileIfMissing(filepath.Join(sourceRoot, "types", "system."+extension), "export interface SystemStatus {\n  status: string;\n}\n", force); err != nil {
+		return err
+	}
+	return writeFileIfMissing(filepath.Join(sourceRoot, "app", "main."+extension), "export function main(): void {\n  console.log(\"Hello from "+target.name+"!\");\n}\n\nmain();\n", force)
 }
 
 func scaffoldGo(target bootstrapTarget, force bool) error {
-	for _, dir := range []string{"cmd/server", "internal/api", "internal/core", "internal/common", "internal/integrations", "internal/services", "internal/models", "internal/config"} {
-		if err := ensureDir(filepath.Join(target.root, dir)); err != nil {
-			return err
-		}
+	if err := ensureDirs(target.root, []string{"cmd/server", "internal/app", "internal/routes", "internal/services/system/constants", "internal/integrations", "internal/core", "internal/config", "internal/types"}); err != nil {
+		return err
+	}
+	if err := writeFileIfMissing(filepath.Join(target.root, "internal", "services", "system", "constants", "runtime.go"), "package constants\n\nconst SystemStatus = \"ready\"\n", force); err != nil {
+		return err
+	}
+	if err := writeFileIfMissing(filepath.Join(target.root, "internal", "services", "system", "service.go"), "package system\n\ntype Status struct {\n\tStatus string `json:\"status\"`\n}\n\nfunc Describe() Status {\n\treturn Status{Status: \"ready\"}\n}\n", force); err != nil {
+		return err
+	}
+	if err := writeFileIfMissing(filepath.Join(target.root, "internal", "types", "system.go"), "package types\n\ntype SystemStatus struct {\n\tStatus string `json:\"status\"`\n}\n", force); err != nil {
+		return err
 	}
 	content := "package main\n\nimport \"fmt\"\n\nfunc main() {\n\tfmt.Println(\"Hello from " + target.name + "!\")\n}\n"
 	return writeFileIfMissing(filepath.Join(target.root, "cmd", "server", "main.go"), content, force)
 }
 
 func scaffoldRust(target bootstrapTarget, force bool) error {
-	for _, dir := range []string{"api", "core", "common", "integrations", "services", "models", "config"} {
-		if err := ensureDir(filepath.Join(target.root, "src", dir)); err != nil {
-			return err
-		}
-		if err := writeFileIfMissing(filepath.Join(target.root, "src", dir, "mod.rs"), "", force); err != nil {
+	sourceRoot := filepath.Join(target.root, "src")
+	dirs := []string{"app", "routes", "services", "services/system", "services/system/constants", "integrations", "core", "config", "types"}
+	if err := ensureDirs(sourceRoot, dirs); err != nil {
+		return err
+	}
+	for _, dir := range []string{"app", "routes", "integrations", "core", "config"} {
+		if err := writeFileIfMissing(filepath.Join(sourceRoot, dir, "mod.rs"), "", force); err != nil {
 			return err
 		}
 	}
-	return nil
+	if err := writeFileIfMissing(filepath.Join(sourceRoot, "services", "mod.rs"), "pub mod system;\n", force); err != nil {
+		return err
+	}
+	if err := writeFileIfMissing(filepath.Join(sourceRoot, "services", "system", "constants", "mod.rs"), "pub const SYSTEM_STATUS: &str = \"ready\";\n", force); err != nil {
+		return err
+	}
+	if err := writeFileIfMissing(filepath.Join(sourceRoot, "services", "system", "mod.rs"), "pub mod constants;\n\npub struct SystemStatus {\n    pub status: &'static str,\n}\n\npub fn describe_system() -> SystemStatus {\n    SystemStatus { status: constants::SYSTEM_STATUS }\n}\n", force); err != nil {
+		return err
+	}
+	if err := writeFileIfMissing(filepath.Join(sourceRoot, "types", "mod.rs"), "pub struct SystemStatus {\n    pub status: String,\n}\n", force); err != nil {
+		return err
+	}
+	return writeFileIfMissing(filepath.Join(sourceRoot, "main.rs"), "fn main() {\n    println!(\"Hello from "+target.name+"!\");\n}\n", force)
 }
 
 func scaffoldJava(target bootstrapTarget, force bool, writeMetadata bool) error {
 	javaPackage := javaPackageName(target.module, target.name)
 	base := filepath.Join(append([]string{target.root, "src", "main", "java"}, strings.Split(javaPackage, ".")...)...)
-	for _, dir := range []string{"api", "core", "common", "integrations", "services", "models", "config"} {
-		if err := ensureDir(filepath.Join(base, dir)); err != nil {
-			return err
-		}
+	if err := ensureDirs(base, []string{"app", "routes", "services/system/constants", "integrations", "core", "config", "types"}); err != nil {
+		return err
+	}
+	if err := writeFileIfMissing(filepath.Join(base, "app", "Application.java"), "package "+javaPackage+".app;\n\npublic final class Application {\n  private Application() {}\n\n  public static void main(String[] args) {\n    System.out.println(\"Hello from "+target.name+"!\");\n  }\n}\n", force); err != nil {
+		return err
+	}
+	if err := writeFileIfMissing(filepath.Join(base, "services", "system", "constants", "SystemConstants.java"), "package "+javaPackage+".services.system.constants;\n\npublic final class SystemConstants {\n  public static final String STATUS = \"ready\";\n\n  private SystemConstants() {}\n}\n", force); err != nil {
+		return err
+	}
+	if err := writeFileIfMissing(filepath.Join(base, "services", "system", "SystemService.java"), "package "+javaPackage+".services.system;\n\nimport "+javaPackage+".services.system.constants.SystemConstants;\nimport "+javaPackage+".types.SystemStatus;\n\npublic final class SystemService {\n  public SystemStatus describe() {\n    return new SystemStatus(SystemConstants.STATUS);\n  }\n}\n", force); err != nil {
+		return err
+	}
+	if err := writeFileIfMissing(filepath.Join(base, "types", "SystemStatus.java"), "package "+javaPackage+".types;\n\npublic record SystemStatus(String status) {}\n", force); err != nil {
+		return err
 	}
 	if !writeMetadata || pathExists(filepath.Join(target.root, "build.gradle")) || pathExists(filepath.Join(target.root, "build.gradle.kts")) {
 		return nil
@@ -134,24 +229,44 @@ func scaffoldJava(target bootstrapTarget, force bool, writeMetadata bool) error 
 
 func scaffoldRuby(target bootstrapTarget, force bool) error {
 	module := rubyFileName(target.name)
-	for _, dir := range []string{"api", "core", "common", "integrations", "services", "models", "config"} {
-		if err := ensureDir(filepath.Join(target.root, "lib", module, dir)); err != nil {
-			return err
-		}
+	className := rubyModuleName(target.name)
+	base := filepath.Join(target.root, "lib", module)
+	if err := ensureDirs(base, []string{"app", "routes", "services/system/constants", "integrations", "core", "config", "types"}); err != nil {
+		return err
 	}
-	return nil
+	if err := writeFileIfMissing(filepath.Join(target.root, "lib", module+".rb"), "module "+className+"\nend\n", force); err != nil {
+		return err
+	}
+	if err := writeFileIfMissing(filepath.Join(base, "services", "system", "constants", "runtime.rb"), "module "+className+"\n  module Services\n    module System\n      module Constants\n        STATUS = \"ready\"\n      end\n    end\n  end\nend\n", force); err != nil {
+		return err
+	}
+	if err := writeFileIfMissing(filepath.Join(base, "services", "system", "service.rb"), "module "+className+"\n  module Services\n    module System\n      def self.describe\n        { status: \"ready\" }\n      end\n    end\n  end\nend\n", force); err != nil {
+		return err
+	}
+	return writeFileIfMissing(filepath.Join(base, "types", "system_status.rb"), "module "+className+"\n  module Types\n    SystemStatus = Struct.new(:status, keyword_init: true)\n  end\nend\n", force)
 }
 
 func scaffoldZig(target bootstrapTarget, force bool) error {
-	for _, dir := range []string{"api", "core", "common", "integrations", "services", "models", "config"} {
-		if err := ensureDir(filepath.Join(target.root, "src", dir)); err != nil {
-			return err
-		}
-		if err := writeFileIfMissing(filepath.Join(target.root, "src", dir, ".gitkeep"), "", force); err != nil {
+	sourceRoot := filepath.Join(target.root, "src")
+	dirs := []string{"app", "routes", "services/system/constants", "integrations", "core", "config", "types"}
+	if err := ensureDirs(sourceRoot, dirs); err != nil {
+		return err
+	}
+	for _, dir := range dirs {
+		if err := writeFileIfMissing(filepath.Join(sourceRoot, dir, ".gitkeep"), "", force); err != nil {
 			return err
 		}
 	}
-	return nil
+	if err := writeFileIfMissing(filepath.Join(sourceRoot, "services", "system", "constants", "runtime.zig"), "pub const system_status = \"ready\";\n", force); err != nil {
+		return err
+	}
+	if err := writeFileIfMissing(filepath.Join(sourceRoot, "services", "system", "service.zig"), "const runtime = @import(\"constants/runtime.zig\");\n\npub const SystemStatus = struct {\n    status: []const u8,\n};\n\npub fn describeSystem() SystemStatus {\n    return .{ .status = runtime.system_status };\n}\n", force); err != nil {
+		return err
+	}
+	if err := writeFileIfMissing(filepath.Join(sourceRoot, "types", "system.zig"), "pub const SystemStatus = struct {\n    status: []const u8,\n};\n", force); err != nil {
+		return err
+	}
+	return writeFileIfMissing(filepath.Join(sourceRoot, "main.zig"), "const std = @import(\"std\");\n\npub fn main() void {\n    std.debug.print(\"Hello from "+target.name+"!\\n\", .{});\n}\n", force)
 }
 
 func writeNativePythonProject(target bootstrapTarget, pythonVersion string, force bool) error {

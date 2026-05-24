@@ -1,6 +1,7 @@
 import { join } from "node:path";
-import { getWorkspaceRoot } from "@backend/core/workspace.js";
-import type { AppDefaults, BootstrapRequest, PipelineCommandSpec, PipelineOptions, RunMode } from "@backend/types.js";
+import { getWorkspaceRoot } from "@backend/core/workspace";
+import type { AppDefaults } from "@backend/types/app";
+import type { BootstrapRequest, PipelineCommandSpec, PipelineOptions, RunMode } from "@backend/types/pipeline";
 
 export function buildPipelineCommandSpec(
   mode: RunMode,

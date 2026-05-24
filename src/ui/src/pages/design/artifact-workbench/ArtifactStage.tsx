@@ -1,11 +1,11 @@
 import type { Dispatch, RefObject, SetStateAction } from "react";
 import { MessageSquarePlus } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import type { ArtifactEditorMode } from "@/entities/design/artifact-editor";
+import { Button } from "@/shared/ui/button";
+import { Textarea } from "@/shared/ui/textarea";
+import type { ArtifactEditorMode } from "@/entities/design/artifact-editor/types";
 import { ArtifactCommentOverlay } from "@/pages/design/artifact-workbench/ArtifactCommentOverlay";
 import type { ArtifactCommentCapture, ArtifactViewport } from "@/pages/design/artifact-workbench/types";
-import { cn } from "@/utils/cn";
+import { cn } from "@/shared/lib/cn";
 
 export function ArtifactStage(props: {
   artifactMode: ArtifactEditorMode;

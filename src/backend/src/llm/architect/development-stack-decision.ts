@@ -1,5 +1,5 @@
-import type { ArchitectDecisionResponse } from "@backend/services/architect-service.js";
-import { textByLocale } from "@backend/i18n/locale.js";
+import type { ArchitectDecisionResponse } from "@backend/services/architect/service";
+import { textByLocale } from "@backend/i18n/locale";
 
 function hasDevelopmentLanguageInfo(goal: string): boolean {
   return /\b(type\s*script|javascript|node\.?js|bun|deno|react|vue|svelte|next\.?js|python|fastapi|django|flask|go|golang|rust|java|kotlin|swift|\.net|php|ruby|rails|zig|elixir|phoenix|scala|spring|express|nestjs)\b/i.test(goal)
@@ -16,6 +16,14 @@ function isDevelopmentLanguageDecision(decision: ArchitectDecisionResponse["deci
   ].join(" ");
   return /\b(language|stack|framework|frontend|backend|typescript|javascript|python|node|react|go|golang|rust|java|ruby|zig)\b/i.test(text)
     || /(개발\s*언어|기술\s*스택|프레임워크|프론트|백엔드)/i.test(text);
+}
+
+function backendRequirement(language: string, constDir: "const" | "constants"): string {
+  return `Use the scaffolded backend structure with app, routes, services, integrations, core, config, and types. Place domain behavior under services/<domain>/${constDir}, focused part files, and service as the public assembly point. Bootstrap: --type backend --language ${language} --profile standard.`;
+}
+
+function fullstackRequirement(serverLanguage: string, constDir: "const" | "constants"): string {
+  return `Place backend code under src/server and frontend code under src/ui. Backend domains use services/<domain>/${constDir}, focused part files, and service as the public assembly point. Frontend uses app, pages, widgets, features, entities, shared, lib/api, hooks, store, and styles. Bootstrap: --type fullstack --server-language ${serverLanguage} --ui-language typescript --profile standard.`;
 }
 
 function buildDevelopmentLanguageDecision(locale: string): ArchitectDecisionResponse["decisions"][number] {
@@ -64,7 +72,7 @@ function buildDevelopmentLanguageDecision(locale: string): ArchitectDecisionResp
           es: "Usa TypeScript tanto en el frontend como en el backend.",
           de: "Nutze TypeScript für Frontend und Backend."
         }),
-        productRequirement: "Use TypeScript as the default implementation language, place frontend code under src/ui/src, and place backend code under src/server/src for a full-stack application. Bootstrap: --type fullstack --server-language typescript --ui-language typescript --profile standard."
+        productRequirement: fullstackRequirement("typescript", "const")
       },
       {
         id: "python-fastapi-react",
@@ -77,7 +85,7 @@ function buildDevelopmentLanguageDecision(locale: string): ArchitectDecisionResp
           es: "Usa un backend API en Python con un frontend en React.",
           de: "Nutze ein Python-API-Backend mit einem React-Frontend."
         }),
-        productRequirement: "Place the Python FastAPI backend under src/server and the React frontend under src/ui for a full-stack application. Bootstrap: --type fullstack --server-language python --ui-language typescript --profile standard."
+        productRequirement: fullstackRequirement("python", "const")
       },
       {
         id: "go-api-react",
@@ -90,7 +98,7 @@ function buildDevelopmentLanguageDecision(locale: string): ArchitectDecisionResp
           es: "Prioriza un despliegue sencillo y buen rendimiento de backend con Go.",
           de: "Setze mit Go auf einfache Bereitstellung und Backend-Performance."
         }),
-        productRequirement: "Place the Go backend under src/server with cmd/server and internal packages, and place the React frontend under src/ui. Bootstrap: --type fullstack --server-language go --ui-language typescript --profile standard."
+        productRequirement: fullstackRequirement("go", "constants")
       },
       {
         id: "rust-api-react",
@@ -103,27 +111,87 @@ function buildDevelopmentLanguageDecision(locale: string): ArchitectDecisionResp
           es: "Prioriza la fiabilidad asíncrona y la seguridad de tipos con Rust.",
           de: "Setze mit Rust auf asynchrone Zuverlässigkeit und Typsicherheit."
         }),
-        productRequirement: "Place the Rust backend under src/server, consider tokio for async work, and place the React frontend under src/ui. Bootstrap: --type fullstack --server-language rust --ui-language typescript --profile standard."
+        productRequirement: fullstackRequirement("rust", "constants")
       },
       {
-        id: "backend-first",
+        id: "backend-service",
         label: textByLocale(locale, {
-          ko: "백엔드 우선",
-          en: "Backend first",
-          zh: "后端优先",
-          ja: "バックエンド優先",
-          es: "Backend primero",
-          de: "Backend zuerst"
+          ko: "백엔드 서비스",
+          en: "Backend service",
+          zh: "后端服务",
+          ja: "バックエンドサービス",
+          es: "Servicio backend",
+          de: "Backend-Service"
         }),
         detail: textByLocale(locale, {
-          ko: "화면보다 API, 데이터 모델, 실행 흐름을 먼저 만듭니다.",
-          en: "Prioritize APIs, data models, and execution flow over screens.",
-          zh: "先做好 API、数据模型和执行流程，再处理界面。",
-          ja: "画面より先に API、データモデル、実行フローを整えます。",
-          es: "Prioriza APIs, modelos de datos y flujos de ejecución antes que las pantallas.",
-          de: "Priorisiere APIs, Datenmodelle und Abläufe vor den Oberflächen."
+          ko: "API, 데이터 모델, 실행 흐름 중심의 백엔드 애플리케이션을 만듭니다.",
+          en: "Build a backend application centered on APIs, data models, and execution flow.",
+          zh: "构建以 API、数据模型和执行流程为中心的后端应用。",
+          ja: "API、データモデル、実行フローを中心にしたバックエンドアプリを作ります。",
+          es: "Crea una aplicación backend centrada en APIs, modelos de datos y flujo de ejecución.",
+          de: "Erstelle eine Backend-Anwendung mit Fokus auf APIs, Datenmodelle und Abläufe."
         }),
-        productRequirement: "Implement the product as a backend-first system and organize the scaffolded backend layout into clear api, core, integrations, services, models, config, and common responsibilities. Bootstrap: --type backend --language typescript --profile standard."
+        productRequirement: backendRequirement("typescript", "const")
+      },
+      {
+        id: "frontend-app",
+        label: textByLocale(locale, {
+          ko: "프론트엔드 앱",
+          en: "Frontend app",
+          zh: "前端应用",
+          ja: "フロントエンドアプリ",
+          es: "Aplicación frontend",
+          de: "Frontend-App"
+        }),
+        detail: textByLocale(locale, {
+          ko: "라우트 화면, 기능, 엔티티, API 클라이언트를 분리한 React 앱을 만듭니다.",
+          en: "Build a React app with separated pages, features, entities, and API clients.",
+          zh: "构建分离页面、功能、实体和 API 客户端的 React 应用。",
+          ja: "ページ、機能、エンティティ、API クライアントを分けた React アプリを作ります。",
+          es: "Crea una app React con páginas, features, entidades y clientes API separados.",
+          de: "Erstelle eine React-App mit getrennten Pages, Features, Entities und API-Clients."
+        }),
+        productRequirement: "Use the scaffolded frontend structure with app, pages, widgets, features, entities, shared, lib/api, hooks, store, and styles. Keep page components thin and move state/event orchestration into page controllers or features. Bootstrap: --type frontend --language typescript --profile standard."
+      },
+      {
+        id: "library-package",
+        label: textByLocale(locale, {
+          ko: "라이브러리 패키지",
+          en: "Library package",
+          zh: "库包",
+          ja: "ライブラリパッケージ",
+          es: "Paquete de biblioteca",
+          de: "Bibliothekspaket"
+        }),
+        detail: textByLocale(locale, {
+          ko: "재사용 가능한 모듈과 명확한 public API를 우선합니다.",
+          en: "Prioritize reusable modules and a clear public API.",
+          zh: "优先构建可复用模块和清晰的公共 API。",
+          ja: "再利用可能なモジュールと明確な public API を重視します。",
+          es: "Prioriza módulos reutilizables y una API pública clara.",
+          de: "Priorisiere wiederverwendbare Module und eine klare öffentliche API."
+        }),
+        productRequirement: "Build a library package with a small public API, focused domain modules, explicit types, and no app-specific transport layer unless required. Bootstrap: --type library --language typescript --profile standard."
+      },
+      {
+        id: "script-tool",
+        label: textByLocale(locale, {
+          ko: "스크립트/CLI 도구",
+          en: "Script or CLI tool",
+          zh: "脚本或 CLI 工具",
+          ja: "スクリプトまたは CLI ツール",
+          es: "Script o herramienta CLI",
+          de: "Skript oder CLI-Tool"
+        }),
+        detail: textByLocale(locale, {
+          ko: "작은 실행 흐름, 명확한 입력/출력, 테스트 가능한 순수 로직을 우선합니다.",
+          en: "Prioritize a small execution flow, clear input/output, and testable plain logic.",
+          zh: "优先考虑小型执行流程、清晰输入输出和可测试的纯逻辑。",
+          ja: "小さな実行フロー、明確な入出力、テスト可能な純粋ロジックを重視します。",
+          es: "Prioriza un flujo pequeño, entrada/salida clara y lógica pura comprobable.",
+          de: "Priorisiere einen kleinen Ablauf, klare Ein-/Ausgabe und testbare reine Logik."
+        }),
+        productRequirement: "Build a script or CLI project with a small entry point, focused reusable modules, explicit input/output handling, and testable plain logic. Bootstrap: --type script --language python --profile standard."
       }
     ]
   };

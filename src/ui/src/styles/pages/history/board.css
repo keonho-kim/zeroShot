@@ -1,0 +1,96 @@
+.workflow-clamp-board {
+  display: grid;
+  gap: 0.5rem;
+  grid-template-areas:
+    "records"
+    "detail";
+  grid-template-columns: minmax(0, 1fr);
+  margin-top: 0.9rem;
+  border: var(--border-strong) solid var(--border);
+  border-radius: 1px;
+  background: var(--panel);
+  box-shadow: var(--shadow-card);
+  padding: 0.65rem;
+}
+
+.workflow-clamp-board-direct {
+  grid-template-areas:
+    "detail";
+}
+
+.workflow-record-list,
+.workflow-event-list,
+.workflow-decision-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.workflow-record-list {
+  grid-area: records;
+  align-content: start;
+}
+
+.workflow-record-button {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.4rem;
+  border: var(--border-strong) solid var(--border);
+  border-radius: 1px;
+  background: var(--surface);
+  color: var(--foreground);
+  box-shadow: var(--shadow-button);
+  padding: 0.75rem;
+  text-align: left;
+}
+
+.workflow-record-button.selected {
+  background: var(--arcade-cyan);
+  transform: translate(-2px, -2px);
+}
+
+.workflow-record-button strong {
+  color: var(--foreground);
+  font-size: 0.9rem;
+  font-weight: 950;
+  line-height: 1.25;
+}
+
+.workflow-record-button span,
+.workflow-record-button small {
+  color: var(--muted-foreground);
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.workflow-record-detail {
+  display: flex;
+  grid-area: detail;
+  min-width: 0;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+@media (min-width: 1024px) {
+  .workflow-clamp-board {
+    gap: 0.65rem;
+    grid-template-areas:
+      "records detail";
+    grid-template-columns: minmax(240px, 0.34fr) minmax(0, 1fr);
+    padding: 0.75rem;
+  }
+
+  .workflow-clamp-board-direct {
+    grid-template-areas:
+      "detail";
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .workflow-record-list {
+    gap: 0.45rem;
+  }
+}

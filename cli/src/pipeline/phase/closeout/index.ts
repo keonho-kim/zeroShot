@@ -1,6 +1,6 @@
-import type { PhaseResult, PipelineContext } from "@cli/pipeline/types.js";
-import { completePipelineRun, mergePhaseResultIntoState, readPipelineState, recordPhaseResult } from "@cli/pipeline/storage.js";
-import { writeRunHtmlReports } from "@cli/pipeline/html-report.js";
+import type { PhaseResult, PipelineContext } from "@cli/pipeline/types";
+import { completePipelineRun, mergePhaseResultIntoState, readPipelineState, recordPhaseResult } from "@cli/pipeline/storage";
+import { writeRunHtmlReports } from "@cli/pipeline/html-report";
 
 export async function closeoutPhase(ctx: PipelineContext, pipelineFailed: boolean, failureReason: string): Promise<PhaseResult> {
   console.log("[closeout] local closeout phase를 시작합니다.");

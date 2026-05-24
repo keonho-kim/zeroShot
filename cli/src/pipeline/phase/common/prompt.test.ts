@@ -59,8 +59,17 @@ describe("pipeline prompt", () => {
     const prompt = buildPrompt(context("build"), "implement", "medium", "Implement", "");
 
     expect(prompt).toContain("Backend architecture guidance");
-    expect(prompt).toContain("Organize maintainable backend code by domain");
+    expect(prompt).toContain("services/<domain>/{const|constants");
+    expect(prompt).toContain("app, routes, services, integrations, core, config, and types");
     expect(prompt).toContain("ARCHITECT/PRODUCT.html");
+  });
+
+  test("includes frontend architecture guidance for all runs", () => {
+    const prompt = buildPrompt(context("build"), "implement", "medium", "Implement", "");
+
+    expect(prompt).toContain("Frontend architecture guidance");
+    expect(prompt).toContain("app, pages, widgets, features, entities, shared, lib/api, hooks, store, and styles");
+    expect(prompt).toContain("lib/api/<domain>");
   });
 
   test("explains PRODUCT and DESIGN roles and preservation contract", () => {
@@ -105,6 +114,7 @@ describe("pipeline prompt", () => {
 
     expect(prompt).toContain("Update-mode refactoring guidance");
     expect(prompt).toContain("YAGNI, DRY, single responsibility");
+    expect(prompt).toContain("over roughly 500 lines");
     expect(prompt).toContain("Promote functions or data objects to classes only when lifecycle");
   });
 });

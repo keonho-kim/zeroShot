@@ -1,14 +1,14 @@
 import { ArrowLeft, ArrowRight, Check, CheckCircle2, PanelsTopLeft, RefreshCw } from "lucide-react";
 import type { CSSProperties, Dispatch, SetStateAction } from "react";
 import { useMemo, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Textarea } from "@/components/ui/textarea";
-import { CodexLoadingPanel } from "@/components/CodexLoadingPanel";
+import { Button } from "@/shared/ui/button";
+import { Card } from "@/shared/ui/card";
+import { Textarea } from "@/shared/ui/textarea";
+import { CodexLoadingPanel } from "@/widgets/codex-loading/CodexLoadingPanel";
 import { useI18n } from "@/lib/i18n";
 import { designModeLabel, designResultStatus } from "@/entities/design/design-runtime";
 import type { DesignRecommendationOption, DesignRecommendationResponse, DesignRuntimeResponse, ResourceManifest } from "@/types/api";
-import { cn } from "@/utils/cn";
+import { cn } from "@/shared/lib/cn";
 import { projectName, type DesignTimelineItem } from "@/pages/design/design-page-model";
 
 type SetupStep = "system" | "template" | "request";
@@ -150,7 +150,7 @@ export function DesignRuntimeSetup(props: {
     <>
       <Card className="design-console">
         <div className="home-console-topline">
-          <span>MAKEOVER</span>
+          <span>DESIGN</span>
           <span>{designResultStatus(props.designResult)}</span>
         </div>
         <div className="agent-panel-heading">

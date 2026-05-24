@@ -2,7 +2,7 @@ import { Database } from "bun:sqlite";
 import { mkdir } from "node:fs/promises";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
-import type { PhaseResult, PipelineContext, PipelineState, WorkLogEntry } from "@cli/pipeline/types.js";
+import type { PhaseResult, PipelineContext, PipelineState, WorkLogEntry } from "@cli/pipeline/types";
 
 let database: Database | null = null;
 

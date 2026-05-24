@@ -3,8 +3,8 @@ import { constants, existsSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawn } from "node:child_process";
-import type { AppDefaults, PipelineContext, PipelineOptions, RunMode } from "@cli/pipeline/types.js";
-import { createEmptyPipelineState } from "@cli/pipeline/storage.js";
+import type { AppDefaults, PipelineContext, PipelineOptions, RunMode } from "@cli/pipeline/types";
+import { createEmptyPipelineState } from "@cli/pipeline/storage";
 
 export function nowHuman(date = new Date()): string {
   const pad = (value: number) => String(value).padStart(2, "0");

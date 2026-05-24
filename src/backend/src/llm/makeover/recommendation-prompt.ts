@@ -1,6 +1,6 @@
-import { languageName } from "@backend/i18n/locale.js";
-import { resourceCatalogSummary } from "@backend/llm/resources/prompt.js";
-import type { ResourceManifest } from "@backend/types.js";
+import { languageName } from "@backend/i18n/locale";
+import { resourceCatalogSummary } from "@backend/llm/resources/prompt";
+import type { ResourceManifest } from "@backend/types/resource";
 
 function resourceList(title: string, resources: ResourceManifest[]): string {
   return [
@@ -26,7 +26,7 @@ export function buildRecommendationPrompt(params: {
     "",
     "Return only JSON matching the provided schema. Put chatMessage first.",
     "chatMessage must be a concise user-facing status update that says what you are comparing or preparing.",
-    "Recommend exactly 5 design systems and exactly 5 design templates for the MAKEOVER request flow.",
+    "Recommend exactly 5 design systems and exactly 5 design templates for the DESIGN request flow.",
     "Every resourceId must be copied exactly from the provided resource catalog.",
     "Do not invent resource IDs. Do not expose raw resource names as labels.",
     "Write labels, details, and reasons as user-facing choices that describe the feel, structure, and fit.",

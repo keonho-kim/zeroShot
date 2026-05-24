@@ -1,0 +1,106 @@
+.flashcard-stage {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+}
+
+.flashcard-progress {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  color: var(--muted-foreground);
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.flashcard-progress div {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.375rem;
+}
+
+.flashcard-progress button {
+  height: 0.5rem;
+  width: 1.25rem;
+  border-radius: 999px;
+  background: var(--surface-active);
+}
+
+.flashcard-progress button.active {
+  background: var(--primary);
+}
+
+.work-flashcard {
+  display: flex;
+  min-height: 336px;
+  flex-direction: column;
+  gap: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 1.5rem;
+  background: var(--panel);
+  box-shadow: var(--shadow-card);
+}
+
+.work-card-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+}
+
+.work-card-icon {
+  display: grid;
+  height: 2.5rem;
+  width: 2.5rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--surface);
+}
+
+.work-card-kicker {
+  margin: 0 0 0.125rem;
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.work-flashcard h2 {
+  margin: 0;
+  font-size: clamp(1.5rem, 5vw, 2.75rem);
+  line-height: 1.08;
+}
+
+.work-card-summary {
+  margin: 0;
+  color: var(--muted-foreground);
+  line-height: 1.6;
+}
+
+.work-card-log {
+  flex: 1;
+  overflow: auto;
+  border-radius: 1rem;
+  background: var(--code-bg);
+  padding: 1rem;
+}
+
+.work-card-log p {
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: var(--code-fg);
+  font-family: "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+  font-size: 0.75rem;
+  line-height: 1.65;
+}
+
+.work-card-log p + p {
+  margin-top: 0.375rem;
+}
+
+.work-card-log p[data-type="stderr"],
+.work-card-log p[data-type="job_failed"] {
+  color: var(--danger-foreground);
+}

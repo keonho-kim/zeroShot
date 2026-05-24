@@ -1,0 +1,159 @@
+.codex-loading-log {
+  display: grid;
+  width: 100%;
+  flex: none;
+  min-height: clamp(24rem, 56vh, 44rem);
+  max-height: min(68vh, 54rem);
+  align-self: stretch;
+  gap: 0.75rem;
+  overflow: auto;
+  border: 2px solid var(--border);
+  border-radius: 2px;
+  background: var(--surface);
+  padding: clamp(1rem, 2vw, 1.5rem);
+  scroll-behavior: smooth;
+}
+
+.codex-loading-log-item {
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.25rem 0;
+}
+
+.codex-loading-log-item.progress {
+  border: 2px solid color-mix(in srgb, var(--border) 72%, transparent);
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--panel) 64%, var(--surface) 36%);
+  padding: 0.75rem 0.85rem;
+}
+
+.codex-loading-progress-heading {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem 0.75rem;
+}
+
+.codex-loading-log-item strong {
+  color: var(--foreground);
+  font-size: 0.8125rem;
+  font-weight: 900;
+}
+
+.codex-loading-log-item pre {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: var(--muted-foreground);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+.codex-loading-status {
+  width: fit-content;
+  border: 2px solid var(--border);
+  border-radius: 999px;
+  padding: 0.1rem 0.45rem;
+  background: var(--input);
+  color: var(--muted-foreground);
+  font-size: 0.6875rem;
+  font-weight: 900;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.codex-loading-status.running {
+  background: var(--success-surface);
+  color: var(--success-foreground);
+}
+
+.codex-loading-status.completed {
+  background: var(--panel);
+  color: var(--foreground);
+}
+
+.codex-loading-status.failed {
+  background: var(--danger-surface);
+  color: var(--danger-foreground);
+}
+
+.codex-loading-log-item.tool {
+  border: 2px solid var(--border);
+  border-radius: 6px;
+  background: var(--panel);
+  padding: 0.75rem 0.85rem;
+}
+
+.codex-loading-log-item.tool p {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.55rem;
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+.codex-loading-log-item.tool span:not(.codex-loading-status) {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.codex-loading-log-item.agent {
+  grid-template-columns: 2rem minmax(0, 1fr);
+  align-items: start;
+  column-gap: 0.75rem;
+  width: 100%;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel);
+  padding: 0.9rem 1rem;
+}
+
+.codex-loading-log-item.reasoning {
+  grid-template-columns: 2rem minmax(0, 1fr);
+  align-items: start;
+  column-gap: 0.75rem;
+  width: 100%;
+  border: 2px solid color-mix(in srgb, var(--border) 56%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--panel) 72%, var(--muted) 28%);
+  opacity: 0.78;
+  padding: 0.8rem 0.95rem;
+}
+
+.codex-loading-agent-icon {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  border: 2px solid var(--border);
+  border-radius: 4px;
+  background: var(--surface);
+  box-shadow: 2px 2px 0 var(--border);
+  color: var(--foreground);
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.codex-loading-markdown {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.codex-loading-log-item.agent .codex-loading-markdown {
+  color: var(--foreground);
+}
+
+.codex-loading-log-item.reasoning .codex-loading-markdown {
+  color: var(--muted-foreground);
+  font-style: italic;
+}
+
+.codex-loading-log-item.reasoning .markdown-renderer-inline-code,
+.codex-loading-log-item.reasoning .markdown-renderer-code-block {
+  color: var(--muted-foreground);
+}
