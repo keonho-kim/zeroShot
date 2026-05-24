@@ -57,7 +57,10 @@ export function CodexLoadingLog(props: {
               </p>
             ) : (
               <>
-                <strong>{item.title}</strong>
+                <div className="codex-loading-progress-heading">
+                  <strong>{item.title}</strong>
+                  {item.status ? <span className={`codex-loading-status ${item.status}`}>{statusLabel(item.status)}</span> : null}
+                </div>
                 <MarkdownRenderer markdown={item.detail} className="codex-loading-markdown" />
               </>
             )}

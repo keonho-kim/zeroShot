@@ -119,11 +119,13 @@
 
 .architect-loading-card {
   display: grid;
-  min-height: min(42vh, 288px);
+  width: min(100%, 90vw, 1440px);
+  max-width: calc(100vw - 2rem);
+  min-height: 0;
+  margin-inline: auto;
   place-items: center;
-  border: 2px solid var(--border);
-  border-radius: 2px;
-  background: var(--panel);
-  padding: clamp(1.5rem, 5vw, 3rem);
-  box-shadow: var(--shadow-card);
+  border: 0;
+  background: transparent;
+  padding: 0;
+  box-shadow: none;
 }

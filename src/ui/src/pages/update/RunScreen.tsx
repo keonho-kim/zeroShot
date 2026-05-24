@@ -1,6 +1,5 @@
 import { Terminal } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
-import { Card } from "@/shared/ui/card";
 import { LogViewer } from "@/widgets/job-log/LogViewer";
 import type { JobSnapshot } from "@/types/api";
 
@@ -8,7 +7,7 @@ export function UpdateRunScreen({ job }: { job: JobSnapshot }) {
   const { t } = useI18n();
   return (
     <div className="build-run-screen">
-      <Card className="agent-panel build-run-heading bg-[var(--panel)]">
+      <section className="build-run-status-strip">
         <div className="agent-panel-heading">
           <div className="agent-panel-icon">
             <Terminal aria-hidden="true" />
@@ -19,7 +18,7 @@ export function UpdateRunScreen({ job }: { job: JobSnapshot }) {
             <p>{t("update.runningDetail")}</p>
           </div>
         </div>
-      </Card>
+      </section>
       <LogViewer job={job} />
     </div>
   );

@@ -191,7 +191,7 @@ describe("codex loading log model", () => {
     }]);
   });
 
-  test("shows only a site for opened web pages", () => {
+  test("shows target sites for web search rows", () => {
     const items = buildCodexLoadingLogItems([], [
       JSON.stringify({
         type: "item.completed",
@@ -211,12 +211,30 @@ describe("codex loading log model", () => {
           type: "web_search",
           query: "codex sdk events"
         }
+      }),
+      JSON.stringify({
+        type: "item.completed",
+        item: {
+          id: "web_3",
+          type: "web_search",
+          query: "site:example.com codex sdk events"
+        }
+      }),
+      JSON.stringify({
+        type: "item.completed",
+        item: {
+          id: "web_4",
+          type: "web_search",
+          query: "https://docs.cloud.google.com/translate/docs batch translation"
+        }
       })
     ]);
 
     expect(items.map((item) => [item.title, item.detail])).toEqual([
       ["Read web page", "example.com"],
-      ["Web search", ""]
+      ["Web search", "Web · codex sdk events"],
+      ["Web search", "example.com · codex sdk events"],
+      ["Web search", "docs.cloud.google.com · batch translation"]
     ]);
   });
 
@@ -352,7 +370,7 @@ describe("codex loading log model", () => {
 
   test("maps progress search, tool, file, agent, and reasoning items to matching renderer kinds", () => {
     const items = buildItems([
-      { id: "architect:search-rss", title: "ARCHITECT · Searching", detail: "RSS reader", status: "running" },
+      { id: "architect:search-rss", title: "ARCHITECT · Searching", detail: "site:example.com RSS reader", status: "running" },
       { id: "architect:tool-github", title: "ARCHITECT · Tool call", detail: "github.search", status: "completed" },
       { id: "architect:file-change", title: "ARCHITECT · File changes", detail: "updated: README.md", status: "completed" },
       { id: "architect:agent-message", title: "ARCHITECT · Writing response", detail: "Preparing answer.", status: "running" },
@@ -366,6 +384,7 @@ describe("codex loading log model", () => {
       ["agent", "💬", "ARCHITECT · Writing response"],
       ["reasoning", "💭", "ARCHITECT · Reviewing"]
     ]);
+    expect(items[0]?.detail).toBe("example.com · RSS reader");
   });
 
   test("maps progress command items to existing CLI icons", () => {
@@ -395,7 +414,7 @@ describe("codex loading log model", () => {
         id: "job-web-0",
         kind: "tool",
         title: "Web search",
-        detail: "RSS reader apps",
+        detail: "Web · RSS reader apps",
         icon: "🌐"
       },
       {

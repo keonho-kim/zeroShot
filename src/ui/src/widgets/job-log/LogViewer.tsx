@@ -2,7 +2,6 @@ import { useEffect, useMemo } from "react";
 import type { CodexLoadingLogSource } from "@/entities/codex/codex-loading-log";
 import type { JobSnapshot } from "@/types/api";
 import { useAppStore, type LogLine } from "@/store/app-store";
-import { Card } from "@/shared/ui/card";
 import { CodexLoadingPanel } from "@/widgets/codex-loading/CodexLoadingPanel";
 import { RunArtifactsPreview } from "@/widgets/job-log/RunArtifactsPreview";
 import { useI18n } from "@/lib/i18n";
@@ -146,8 +145,8 @@ export function LogViewer({ job }: Props) {
   }, [appendLog, job, setCurrentJob]);
 
   return (
-    <div className="flex flex-col gap-4">
-      <Card className="flex flex-col gap-4 bg-[var(--panel)]">
+    <div className="job-log-viewer">
+      <section className="job-log-panel">
         <CodexLoadingPanel
           label={job?.mode === "update" ? t("log.updating") : t("log.building")}
           noteTitle={t("log.streamTitle")}
@@ -156,7 +155,7 @@ export function LogViewer({ job }: Props) {
           sources={logSources}
           emptyMessage={job ? t("log.waiting") : t("log.notStarted")}
         />
-      </Card>
+      </section>
       <RunArtifactsPreview job={job} />
     </div>
   );

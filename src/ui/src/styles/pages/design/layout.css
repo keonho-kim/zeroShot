@@ -287,15 +287,17 @@
 
 .makeover-loading-card {
   display: grid;
-  min-height: min(52vh, 416px);
-  align-content: center;
+  width: min(100%, 90vw, 1440px);
+  max-width: calc(100vw - 2rem);
+  min-height: 0;
+  margin-inline: auto;
+  align-content: start;
   justify-items: center;
-  gap: 1.5rem;
-  border: 2px solid var(--border);
-  border-radius: 2px;
-  background: var(--panel);
-  padding: clamp(1.5rem, 5vw, 3rem);
-  box-shadow: var(--shadow-card);
+  gap: 0.75rem;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  box-shadow: none;
 }
 
 @media (max-width: 920px) {

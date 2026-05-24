@@ -83,9 +83,12 @@
 
   .codex-loading-panel {
     height: auto;
+    width: min(100%, calc(100vw - 2rem));
+    max-width: calc(100vw - 2rem);
   }
 
   .codex-loading-log {
-    height: clamp(18rem, 48vh, 28rem);
+    min-height: clamp(22rem, 52vh, 34rem);
+    max-height: min(68vh, 42rem);
   }
 }

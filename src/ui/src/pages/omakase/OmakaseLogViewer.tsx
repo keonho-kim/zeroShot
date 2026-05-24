@@ -3,7 +3,6 @@ import type { CodexLoadingLogSource } from "@/entities/codex/codex-loading-log";
 import { type OmakaseProgressItem, type OmakaseRunStatus, type OmakaseStageStatus } from "@/entities/omakase/omakase-progress";
 import { useI18n } from "@/lib/i18n";
 import { Button } from "@/shared/ui/button";
-import { Card } from "@/shared/ui/card";
 import { CodexLoadingPanel } from "@/widgets/codex-loading/CodexLoadingPanel";
 import { OmakaseTimeline } from "@/pages/omakase/OmakaseTimeline";
 import type { OmakaseStage } from "@/types/api";
@@ -25,7 +24,7 @@ export function OmakaseLogViewer({
 }) {
   const { t } = useI18n();
   return (
-    <Card className="omakase-log-panel">
+    <section className="omakase-log-panel">
       <OmakaseTimeline statuses={statuses} />
       <CodexLoadingPanel
         label="OMAKASE"
@@ -43,6 +42,6 @@ export function OmakaseLogViewer({
           </Button>
         </div>
       ) : null}
-    </Card>
+    </section>
   );
 }

@@ -4,6 +4,7 @@
 @import "./base.css";
 @import "./layout.css";
 @import "./pages/home/layout.css";
+@import "./pages/home/omakase.css";
 @import "./pages/history/layout.css";
 @import "./pages/build/layout.css";
 @import "./pages/design/layout.css";

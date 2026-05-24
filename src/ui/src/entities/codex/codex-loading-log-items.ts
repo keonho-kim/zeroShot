@@ -1,5 +1,6 @@
 import type { TranslationKey } from "@/lib/i18n-core";
 import type { CodexLoadingLogItem, CodexLoadingLogSource, CodexLoadingProgressItem, CodexLogTranslate } from "@/entities/codex/codex-loading-log";
+import { hostnameFromUrl, searchDetail } from "@/entities/codex/codex-loading-search-target";
 import { commandIcon, commandLabel, displayCommand } from "@/entities/codex/codex-loading-tool-labels";
 
 type RawCodexEvent = {
@@ -118,14 +119,6 @@ function localizeStableMessage(text: string, t: CodexLogTranslate): string {
   return key ? t(key) : text;
 }
 
-function hostnameFromUrl(value: string): string {
-  try {
-    return new URL(value).hostname.replace(/^www\./, "");
-  } catch {
-    return compact(value);
-  }
-}
-
 function splitTrailingPunctuation(url: string): { url: string; trailing: string } {
   const match = /^(?<url>.*?)(?<trailing>[.,;:!?]+)?$/.exec(url);
   return {
@@ -214,7 +207,7 @@ function webSearchLabel(item: Record<string, unknown>, t: CodexLogTranslate): { 
   return {
     icon: "🌐",
     title: t("log.tool.webSearch"),
-    detail: ""
+    detail: searchDetail(readString(item.query), t)
   };
 }
 
@@ -364,11 +357,15 @@ export function codexProgressPresentation(item: Pick<CodexLoadingProgressItem, "
 
 export function progressItem(item: CodexLoadingProgressItem, t: CodexLogTranslate): CodexLoadingLogItem {
   const presentation = codexProgressPresentation(item);
+  const id = unscopedProgressId(item.id);
+  const detail = id.startsWith("search-")
+    ? searchDetail(item.detail.trim(), t)
+    : formatUserText(item.detail.trim(), t);
   return {
     id: `progress-${item.id}`,
     kind: presentation.kind,
     title: item.title,
-    detail: formatUserText(item.detail.trim(), t),
+    detail,
     status: item.status,
     icon: presentation.icon
   };
@@ -401,7 +398,7 @@ function jobLogItem(source: Extract<CodexLoadingLogSource, { source: "job" }>, i
       id: source.id ?? `job-web-${index}`,
       kind: "tool",
       title: t("log.tool.webSearch"),
-      detail: compact(formatUserText(webSearch.groups.query, t)),
+      detail: searchDetail(webSearch.groups.query, t),
       icon: "🌐"
     };
   }

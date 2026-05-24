@@ -1,6 +1,7 @@
-import { Bot, Play } from "lucide-react";
+import { Bot, FolderOpen, Play, Radio } from "lucide-react";
 import { Navigate } from "react-router-dom";
 import { omakaseProjectName } from "@/entities/omakase/omakase-progress";
+import { formatProjectPath } from "@/entities/workflow-log/format";
 import { useI18n } from "@/lib/i18n";
 import { useOmakasePageController } from "@/pages/omakase/page-controller";
 import { OmakaseLogViewer } from "@/pages/omakase/OmakaseLogViewer";
@@ -18,6 +19,7 @@ export function OmakasePage() {
   }
 
   const running = controller.runStatus === "running";
+  const progressMode = controller.runStatus !== "idle";
   const statusLabel = controller.runStatus === "failed"
     ? t("home.omakaseFailed")
     : controller.runStatus === "completed"
@@ -25,22 +27,40 @@ export function OmakasePage() {
       : running
         ? t("common.loading")
         : t("common.wait");
+  const headerMeta = progressMode ? (
+    <div className="omakase-title-meta">
+      <span className="omakase-title-chip">
+        <Radio aria-hidden="true" />
+        <span>{statusLabel}</span>
+      </span>
+      <span className="omakase-title-chip" title={controller.projectRoot}>
+        <FolderOpen aria-hidden="true" />
+        <span>{formatProjectPath(controller.projectRoot)}</span>
+      </span>
+    </div>
+  ) : undefined;
 
   return (
     <div className="home-shell omakase-page mx-auto flex max-w-[1180px] flex-col gap-6 md:gap-8">
-      <PageHeader title="OMAKASE" projectRoot={controller.projectRoot} />
-      <section className="home-console" aria-label="Omakase project">
-        <div className="home-console-topline">
-          <span>{t("home.projectSlot")}</span>
-          <span>{statusLabel}</span>
-        </div>
-        <div className="min-w-0">
-          <p className="home-console-title">{omakaseProjectName(controller.projectRoot)}</p>
-          <p className="home-console-path" title={controller.projectRoot}>
-            {controller.projectRoot}
-          </p>
-        </div>
-      </section>
+      <PageHeader
+        title={progressMode ? omakaseProjectName(controller.projectRoot) : "OMAKASE"}
+        projectRoot={progressMode ? undefined : controller.projectRoot}
+        titleMeta={headerMeta}
+      />
+      {progressMode ? null : (
+        <section className="home-console" aria-label="Omakase project">
+          <div className="home-console-topline">
+            <span>{t("home.projectSlot")}</span>
+            <span>{statusLabel}</span>
+          </div>
+          <div className="min-w-0">
+            <p className="home-console-title">{omakaseProjectName(controller.projectRoot)}</p>
+            <p className="home-console-path" title={controller.projectRoot}>
+              {controller.projectRoot}
+            </p>
+          </div>
+        </section>
+      )}
       {controller.runStatus === "idle" ? (
         <Card className="omakase-input-card">
           <div className="agent-panel-heading">
