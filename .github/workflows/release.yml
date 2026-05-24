@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: write
+  id-token: write
 
 jobs:
   release:
@@ -21,6 +22,13 @@ jobs:
         uses: oven-sh/setup-bun@v2
         with:
           bun-version: 1.3.11
+
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false
 
       - name: Set up Go
         uses: actions/setup-go@v6
@@ -66,21 +74,12 @@ jobs:
           cp -R system-asseets/design/source-files cli/app/assets/design/source-files
 
       - name: Publish npm package
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
-          if [ -z "${NODE_AUTH_TOKEN:-}" ]; then
-            echo "NPM_TOKEN repository secret is required to publish @keonhokim/zeroshot." >&2
-            exit 1
-          fi
-
-          printf "//registry.npmjs.org/:_authToken=%s\n" "$NODE_AUTH_TOKEN" > "$HOME/.npmrc"
-
           PACKAGE_NAME="$(bun --print 'require("./cli/package.json").name')"
           PACKAGE_VERSION="$(bun --print 'require("./cli/package.json").version')"
 
           if npm view "${PACKAGE_NAME}@${PACKAGE_VERSION}" version >/dev/null 2>&1; then
-            npm dist-tag add "${PACKAGE_NAME}@${PACKAGE_VERSION}" latest
+            echo "${PACKAGE_NAME}@${PACKAGE_VERSION} already exists on npm; skipping publish."
           else
             cd cli
             npm publish --access public --tag latest
