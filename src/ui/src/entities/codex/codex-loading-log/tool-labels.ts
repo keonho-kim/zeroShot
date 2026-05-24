@@ -1,4 +1,4 @@
-import type { CodexLogTranslate } from "@/entities/codex/codex-loading-log";
+import type { CodexLogTranslate } from "@/entities/codex/codex-loading-log/types";
 
 function firstCommandToken(command: string): string {
   return command.trim().split(/\s+/)[0]?.replace(/^.*\//, "") ?? "";

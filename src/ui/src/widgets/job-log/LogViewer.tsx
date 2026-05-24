@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from "react";
-import type { CodexLoadingLogSource } from "@/entities/codex/codex-loading-log";
+import type { CodexLoadingLogSource } from "@/entities/codex/codex-loading-log/service";
 import type { JobSnapshot } from "@/types/api";
 import { useAppStore, type LogLine } from "@/store/app-store";
 import { CodexLoadingPanel } from "@/widgets/codex-loading/CodexLoadingPanel";

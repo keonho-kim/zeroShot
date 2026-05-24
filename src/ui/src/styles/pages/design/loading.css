@@ -1,0 +1,50 @@
+.makeover-loading-card {
+  display: grid;
+  width: min(100%, 90vw, 1440px);
+  max-width: calc(100vw - 2rem);
+  min-height: 0;
+  margin-inline: auto;
+  align-content: start;
+  justify-items: center;
+  gap: 0.75rem;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  box-shadow: none;
+}
+
+.makeover-loading-card .design-inline-log {
+  width: min(100%, 576px);
+}
+
+.design-inline-log {
+  display: grid;
+  gap: 0.45rem;
+  border: 2px solid var(--border);
+  border-radius: 2px;
+  background: var(--surface);
+  padding: 0.75rem;
+}
+
+.design-inline-log div {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.design-inline-log span {
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+}
+
+.design-loading-note {
+  justify-items: center;
+  padding: 1rem 1.25rem;
+}
+
+.design-loading-note span {
+  color: var(--foreground);
+  font-size: clamp(1rem, 1.8vw, 1.25rem);
+  font-weight: 900;
+  line-height: 1.45;
+  text-align: center;
+}

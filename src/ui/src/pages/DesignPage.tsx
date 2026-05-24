@@ -6,7 +6,7 @@ import { Card } from "@/shared/ui/card";
 import { ArtifactWorkbench } from "@/pages/design/artifact-workbench/ArtifactWorkbench";
 import { DesignResult } from "@/pages/design/DesignResult";
 import { DesignRuntimeSetup } from "@/pages/design/DesignRuntimeSetup";
-import { useDesignPageController } from "@/pages/design/page-controller";
+import { useDesignPageController } from "@/pages/design/page-controller/service";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/shared/lib/cn";
 

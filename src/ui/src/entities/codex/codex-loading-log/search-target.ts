@@ -1,4 +1,4 @@
-import type { CodexLogTranslate } from "@/entities/codex/codex-loading-log";
+import type { CodexLogTranslate } from "@/entities/codex/codex-loading-log/types";
 
 function compact(value: string, maxLength = 180): string {
   const normalized = value.replace(/\s+/g, " ").trim();

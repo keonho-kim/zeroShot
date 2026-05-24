@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { buildCodexLoadingLogItems, type CodexLoadingLogSource, type CodexLoadingProgressItem } from "@/entities/codex/codex-loading-log";
+import { buildCodexLoadingLogItems, type CodexLoadingLogSource, type CodexLoadingProgressItem } from "@/entities/codex/codex-loading-log/service";
 import { useI18n } from "@/lib/i18n";
 import { MarkdownRenderer } from "@/shared/ui/MarkdownRenderer";
 

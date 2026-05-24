@@ -1,6 +1,6 @@
 import { AgentLoadingStage } from "@/widgets/codex-loading/AgentLoadingStage";
 import { CodexLoadingLog } from "@/widgets/codex-loading/CodexLoadingLog";
-import { codexLogSources, hasCodexThreadStarted, type CodexLoadingLogSource } from "@/entities/codex/codex-loading-log";
+import { codexLogSources, hasCodexThreadStarted, type CodexLoadingLogSource } from "@/entities/codex/codex-loading-log/service";
 import { useI18n } from "@/lib/i18n";
 
 interface CodexLoadingProgressItem {

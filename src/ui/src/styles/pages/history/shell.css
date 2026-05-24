@@ -1,0 +1,106 @@
+.history-page {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.history-page.builder-shell {
+  max-width: 1440px;
+  width: 100%;
+}
+
+.history-page .page-header {
+  margin-bottom: 0;
+}
+
+.history-update-button {
+  border-color: var(--border);
+  background: color-mix(in srgb, var(--arcade-pink) 70%, var(--panel) 30%);
+  color: var(--foreground);
+}
+
+.history-update-button:hover:not(:disabled) {
+  background: var(--arcade-pink);
+}
+
+.history-update-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.history-title-meta {
+  display: inline-flex;
+  max-width: min(52rem, 70vw);
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  color: var(--muted-foreground);
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1.35;
+  margin: 0.45rem 0 0;
+  overflow: hidden;
+  text-align: center;
+}
+
+.history-title-chip {
+  display: inline-flex;
+  min-width: 0;
+  max-width: min(28rem, 64vw);
+  align-items: center;
+  gap: 0.35rem;
+  border: var(--border-thin) solid color-mix(in srgb, var(--border) 68%, transparent);
+  border-radius: 1px;
+  background: color-mix(in srgb, var(--panel) 72%, white 28%);
+  color: var(--muted-foreground);
+  padding: 0.22rem 0.42rem;
+}
+
+.history-title-chip svg {
+  width: 0.82rem;
+  height: 0.82rem;
+  flex: 0 0 auto;
+  color: var(--foreground);
+}
+
+.history-title-chip span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.history-empty {
+  border: var(--border-strong) dashed var(--border);
+  background: var(--muted);
+  color: var(--muted-foreground);
+  font-size: 0.875rem;
+  font-weight: 700;
+  line-height: 1.5;
+  margin-top: 1rem;
+  padding: 1rem;
+}
+
+.history-document-frame {
+  min-height: 560px;
+  width: 100%;
+  border: var(--border-strong) solid var(--border);
+  border-radius: 1px;
+  background: white;
+}
+
+.history-detail-empty {
+  display: grid;
+  min-height: 0;
+  margin-top: 0;
+  place-items: center;
+  padding-block: 2rem;
+}
+
+@media (min-width: 1024px) {
+  .history-document-frame {
+    min-height: 620px;
+  }
+}

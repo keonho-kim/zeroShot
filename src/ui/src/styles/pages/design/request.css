@@ -1,0 +1,144 @@
+.design-editor-grid,
+.design-result-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.design-input-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.design-request-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(248px, 0.42fr);
+  align-items: start;
+  gap: 1rem;
+}
+
+.design-choice-board {
+  position: sticky;
+  top: 1rem;
+}
+
+.design-request-heading {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.design-request-heading .decision-kicker {
+  margin-bottom: 0.25rem;
+}
+
+.design-input-panel textarea {
+  min-height: 144px;
+}
+
+.design-resource-row,
+.design-template-picker {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.design-template-heading {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.design-template-heading span {
+  color: var(--foreground);
+  font-size: 0.75rem;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.design-template-grid {
+  display: grid;
+  gap: 0.5rem;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.design-template-card {
+  display: grid;
+  min-height: 4.6rem;
+  text-align: left;
+}
+
+.design-template-card .choice-check {
+  opacity: 1;
+}
+
+.design-template-card span,
+.design-template-card small {
+  color: inherit;
+  opacity: 0.82;
+}
+
+.design-template-card > span:not(.choice-check),
+.design-template-card > small {
+  grid-column: 2;
+}
+
+.design-template-card small {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.design-template-card.selected span:last-child,
+.design-template-card.selected small,
+.design-template-card:hover span:last-child,
+.design-template-card:hover small {
+  color: var(--background);
+  opacity: 0.9;
+}
+
+.design-request-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  align-self: end;
+  width: min(100%, 288px);
+  margin-left: auto;
+}
+
+.design-step-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.625rem;
+}
+
+.design-resource-row label {
+  display: grid;
+  gap: 0.375rem;
+}
+
+.design-resource-row span {
+  color: var(--foreground);
+  font-size: 0.75rem;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.design-resource-row select {
+  min-height: 2.2rem;
+  width: 100%;
+  border: 2px solid var(--border);
+  border-radius: 2px;
+  background: var(--input);
+  color: var(--foreground);
+  padding: 0.625rem 0.75rem;
+  font: inherit;
+}
+
+@media (max-width: 920px) {
+  .design-request-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .design-choice-board {
+    position: static;
+  }
+}

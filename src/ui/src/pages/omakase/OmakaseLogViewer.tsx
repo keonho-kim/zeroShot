@@ -1,5 +1,5 @@
 import { RotateCcw } from "lucide-react";
-import type { CodexLoadingLogSource } from "@/entities/codex/codex-loading-log";
+import type { CodexLoadingLogSource } from "@/entities/codex/codex-loading-log/service";
 import { type OmakaseProgressItem, type OmakaseRunStatus, type OmakaseStageStatus } from "@/entities/omakase/omakase-progress";
 import { useI18n } from "@/lib/i18n";
 import { Button } from "@/shared/ui/button";

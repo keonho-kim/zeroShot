@@ -5,7 +5,7 @@ import {
   hasCodexThreadStarted as hasThreadStarted,
   type CodexLoadingLogSource,
   type CodexLoadingProgressItem
-} from "@/entities/codex/codex-loading-log";
+} from "@/entities/codex/codex-loading-log/service";
 import { translateForLocale } from "@/lib/i18n";
 
 const t = (key: Parameters<typeof translateForLocale>[1], params?: Record<string, string | number>) => translateForLocale("en", key, params);

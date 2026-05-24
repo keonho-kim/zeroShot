@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { buildLogText, initialOmakaseStageStatuses, omakaseStageLabel, type OmakaseProgressItem, type OmakaseRunStatus, type OmakaseStageStatus } from "@/entities/omakase/omakase-progress";
-import { codexProgressPresentation, type CodexLoadingLogSource } from "@/entities/codex/codex-loading-log";
+import { codexProgressPresentation, type CodexLoadingLogSource } from "@/entities/codex/codex-loading-log/service";
 import { useBodyClass } from "@/hooks/useBodyClass";
 import { requestOmakaseStream } from "@/lib/api/omakase";
 import { useI18n } from "@/lib/i18n";

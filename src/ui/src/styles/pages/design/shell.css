@@ -1,0 +1,72 @@
+.design-page {
+  padding-bottom: 3rem;
+}
+
+.design-page-workbench-wide {
+  width: min(82vw, 1600px);
+}
+
+.design-workbench {
+  display: grid;
+  gap: 1rem;
+  margin-top: clamp(1.5rem, 5vh, 4rem);
+}
+
+.makeover-step-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.design-console,
+.design-input-panel,
+.design-source-panel,
+.design-result-hero,
+.design-output-panel {
+  border: 2px solid var(--border);
+  border-radius: 2px;
+  background: var(--panel);
+  box-shadow: var(--shadow-card);
+}
+
+.design-wave-heading,
+.design-wave-loader {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.22rem;
+}
+
+.design-wave-heading {
+  margin-top: 0.75rem;
+}
+
+.design-wave-heading i,
+.design-wave-loader i {
+  display: block;
+  width: 0.42rem;
+  height: 0.42rem;
+  border: 2px solid var(--border);
+  border-radius: 999px;
+  background: var(--primary);
+  animation: design-dot-wave 780ms ease-in-out infinite;
+}
+
+.design-wave-heading i:nth-child(2),
+.design-wave-loader i:nth-child(2) {
+  animation-delay: 110ms;
+}
+
+.design-wave-heading i:nth-child(3),
+.design-wave-loader i:nth-child(3) {
+  animation-delay: 220ms;
+}
+
+@keyframes design-dot-wave {
+  0%, 100% {
+    transform: translateY(0);
+  }
+
+  45% {
+    transform: translateY(-0.32rem);
+  }
+}
