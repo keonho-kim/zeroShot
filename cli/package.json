@@ -1,8 +1,12 @@
 {
   "name": "@keonhokim/zeroshot",
-  "version": "0.0.0-dev.11",
+  "version": "0.0.0-dev.12",
   "description": "ZeroShot production CLI wrapper",
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/keonho-kim/zeroShot"
+  },
   "bin": {
     "zeroshot": "dist/index.js"
   },
